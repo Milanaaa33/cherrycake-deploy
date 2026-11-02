@@ -1,0 +1,15 @@
+# Global code owners for Cherry Cake repository
+* @MilanaUlubabyan @AndreiVarnavskiy
+
+# Backend Team
+/src/main/java/ @AdrianZakirov @AnvarMakhamatjonov
+/src/test/java/ @AdrianZakirov @AnvarMakhamatjonov @MuhammadyusufIsmatov
+pom.xml @AdrianZakirov @MilanaUlubabyan
+checkstyle.xml @AdrianZakirov
+
+# Quality Assurance
+/qa/ @MuhammadyusufIsmatov @AsadbekYulchiev
+
+# Documentation
+/docs/ @AndreiVarnavskiy @MilanaUlubabyan
+README.md @AndreiVarnavskiy @MilanaUlubabyan

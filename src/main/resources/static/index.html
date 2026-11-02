@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cherry Cake - Bakery &amp; Café | API Reference</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Parisienne&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
+    <link rel="icon" type="image/png" href="assets/images/Flower%20Icon%20Large/TransparentSakuraFlower.png">
+
+    <style>
+        :root
+        {
+            --cherry-void: #12060e;
+            --cherry-deep: #190814;
+            --cherry-panel: #230b1c;
+            --cherry-card: #2d0e24;
+            --cherry-card-hover: #38132d;
+            --cherry-border: rgba(255, 183, 197, 0.16);
+            --cherry-border-glow: rgba(230, 57, 96, 0.4);
+
+            --raspberry-coulis: #e63960;
+            --raspberry-bright: #ff3864;
+            --raspberry-dim: #a82040;
+
+            --sakura-pink: #ffb7c5;
+            --sakura-glow: #ffd5df;
+            --sakura-soft: #fff0f4;
+
+            --cheesecake-cream: #fff6ed;
+            --crust-gold: #e5b061;
+            --crust-glow: #f5cf8e;
+
+            --mint-fresh: #38c172;
+            --mint-glow: rgba(56, 193, 114, 0.3);
+
+            --text-main: #fdf2f5;
+            --text-dim: #c7a3b3;
+            --text-faint: #805f6e;
+
+            --shadow-elevation: 0 12px 36px -8px rgba(18, 6, 14, 0.7);
+        }
+
+        *
+        {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body
+        {
+            background-color: var(--cherry-void);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        ::selection
+        {
+            background: var(--raspberry-coulis);
+            color: #fff;
+        }
+
+        ::-webkit-scrollbar { width: 10px; }
+
+        ::-webkit-scrollbar-track { background: var(--cherry-void); }
+
+        ::-webkit-scrollbar-thumb
+        {
+            background: var(--cherry-card);
+            border-radius: 5px;
+            border: 1px solid var(--cherry-border);
+        }
+
+        ::-webkit-scrollbar-thumb:hover { background: var(--raspberry-coulis); }
+
+        /* Typography */
+        .script-font { font-family: 'Parisienne', cursive; }
+
+        .display-font { font-family: 'Playfair Display', serif; }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        a
+        {
+            color: var(--sakura-pink);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover
+        {
+            color: var(--sakura-glow);
+            text-decoration: underline;
+        }
+
+        /* HERO SECTION */
+        .hero
+        {
+            position: relative;
+            height: 100vh;
+            min-height: 680px;
+            width: 100%;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 50% 25%, rgba(230, 57, 96, 0.22) 0%, transparent 60%),
+                radial-gradient(circle at 80% 70%, rgba(255, 183, 197, 0.08) 0%, transparent 50%),
+                linear-gradient(to bottom, #10050c 0%, #170713 35%, var(--cherry-void) 70%, var(--cherry-void) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Seamless blurred gradient transition from Hero to Content */
+        .hero::after
+        {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 280px;
+            background: linear-gradient(to bottom,
+                rgba(18, 6, 14, 0) 0%,
+                rgba(18, 6, 14, 0.15) 25%,
+                rgba(18, 6, 14, 0.5) 50%,
+                rgba(18, 6, 14, 0.85) 75%,
+                var(--cherry-void) 100%);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            mask-image: linear-gradient(to bottom, transparent 0%, black 40%, black 100%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 40%, black 100%);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        #ambient-canvas,
+        #sakura-canvas
+        {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #ambient-canvas
+        {
+            z-index: 1;
+            opacity: 0.8;
+            mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 95%);
+            -webkit-mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 95%);
+        }
+
+        #sakura-canvas
+        {
+            z-index: 3;
+            mask-image: linear-gradient(to bottom, black 0%, black 75%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 0%, black 75%, transparent 100%);
+        }
+
+        /* Emblem */
+        .blossom-emblem-wrap
+        {
+            position: relative;
+            z-index: 4;
+            width: 170px;
+            height: 170px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .blossom-glow-ring
+        {
+            position: absolute;
+            inset: -14px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(230, 57, 96, 0.35) 0%, rgba(255, 183, 197, 0.15) 50%, transparent 75%);
+            animation: pulseAura 4s ease-in-out infinite alternate;
+        }
+
+        .blossom-card
+        {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(45, 14, 36, 0.95), rgba(28, 8, 22, 0.95));
+            border: 2px solid rgba(255, 183, 197, 0.35);
+            box-shadow: 0 0 35px rgba(230, 57, 96, 0.3), inset 0 0 20px rgba(255, 183, 197, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+        }
+
+        .blossom-card img
+        {
+            width: 95px;
+            height: 95px;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
+            animation: gentleRotate 20s linear infinite;
+        }
+
+        @keyframes pulseAura
+        {
+            0%
+            {
+                transform: scale(0.94);
+                opacity: 0.6;
+            }
+
+            100%
+            {
+                transform: scale(1.1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes gentleRotate
+        {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hero-content
+        {
+            position: relative;
+            z-index: 4;
+            text-align: center;
+            padding: 0 24px;
+            max-width: 960px;
+        }
+
+        .hero-pretitle
+        {
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            color: var(--sakura-pink);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .hero-title
+        {
+            font-size: clamp(3rem, 7vw, 5.2rem);
+            line-height: 1.05;
+            color: var(--cheesecake-cream);
+            text-shadow: 0 4px 24px rgba(230, 57, 96, 0.45);
+            margin-bottom: 8px;
+        }
+
+        .hero-script
+        {
+            font-size: clamp(2rem, 4vw, 3.2rem);
+            color: var(--sakura-pink);
+            display: block;
+            margin-top: -6px;
+            margin-bottom: 16px;
+        }
+
+        .hero-description
+        {
+            font-size: clamp(1rem, 2vw, 1.2rem);
+            color: var(--text-dim);
+            max-width: 680px;
+            margin: 0 auto 32px auto;
+            line-height: 1.6;
+        }
+
+        .hero-actions
+        {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: center;
+            margin-bottom: 36px;
+        }
+
+        .btn
+        {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 13px 26px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-decoration: none !important;
+        }
+
+        .btn-primary
+        {
+            background: linear-gradient(135deg, var(--raspberry-coulis), var(--raspberry-bright));
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 4px 20px rgba(230, 57, 96, 0.4);
+        }
+
+        .btn-primary:hover
+        {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 28px rgba(230, 57, 96, 0.6);
+            color: #fff;
+        }
+
+        .btn-secondary
+        {
+            background: rgba(45, 14, 36, 0.75);
+            color: var(--cheesecake-cream);
+            border: 1px solid var(--cherry-border);
+            backdrop-filter: blur(8px);
+        }
+
+        .btn-secondary:hover
+        {
+            background: rgba(56, 19, 45, 0.9);
+            border-color: var(--sakura-pink);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        /* Ambient Audio Player */
+        .audio-bar
+        {
+            position: absolute;
+            bottom: 24px;
+            right: 28px;
+            z-index: 10;
+            background: rgba(30, 9, 23, 0.92);
+            border: 1px solid var(--cherry-border);
+            border-radius: 9999px;
+            padding: 10px 20px;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(230, 57, 96, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            min-width: 440px;
+            max-width: 520px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        .audio-bar:hover
+        {
+            border-color: rgba(255, 183, 197, 0.35);
+            box-shadow: 0 10px 36px rgba(230, 57, 96, 0.25);
+        }
+
+        /* LEFT: DISC & TITLE */
+        .audio-left
+        {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+            flex: 1 1 auto;
+        }
+
+        .audio-disc
+        {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--raspberry-coulis), #591024);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            flex-shrink: 0;
+            box-shadow: 0 0 16px rgba(230, 57, 96, 0.45);
+        }
+
+        .audio-disc.playing { animation: discSpin 4s linear infinite; }
+
+        @keyframes discSpin
+        {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .audio-details
+        {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .audio-track-name
+        {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--cheesecake-cream);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 135px;
+        }
+
+        .audio-status-label
+        {
+            font-size: 0.72rem;
+            color: var(--sakura-pink);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .audio-equalizer
+        {
+            display: inline-flex;
+            gap: 2.5px;
+            align-items: flex-end;
+            height: 10px;
+        }
+
+        .audio-equalizer span
+        {
+            width: 2px;
+            height: 100%;
+            background: var(--sakura-pink);
+            border-radius: 1px;
+        }
+
+        .audio-equalizer.active span:nth-child(1) { animation: eqBar 0.8s ease infinite alternate; }
+
+        .audio-equalizer.active span:nth-child(2) { animation: eqBar 1.2s ease 0.2s infinite alternate; }
+
+        .audio-equalizer.active span:nth-child(3) { animation: eqBar 0.9s ease 0.4s infinite alternate; }
+
+        @keyframes eqBar
+        {
+            0% { height: 2px; }
+            100% { height: 10px; }
+        }
+
+        /* CENTER CONTROLS: |<  =  >| */
+        .audio-center-controls
+        {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .audio-nav-btn
+        {
+            background: transparent;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            color: var(--sakura-pink);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            opacity: 0.75;
+            padding: 0;
+            flex-shrink: 0;
+        }
+
+        .audio-nav-btn:hover
+        {
+            opacity: 1;
+            color: #fff;
+            background: rgba(230, 57, 96, 0.25);
+            transform: scale(1.12);
+        }
+
+        .audio-nav-btn:active { transform: scale(0.92); }
+
+        .play-toggle-btn
+        {
+            background: var(--raspberry-coulis);
+            border: none;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 0 16px rgba(230, 57, 96, 0.5);
+            flex-shrink: 0;
+        }
+
+        .play-toggle-btn:hover
+        {
+            transform: scale(1.08);
+            background: var(--raspberry-bright);
+            box-shadow: 0 0 22px rgba(230, 57, 96, 0.75);
+        }
+
+        /* RIGHT: VOLUME SLIDER */
+        .audio-right
+        {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            padding-right: 2px;
+        }
+
+        .volume-box
+        {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .volume-icon
+        {
+            color: var(--sakura-pink);
+            opacity: 0.75;
+            flex-shrink: 0;
+        }
+
+        .volume-input
+        {
+            width: 55px;
+            height: 5px;
+            accent-color: var(--raspberry-coulis);
+            background: rgba(255, 183, 197, 0.25);
+            border-radius: 9999px;
+            cursor: pointer;
+            outline: none;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px)
+        {
+            .audio-bar
+            {
+                right: 50%;
+                transform: translateX(50%);
+                min-width: 0;
+                width: calc(100% - 32px);
+                max-width: 440px;
+                bottom: 16px;
+                padding: 8px 14px;
+                gap: 10px;
+            }
+
+            .audio-track-name { max-width: 100px; }
+
+            .volume-input { width: 45px; }
+        }
+
+        @media (max-width: 400px) { .volume-box { display: none; } }
+
+        /* SECTION LAYOUT */
+        .content-section
+        {
+            position: relative;
+            padding: 80px 24px;
+            max-width: 1240px;
+            margin: 0 auto;
+        }
+
+        .content-section::before
+        {
+            content: '';
+            position: absolute;
+            top: -120px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 85%;
+            max-width: 1000px;
+            height: 220px;
+            background: radial-gradient(ellipse at 50% 0%, rgba(230, 57, 96, 0.12) 0%, rgba(255, 183, 197, 0.03) 45%, transparent 75%);
+            filter: blur(40px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .section-header
+        {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .section-tag
+        {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: var(--raspberry-coulis);
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+
+        .section-heading
+        {
+            font-size: clamp(2rem, 4vw, 2.8rem);
+            color: var(--cheesecake-cream);
+        }
+
+        /* KEY METRICS & LIVE STATUS */
+        .metrics-grid
+        {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 60px;
+        }
+
+        .metric-card
+        {
+            background: linear-gradient(145deg, var(--cherry-card), var(--cherry-panel));
+            border: 1px solid var(--cherry-border);
+            border-radius: 16px;
+            padding: 24px;
+            transition: transform 0.25s, border-color 0.25s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before
+        {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--raspberry-coulis), var(--crust-gold));
+            opacity: 0.7;
+        }
+
+        .metric-card:hover
+        {
+            transform: translateY(-4px);
+            border-color: var(--cherry-border-glow);
+            box-shadow: 0 10px 30px rgba(230, 57, 96, 0.2);
+        }
+
+        .metric-value
+        {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--cheesecake-cream);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .metric-label
+        {
+            font-size: 0.88rem;
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+
+        /* COUNTRY BADGES ROW */
+        .countries-pill-row
+        {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 50px;
+        }
+
+        .country-pill
+        {
+            background: rgba(45, 14, 36, 0.6);
+            border: 1px solid var(--cherry-border);
+            padding: 8px 16px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.88rem;
+            color: var(--cheesecake-cream);
+            transition: all 0.2s;
+        }
+
+        .country-pill .flag-code
+        {
+            font-weight: 700;
+            color: var(--sakura-pink);
+        }
+
+        .country-pill .vat-badge
+        {
+            background: rgba(230, 57, 96, 0.25);
+            color: var(--sakura-soft);
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* SWAGGER WRAPPER */
+        .swagger-window
+        {
+            background: var(--cherry-panel);
+            border: 1px solid var(--cherry-border);
+            border-radius: 20px;
+            box-shadow: var(--shadow-elevation), 0 0 60px rgba(230, 57, 96, 0.12);
+            overflow: hidden;
+            margin-bottom: 80px;
+        }
+
+        .swagger-titlebar
+        {
+            background: linear-gradient(to right, #1b0716, #280d21);
+            border-bottom: 1px solid var(--cherry-border);
+            padding: 14px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .window-dots
+        {
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot
+        {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot-red { background: #ff5f56; }
+
+        .dot-yellow { background: #ffbd2e; }
+
+        .dot-green { background: #27c93f; }
+
+        .swagger-api-badge
+        {
+            font-size: 0.85rem;
+            color: var(--sakura-pink);
+            background: rgba(45, 14, 36, 0.8);
+            border: 1px solid var(--cherry-border);
+            padding: 5px 14px;
+            border-radius: 8px;
+        }
+
+        /* SWAGGER UI OVERRIDES - CHERRY-RASPBERRY PALETTE */
+        #swagger-ui
+        {
+            padding: 24px;
+            background: var(--cherry-deep) !important;
+        }
+
+        .swagger-ui,
+        .swagger-ui * { font-family: 'Plus Jakarta Sans', sans-serif !important; }
+
+        .swagger-ui .info { margin: 20px 0 32px 0 !important; }
+
+        .swagger-ui .info .title
+        {
+            color: var(--cheesecake-cream) !important;
+            font-family: 'Playfair Display', serif !important;
+            font-weight: 700 !important;
+            font-size: 2.2rem !important;
+        }
+
+        .swagger-ui .info p,
+        .swagger-ui .info li
+        {
+            color: var(--text-dim) !important;
+            font-size: 0.95rem !important;
+        }
+
+        .swagger-ui .info a { color: var(--sakura-pink) !important; }
+
+        .swagger-ui .scheme-container
+        {
+            background: transparent !important;
+            box-shadow: none !important;
+            border-bottom: 1px solid var(--cherry-border) !important;
+            padding: 16px 0 !important;
+        }
+
+        .swagger-ui select
+        {
+            background: var(--cherry-card) !important;
+            color: var(--text-main) !important;
+            border: 1px solid var(--cherry-border) !important;
+            border-radius: 8px !important;
+        }
+
+        .swagger-ui .opblock-tag
+        {
+            color: var(--cheesecake-cream) !important;
+            border-bottom: 1px solid var(--cherry-border) !important;
+            font-family: 'Playfair Display', serif !important;
+            font-size: 1.35rem !important;
+            padding: 14px 0 !important;
+        }
+
+        .swagger-ui .opblock-tag:hover
+        {
+            color: var(--sakura-pink) !important;
+            background: transparent !important;
+        }
+
+        .swagger-ui .opblock
+        {
+            background: var(--cherry-card) !important;
+            border: 1px solid var(--cherry-border) !important;
+            border-radius: 12px !important;
+            margin-bottom: 14px !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+            transition: all 0.2s ease;
+        }
+
+        .swagger-ui .opblock:hover
+        {
+            border-color: var(--cherry-border-glow) !important;
+            box-shadow: 0 6px 22px rgba(230, 57, 96, 0.25) !important;
+        }
+
+        .swagger-ui .opblock .opblock-summary { padding: 10px 16px !important; }
+
+        .swagger-ui .opblock .opblock-summary-path
+        {
+            color: var(--text-main) !important;
+            font-family: 'JetBrains Mono', monospace !important;
+            font-weight: 600 !important;
+        }
+
+        .swagger-ui .opblock .opblock-summary-description
+        {
+            color: var(--text-dim) !important;
+            font-size: 0.88rem !important;
+        }
+
+        /* Method Badges */
+        .swagger-ui .opblock.opblock-get .opblock-summary-method
+        {
+            background: var(--mint-fresh) !important;
+            border-radius: 8px !important;
+            font-weight: 700 !important;
+            font-size: 0.82rem !important;
+        }
+
+        .swagger-ui .opblock.opblock-get { border-color: rgba(56, 193, 114, 0.25) !important; }
+
+        .swagger-ui .opblock.opblock-post .opblock-summary-method
+        {
+            background: var(--raspberry-coulis) !important;
+            border-radius: 8px !important;
+            font-weight: 700 !important;
+            font-size: 0.82rem !important;
+        }
+
+        .swagger-ui .opblock.opblock-post { border-color: rgba(230, 57, 96, 0.3) !important; }
+
+        .swagger-ui .opblock.opblock-put .opblock-summary-method
+        {
+            background: var(--crust-gold) !important;
+            color: #12060e !important;
+            border-radius: 8px !important;
+            font-weight: 700 !important;
+        }
+
+        .swagger-ui .opblock.opblock-delete .opblock-summary-method
+        {
+            background: #d62828 !important;
+            border-radius: 8px !important;
+            font-weight: 700 !important;
+        }
+
+        .swagger-ui .opblock-body
+        {
+            background: rgba(25, 8, 20, 0.9) !important;
+            border-top: 1px solid var(--cherry-border) !important;
+            padding: 20px !important;
+        }
+
+        .swagger-ui .tabheader,
+        .swagger-ui label,
+        .swagger-ui .response-col_status { color: var(--text-dim) !important; }
+
+        .swagger-ui table thead th
+        {
+            color: var(--sakura-pink) !important;
+            border-bottom: 1px solid var(--cherry-border) !important;
+        }
+
+        .swagger-ui table tbody td
+        {
+            color: var(--text-main) !important;
+            border-color: var(--cherry-border) !important;
+        }
+
+        .swagger-ui .btn.execute
+        {
+            background: linear-gradient(135deg, var(--raspberry-coulis), var(--raspberry-bright)) !important;
+            border: none !important;
+            color: #fff !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 15px rgba(230, 57, 96, 0.4) !important;
+        }
+
+        .swagger-ui .btn.try-out__btn
+        {
+            border-color: var(--sakura-pink) !important;
+            color: var(--sakura-pink) !important;
+            border-radius: 8px !important;
+        }
+
+        .swagger-ui .btn.try-out__btn:hover { background: rgba(255, 183, 197, 0.15) !important; }
+
+        .swagger-ui section.models
+        {
+            background: var(--cherry-card) !important;
+            border: 1px solid var(--cherry-border) !important;
+            border-radius: 16px !important;
+            margin-top: 36px !important;
+        }
+
+        .swagger-ui section.models h4
+        {
+            color: var(--cheesecake-cream) !important;
+            font-family: 'Playfair Display', serif !important;
+        }
+
+        /* FOOTER */
+        .footer
+        {
+            border-top: 1px solid var(--cherry-border);
+            background: var(--cherry-void);
+            padding: 48px 24px;
+            text-align: center;
+        }
+
+        .footer-logo
+        {
+            font-size: 2rem;
+            color: var(--sakura-pink);
+            margin-bottom: 12px;
+        }
+
+        .footer-credits
+        {
+            color: var(--text-faint);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .footer-team-pills
+        {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .team-pill
+        {
+            background: rgba(45, 14, 36, 0.5);
+            border: 1px solid var(--cherry-border);
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.78rem;
+            color: var(--text-dim);
+        }
+
+        .team-pill strong { color: var(--sakura-pink); }
+    </style>
+</head>
+
+<body>
+
+    <!-- HERO SECTION -->
+    <section class="hero" id="hero">
+        <canvas id="ambient-canvas"></canvas>
+        <canvas id="sakura-canvas"></canvas>
+
+        <div class="blossom-emblem-wrap">
+            <div class="blossom-glow-ring"></div>
+            <div class="blossom-card">
+                <img src="assets/images/Flower%20Icon%20Large/TransparentSakuraFlower.png"
+                    alt="Cherry Cake Blossom Logo">
+            </div>
+        </div>
+
+        <div class="hero-content">
+            <div class="hero-pretitle">ITPU Team 9 - Confectionery &amp; Café Administrator REST-API Panel</div>
+            <h1 class="hero-title display-font">Cherry Cake</h1>
+            <span class="hero-script script-font">Bakery &amp; Café</span>
+            <p class="hero-description">
+                Interactive REST API Panel for Administrators of our Cherry Cake Branches
+            </p>
+            <div class="hero-actions">
+                <a href="#swagger-section" class="btn btn-primary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <polyline points="10 9 9 9 8 9" />
+                    </svg>
+                    Explore Swagger API
+                </a>
+                <a href="/api/v1/catalog/regions" target="_blank" class="btn btn-secondary mono">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="2" y1="12" x2="22" y2="12" />
+                        <path
+                            d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                    </svg>
+                    GET /api/v1/catalog/regions
+                </a>
+            </div>
+        </div>
+
+        <!-- Ambient Audio Player Bar -->
+        <div class="audio-bar" id="audioBar">
+            <div class="audio-left">
+                <div class="audio-disc" id="audioDisc">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.49 0-4.5-2.01-4.5-4.5S9.51 7.5 12 7.5s4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5zm0-5.5c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z" />
+                    </svg>
+                </div>
+                <div class="audio-details">
+                    <span class="audio-track-name" id="audioTrackName">Rio - Fly Love</span>
+                    <span class="audio-status-label" id="audioStatus">
+                        <span class="audio-equalizer" id="audioEq">
+                            <span></span><span></span><span></span>
+                        </span>
+                        <span id="audioStatusText">Click to play</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Center Controls: |< = >| -->
+            <div class="audio-center-controls">
+                <button class="audio-nav-btn" id="prevTrackBtn" title="Previous Track">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="19 20 9 12 19 4 19 20" />
+                        <line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2.5" />
+                    </svg>
+                </button>
+                <button class="play-toggle-btn" id="playBtn" title="Play / Pause music">
+                    <svg id="playIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                    <svg id="pauseIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"
+                        style="display:none;">
+                        <rect x="6" y="4" width="4" height="16" />
+                        <rect x="14" y="4" width="4" height="16" />
+                    </svg>
+                </button>
+                <button class="audio-nav-btn" id="nextTrackBtn" title="Next Track">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 4 15 12 5 20 5 4" />
+                        <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2.5" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Right: Volume Slider -->
+            <div class="audio-right">
+                <div class="volume-box">
+                    <svg class="volume-icon" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" />
+                    </svg>
+                    <input type="range" class="volume-input" id="volumeSlider" min="0" max="100" value="45"
+                        title="Volume">
+                </div>
+            </div>
+        </div>
+
+        <audio id="bgAudio" preload="auto">
+            <source src="assets/audio/Rio - Fly Love.m4a" type="audio/mp4">
+        </audio>
+    </section>
+
+    <!-- CONTENT & SPECIFICATION SECTION -->
+    <main class="content-section">
+
+        <!-- Live Metrics & Operating Countries -->
+        <div class="section-header">
+            <span class="section-tag">Stage 1–5 Architecture</span>
+            <h2 class="section-heading display-font">Global Context &amp; Calculation Engine</h2>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value">16 <span style="font-size:1.1rem; color:var(--sakura-pink)">Branches</span>
+                </div>
+                <div class="metric-label">Operating countries across Europe &amp; Asia with regional tax &amp; currency policies</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">100% <span style="font-size:1.1rem; color:var(--mint-fresh)">Exact</span>
+                </div>
+                <div class="metric-label">BigDecimal math with RoundingMode.HALF_UP (2 decimals)</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">15+ <span style="font-size:1.1rem; color:var(--crust-gold)">APIs</span></div>
+                <div class="metric-label">Catalog, Cart Recalculation, Orders, Bookings &amp; Reports</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">JWT <span style="font-size:1.1rem; color:var(--raspberry-coulis)">RBAC</span>
+                </div>
+                <div class="metric-label">Stateless security with ROLE_USER and ROLE_ADMIN</div>
+            </div>
+        </div>
+
+        <!-- 16 Countries Reference Pill Row -->
+        <div class="countries-pill-row">
+            <div class="country-pill">
+                <span class="flag-code">UZB</span> Uzbekistan (soʻm)
+                <span class="vat-badge">15% VAT</span>
+            </div>
+            <div class="country-pill">
+                <span class="flag-code">KAZ</span> Kazakhstan (₸)
+                <span class="vat-badge">20% VAT</span>
+            </div>
+            <div class="country-pill">
+                <span class="flag-code">GEO</span> Georgia (₾)
+                <span class="vat-badge">12% VAT</span>
+            </div>
+            <div class="country-pill">
+                <span class="flag-code">UKR</span> Ukraine (₴)
+                <span class="vat-badge">8% VAT</span>
+            </div>
+            <div class="country-pill">
+                <span class="flag-code">CHN</span> China (¥)
+                <span class="vat-badge">18% VAT</span>
+            </div>
+            <div class="country-pill">
+                <span class="flag-code">BLR</span> Belarus (Br)
+                <span class="vat-badge">20% VAT</span>
+            </div>
+            <div class="country-pill">
+                <span class="flag-code">LTU</span> Lithuania (€)
+                <span class="vat-badge">21% VAT</span>
+            </div>
+            <div class="country-pill">
+                <span class="flag-code">LVA</span> Latvia (€)
+                <span class="vat-badge">21% VAT</span>
+            </div>
+            <div class="country-pill">
+                <span class="flag-code">EST</span> Estonia (€)
+                <span class="vat-badge">22% VAT</span>
+            </div>
+            <div class="country-pill">
+                <span class="flag-code">FIN</span> Finland (€)
+                <span class="vat-badge">25.5% VAT</span>
+            </div>
+            <div class="country-pill">
+                <span class="flag-code">SWE</span> Sweden (kr)
+                <span class="vat-badge">25% VAT</span>
+            </div>
+            <div class="country-pill">
+                <span class="flag-code">MDA</span> Moldova (L)
+                <span class="vat-badge">20% VAT</span>
+            </div>
+            <div class="country-pill">
+                <span class="flag-code">ROU</span> Romania (lei)
+                <span class="vat-badge">19% VAT</span>
+            </div>
+            <div class="country-pill">
+                <span class="flag-code">TUR</span> Turkey (₺)
+                <span class="vat-badge">20% VAT</span>
+            </div>
+            <div class="country-pill">
+                <span class="flag-code">AZE</span> Azerbaijan (₼)
+                <span class="vat-badge">18% VAT</span>
+            </div>
+            <div class="country-pill">
+                <span class="flag-code">ARM</span> Armenia (֏)
+                <span class="vat-badge">20% VAT</span>
+            </div>
+        </div>
+
+        <!-- SWAGGER UI INTERFACE -->
+        <div id="swagger-section" class="swagger-window">
+            <div class="swagger-titlebar">
+                <div class="window-dots">
+                    <span class="dot dot-red"></span>
+                    <span class="dot dot-yellow"></span>
+                    <span class="dot dot-green"></span>
+                </div>
+                <div class="swagger-api-badge mono">API Specification: /v3/api-docs</div>
+                <div style="width: 48px;"></div>
+            </div>
+            <div id="swagger-ui"></div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-logo script-font">Cherry Cake Bakery &amp; Café</div>
+        <p class="footer-credits">
+            EPAM University Teamwork Project &bull; Scrum Team 9 (t09-cherry-cake) &bull; Spring Boot 3.3.4 &bull; Java
+            21 LTS
+        </p>
+        <div class="footer-team-pills">
+            <span class="team-pill"><strong>TL:</strong> Milana Ulubabyan</span>
+            <span class="team-pill"><strong>AS:</strong> Andrei Varnavskiy</span>
+            <span class="team-pill"><strong>BE1:</strong> Adrian Zakirov</span>
+            <span class="team-pill"><strong>BE2:</strong> Anvar Makhamatjonov</span>
+            <span class="team-pill"><strong>FE1:</strong> Shovkat Khabidullaev</span>
+            <span class="team-pill"><strong>FE2:</strong> Arjumandbonu Narzullaeva</span>
+            <span class="team-pill"><strong>FE3:</strong> Mukhammademin Emminov</span>
+            <span class="team-pill"><strong>QAJ:</strong> Muhammadyusuf Ismatov</span>
+            <span class="team-pill"><strong>QAF:</strong> Asadbek Yulchiev</span>
+        </div>
+    </footer>
+
+    <!-- SWAGGER SCRIPTS -->
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+
+    <script>
+        // -------------------------------------------------------------
+        // 1. SWAGGER UI INITIALIZATION
+        // -------------------------------------------------------------
+        window.addEventListener('DOMContentLoaded', () => {
+            const ui = SwaggerUIBundle({
+                url: "/v3/api-docs",
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+                plugins: [SwaggerUIBundle.plugins.DownloadUrl],
+                layout: "BaseLayout",
+                docExpansion: "list",
+                defaultModelsExpandDepth: 1,
+                operationsSorter: "alpha",
+                tagsSorter: "alpha"
+            });
+            window.ui = ui;
+        });
+
+        // -------------------------------------------------------------
+        // 2. JAPAN SAKURA FALLING PETALS CANVAS ANIMATION
+        // -------------------------------------------------------------
+        const sCanvas = document.getElementById('sakura-canvas');
+        const sCtx = sCanvas.getContext('2d');
+        const hero = document.getElementById('hero');
+
+        function resizeCanvas()
+        {
+            sCanvas.width = hero.clientWidth;
+            sCanvas.height = hero.clientHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Preload transparent cherry blossom flower logo particles
+        const flowerImg1 = new Image();
+        flowerImg1.src = 'assets/images/Partical%20Effects/flower-particle.png';
+        const flowerImg2 = new Image();
+        flowerImg2.src = 'assets/images/Partical%20Effects/flower-particle-soft.png';
+        const flowerImgs = [flowerImg1, flowerImg2];
+
+        const petalsCount = Math.min(48, Math.max(22, Math.floor(hero.clientWidth / 28)));
+        const petals = [];
+
+        class SakuraPetal
+        {
+            constructor()
+            {
+                this.imgIndex = Math.random() > 0.45 ? 0 : 1;
+                this.reset(true);
+            }
+
+            reset(initial = false)
+            {
+                this.x = Math.random() * sCanvas.width;
+                this.y = initial ? Math.random() * sCanvas.height : -35;
+                this.size = 16 + Math.random() * 20; // Crisp flower size (16px - 36px)
+                this.speedY = 0.8 + Math.random() * 1.5;
+                this.speedX = -0.4 + Math.random() * 1.0;
+                this.oscillationSpeed = 0.015 + Math.random() * 0.025;
+                this.oscillationPhase = Math.random() * Math.PI * 2;
+                this.angle = Math.random() * Math.PI * 2;
+                this.spinSpeed = (Math.random() - 0.5) * 0.035;
+                this.wobble = Math.random() * Math.PI * 2;
+                this.wobbleSpeed = 0.02 + Math.random() * 0.035;
+                this.opacity = 0.55 + Math.random() * 0.42;
+                this.depthScale = 0.65 + Math.random() * 0.55;
+                this.imgIndex = Math.random() > 0.45 ? 0 : 1;
+            }
+
+            update()
+            {
+                this.y += this.speedY;
+                this.angle += this.spinSpeed;
+                this.wobble += this.wobbleSpeed;
+                this.x += this.speedX + Math.sin(this.y * this.oscillationSpeed + this.oscillationPhase) * 0.75;
+
+                if (this.y > sCanvas.height + 40 || this.x > sCanvas.width + 45 || this.x < -45) this.reset(false);
+            }
+
+            draw(ctx)
+            {
+                const img = flowerImgs[this.imgIndex];
+                if (!img.complete || img.naturalWidth === 0) return;
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+
+                // Realistic 3D fluttering in the breeze (gentle squish along X-axis as it tumbles)
+                const flutterScaleX = Math.cos(this.wobble) * 0.9;
+                ctx.scale(this.depthScale * flutterScaleX, this.depthScale);
+                ctx.globalAlpha = this.opacity;
+
+                const s = this.size;
+                ctx.drawImage(img, -s / 2, -s / 2, s, s);
+
+                ctx.restore();
+            }
+        }
+
+        for (let i = 0; i < petalsCount; i++) { petals.push(new SakuraPetal()); }
+
+        function renderSakura()
+        {
+            sCtx.clearRect(0, 0, sCanvas.width, sCanvas.height);
+            for (const p of petals)
+            {
+                p.update();
+                p.draw(sCtx);
+            }
+            requestAnimationFrame(renderSakura);
+        }
+        renderSakura();
+
+        // -------------------------------------------------------------
+        // 3. AMBIENT GLOW ORBS CANVAS
+        // -------------------------------------------------------------
+        const aCanvas = document.getElementById('ambient-canvas');
+        const aCtx = aCanvas.getContext('2d');
+
+        function resizeAmbient()
+        {
+            aCanvas.width = hero.clientWidth;
+            aCanvas.height = hero.clientHeight;
+        }
+        resizeAmbient();
+        window.addEventListener('resize', resizeAmbient);
+
+        const orbs =
+        [
+            { x: 0.2, y: 0.35, r: 240, color: 'rgba(230, 57, 96, 0.16)', dx: 0.0003, dy: 0.0004 },
+            { x: 0.8, y: 0.60, r: 280, color: 'rgba(255, 183, 197, 0.12)', dx: -0.0004, dy: 0.0002 },
+            { x: 0.45, y: 0.55, r: 240, color: 'rgba(229, 176, 97, 0.07)', dx: 0.0002, dy: -0.0003 }
+        ];
+
+        function renderAmbient()
+        {
+            aCtx.clearRect(0, 0, aCanvas.width, aCanvas.height);
+            const w = aCanvas.width, h = aCanvas.height;
+
+            for (const orb of orbs)
+            {
+                orb.x += orb.dx;
+                orb.y += orb.dy;
+                if (orb.x < 0.1 || orb.x > 0.9) orb.dx *= -1;
+                if (orb.y < 0.1 || orb.y > 0.9) orb.dy *= -1;
+
+                const grad = aCtx.createRadialGradient(orb.x * w, orb.y * h, 0, orb.x * w, orb.y * h, orb.r);
+                grad.addColorStop(0, orb.color);
+                grad.addColorStop(1, 'transparent');
+                aCtx.fillStyle = grad;
+                aCtx.beginPath();
+                aCtx.arc(orb.x * w, orb.y * h, orb.r, 0, Math.PI * 2);
+                aCtx.fill();
+            }
+            requestAnimationFrame(renderAmbient);
+        }
+        renderAmbient();
+
+        // -------------------------------------------------------------
+        // 4. SOFT AMBIENT AUDIO PLAYER & PLAYLIST CONTROLLER
+        // -------------------------------------------------------------
+        const bgAudio = document.getElementById('bgAudio');
+        const playBtn = document.getElementById('playBtn');
+        const prevTrackBtn = document.getElementById('prevTrackBtn');
+        const nextTrackBtn = document.getElementById('nextTrackBtn');
+        const playIcon = document.getElementById('playIcon');
+        const pauseIcon = document.getElementById('pauseIcon');
+        const audioDisc = document.getElementById('audioDisc');
+        const audioEq = document.getElementById('audioEq');
+        const audioStatusText = document.getElementById('audioStatusText');
+        const audioTrackName = document.getElementById('audioTrackName');
+        const volumeSlider = document.getElementById('volumeSlider');
+
+        // Initial default playlist
+        let playlist =
+        [
+            { title: "Rio - Fly Love", url: "assets/audio/Rio%20-%20Fly%20Love.m4a", filename: "Rio - Fly Love.m4a" },
+            { title: "Mellow Fox - Backyard", url: "assets/audio/Mellow%20Fox%20-%20Backyard.m4a", filename: "Mellow Fox - Backyard.m4a" }
+        ];
+        let currentTrackIndex = 0;
+
+        bgAudio.volume = volumeSlider.value / 100;
+
+        function updatePlayState(isPlaying)
+        {
+            if (isPlaying)
+            {
+                playIcon.style.display = 'none';
+                pauseIcon.style.display = 'block';
+                audioDisc.classList.add('playing');
+                audioEq.classList.add('active');
+                audioStatusText.textContent = 'Now playing';
+            }
+            else
+            {
+                playIcon.style.display = 'block';
+                pauseIcon.style.display = 'none';
+                audioDisc.classList.remove('playing');
+                audioEq.classList.remove('active');
+                audioStatusText.textContent = 'Paused';
+            }
+        }
+
+        function loadTrack(index, autoPlay = true)
+        {
+            if (!playlist || playlist.length === 0) return;
+            currentTrackIndex = (index + playlist.length) % playlist.length;
+            const track = playlist[currentTrackIndex];
+
+            // Strip extension cleanly (e.g. .m4a, .mp3)
+            const rawName = track.title || track.filename || "Track";
+            const cleanTitle = rawName.replace(/\.[^/.]+$/, "");
+            audioTrackName.textContent = cleanTitle;
+            audioTrackName.title = cleanTitle;
+
+            // Resolve track URL reliably
+            let trackUrl = track.url;
+            if (!trackUrl)
+            {
+                const fname = track.filename || (cleanTitle + ".mp3");
+                trackUrl = "assets/audio/" + encodeURIComponent(fname);
+            }
+
+            // Set audio source if changed
+            if (!bgAudio.src.endsWith(trackUrl))
+            {
+                bgAudio.src = trackUrl;
+                bgAudio.load();
+            }
+
+            if (autoPlay) bgAudio.play().then(() => { updatePlayState(true); }).catch(err => { console.log("Playback pending user interaction:", err); updatePlayState(false); });
+            else updatePlayState(!bgAudio.paused);
+        }
+
+        function nextTrack() { loadTrack(currentTrackIndex + 1, true); }
+
+        function prevTrack() { loadTrack(currentTrackIndex - 1, true); }
+
+        // When current track finishes, automatically advance to the next song!
+        bgAudio.addEventListener('ended', () => { nextTrack(); });
+
+        // Error handling fallback: if audio file fails, advance to next
+        bgAudio.addEventListener('error', (e) => {
+            console.warn("Audio error on track, skipping to next...", e);
+            if (playlist && playlist.length > 1) setTimeout(nextTrack, 600);
+        });
+
+        playBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (bgAudio.paused) bgAudio.play().then(() => updatePlayState(true)).catch(err => { audioStatusText.textContent = 'Click again to play'; });
+            else
+            {
+                bgAudio.pause();
+                updatePlayState(false);
+            }
+        });
+
+        if (nextTrackBtn) nextTrackBtn.addEventListener('click', (e) => { e.stopPropagation(); nextTrack(); });
+        if (prevTrackBtn) prevTrackBtn.addEventListener('click', (e) => { e.stopPropagation(); prevTrack(); });
+        
+        volumeSlider.addEventListener('input', (e) => { bgAudio.volume = e.target.value / 100; });
+
+        // Load playlist from static assets/audio/playlist.json
+        async function fetchPlaylist()
+        {
+            try
+            {
+                const res = await fetch('assets/audio/playlist.json');
+                if (res.ok)
+                {
+                    const tracks = await res.json();
+                    if (Array.isArray(tracks) && tracks.length > 0)
+                    {
+                        playlist = tracks;
+                        loadTrack(0, !bgAudio.paused);
+                    }
+                }
+            } catch (err) { console.log("Using static playlist fallback:", err); }
+        }
+        fetchPlaylist();
+
+        // Autoplay on first click anywhere (browser media policy compliance)
+        let hasInteracted = false;
+        document.addEventListener('click', () =>
+        {
+            if (!hasInteracted && bgAudio.paused)
+            {
+                hasInteracted = true;
+                bgAudio.play().then(() => updatePlayState(true)).catch(() => { });
+            }
+        }, { once: true });
+    </script>
+</body>
+</html>
