@@ -6,12 +6,12 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="cherrycake-frontend" />
         <module name="cherrycake-backend" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="cherry-cake" target="21" />
+      <module name="cherrycake-frontend" target="25" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
