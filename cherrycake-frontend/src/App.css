@@ -1,0 +1,137 @@
+/* Main layout */
+
+.cc-app {
+  min-height: 100vh;
+}
+
+.cc-header {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.cc-header-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 22px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.cc-brand {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--color-primary);
+  letter-spacing: -1px;
+}
+
+.cc-nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cc-nav a {
+  padding: 10px 14px;
+  text-decoration: none;
+  color: var(--color-muted);
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  transition: background 0.2s, color 0.2s;
+}
+
+.cc-nav a:hover {
+  color: var(--color-primary);
+  background: var(--color-surface-soft);
+}
+
+.cc-content {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 36px 24px 64px;
+}
+
+/* Home */
+
+.cc-hero {
+  background: linear-gradient(125deg, #fff0e8, #f7e5e5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 64px 48px;
+  margin-top: 18px;
+}
+
+.cc-eyebrow {
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.cc-hero h2 {
+  max-width: 650px;
+  font-size: clamp(36px, 5vw, 60px);
+  line-height: 1.12;
+  letter-spacing: -2px;
+  margin: 18px 0;
+}
+
+.cc-hero p {
+  max-width: 520px;
+  font-size: 18px;
+  color: var(--color-muted);
+  line-height: 1.7;
+}
+
+.cc-hero-action {
+  display: inline-block;
+  margin-top: 18px;
+  padding: 14px 26px;
+  background: var(--color-primary);
+  border-radius: var(--radius-md);
+  color: white;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.cc-hero-action:hover {
+  background: var(--color-primary-hover);
+  color: white;
+}
+
+.cc-placeholder {
+  padding: 36px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+/* Responsive */
+
+@media (max-width: 700px) {
+  .cc-header-inner {
+    align-items: flex-start;
+    padding: 18px;
+  }
+
+  .cc-brand {
+    font-size: 25px;
+  }
+
+  .cc-content {
+    padding: 20px 16px 40px;
+  }
+
+  .cc-hero {
+    padding: 40px 24px;
+  }
+
+  .cc-nav a {
+    padding: 8px 10px;
+  }
+}
