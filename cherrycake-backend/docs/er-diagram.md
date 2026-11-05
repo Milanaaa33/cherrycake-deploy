@@ -25,8 +25,8 @@ erDiagram
         VARCHAR(500) photo_url
     }
     regional_prices {
-        BIGINT product_id PK, FK
-        BIGINT region_id PK, FK
+        BIGINT product_id PK "FK to products"
+        BIGINT region_id PK "FK to regions"
         NUMERIC(12_2) price
         BOOLEAN in_stock
     }
@@ -43,8 +43,8 @@ erDiagram
         VARCHAR(100) name
     }
     modifier_regional_prices {
-        BIGINT modifier_id PK, FK
-        BIGINT region_id PK, FK
+        BIGINT modifier_id PK "FK to modifiers"
+        BIGINT region_id PK "FK to regions"
         NUMERIC(12_2) price_delta
     }
     discount_rules {
