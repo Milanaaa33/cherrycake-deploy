@@ -56,8 +56,16 @@ class CatalogMigrationTests {
     @Test
     void rejectsVatRateGivenAsPercent() {
         assertThatThrownBy(() -> jdbc.update(
-                "INSERT INTO regions (code, name, currency_code, currency_symbol, vat_rate) "
-                        + "VALUES ('TST', 'Test', 'TST', 'T', 15)"))
+                "INSERT INTO regions (code, name, currency_code, currency_symbol, vat_rate, exchange_rate) "
+                        + "VALUES ('TST', 'Test', 'TST', 'T', 15, 1)"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void rejectsZeroExchangeRate() {
+        assertThatThrownBy(() -> jdbc.update(
+                "INSERT INTO regions (code, name, currency_code, currency_symbol, vat_rate, exchange_rate) "
+                        + "VALUES ('TST', 'Test', 'TST', 'T', 0.1000, 0)"))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -84,8 +92,8 @@ class CatalogMigrationTests {
     }
 
     private long insertRegion() {
-        jdbc.update("INSERT INTO regions (code, name, currency_code, currency_symbol, vat_rate) "
-                + "VALUES ('TST', 'Test', 'TST', 'T', 0.1000)");
+        jdbc.update("INSERT INTO regions (code, name, currency_code, currency_symbol, vat_rate, exchange_rate) "
+                + "VALUES ('TST', 'Test', 'TST', 'T', 0.1000, 3000.0000)");
         return jdbc.queryForObject("SELECT id FROM regions WHERE code = 'TST'", Long.class);
     }
 
