@@ -1,5 +1,5 @@
-import type { SelectHTMLAttributes } from 'react';
-import { useId } from 'react';
+import type { SelectHTMLAttributes } from "react";
+import { useId } from "react";
 
 type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
   label: string;
@@ -18,7 +18,7 @@ export default function Select({
   const selectId = id || generatedId;
 
   return (
-    <div style={{ display: 'grid', gap: 6 }}>
+    <div style={{ display: "grid", gap: 6 }}>
       <label htmlFor={selectId}>{label}</label>
       <select
         {...props}
@@ -27,8 +27,8 @@ export default function Select({
         style={{
           minHeight: 44,
           padding: 12,
-          border: `1px solid ${error ? 'var(--color-error)' : 'var(--color-border)'}`,
-          borderRadius: 'var(--radius-md)',
+          border: `1px solid ${error ? "var(--color-error)" : "var(--color-border)"}`,
+          borderRadius: "var(--radius-md)",
           fontSize: 16,
         }}
       >
@@ -38,7 +38,11 @@ export default function Select({
           </option>
         ))}
       </select>
-      {error && <small role="alert" style={{ color: 'var(--color-error)' }}>{error}</small>}
+      {error && (
+        <small role="alert" style={{ color: "var(--color-error)" }}>
+          {error}
+        </small>
+      )}
     </div>
   );
 }

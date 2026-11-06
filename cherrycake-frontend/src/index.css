@@ -1,5 +1,5 @@
 :root {
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: "Segoe UI", Arial, sans-serif;
   color: var(--color-text);
   background: var(--color-background);
   font-synthesis: none;
@@ -41,7 +41,9 @@ select:focus-visible {
   outline-offset: 3px;
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
   color: var(--color-text);
 }
 

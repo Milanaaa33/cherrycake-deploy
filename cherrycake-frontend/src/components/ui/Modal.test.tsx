@@ -1,59 +1,59 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
-import { afterEach } from 'vitest';
-import Modal from './Modal';
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { afterEach } from "vitest";
+import Modal from "./Modal";
 
 afterEach(() => {
   cleanup();
 });
 
-describe('Modal component', () => {
-  it('does not render when closed', () => {
+describe("Modal component", () => {
+  it("does not render when closed", () => {
     render(
       <Modal open={false} title="Test Modal" onClose={() => {}}>
         <p>Modal content</p>
-      </Modal>
+      </Modal>,
     );
 
-    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it('renders title and content when open', () => {
+  it("renders title and content when open", () => {
     render(
       <Modal open={true} title="Cherry Cake Modal" onClose={() => {}}>
         <p>Welcome to Cherry Cake</p>
-      </Modal>
+      </Modal>,
     );
 
-    expect(screen.getByRole('dialog')).toBeTruthy();
-    expect(screen.getByText('Cherry Cake Modal')).toBeTruthy();
-    expect(screen.getByText('Welcome to Cherry Cake')).toBeTruthy();
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(screen.getByText("Cherry Cake Modal")).toBeTruthy();
+    expect(screen.getByText("Welcome to Cherry Cake")).toBeTruthy();
   });
 
-  it('calls onClose when Close button is clicked', () => {
+  it("calls onClose when Close button is clicked", () => {
     const handleClose = vi.fn();
 
     render(
       <Modal open={true} title="Test Modal" onClose={handleClose}>
         <p>Content</p>
-      </Modal>
+      </Modal>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
 
     expect(handleClose).toHaveBeenCalledOnce();
   });
 
-  it('calls onClose when Escape is pressed', () => {
+  it("calls onClose when Escape is pressed", () => {
     const handleClose = vi.fn();
 
     render(
       <Modal open={true} title="Test Modal" onClose={handleClose}>
         <p>Content</p>
-      </Modal>
+      </Modal>,
     );
 
-    fireEvent.keyDown(document, { key: 'Escape' });
+    fireEvent.keyDown(document, { key: "Escape" });
 
     expect(handleClose).toHaveBeenCalledOnce();
   });

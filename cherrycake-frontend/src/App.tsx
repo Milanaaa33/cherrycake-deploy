@@ -1,49 +1,21 @@
-import { NavLink, Link, Routes, Route } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { hideToast } from './store';
-import type { RootState } from './store';
+import { NavLink, Routes, Route } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { hideToast } from "./store";
+import type { RootState } from "./store";
 
-import Toast from './components/ui/Toast';
-import UIKit from './pages/UIKit';
-import ReduxDemo from './pages/ReduxDemo';
+import Toast from "./components/ui/Toast";
+import UIKit from "./pages/UIKit";
+import ReduxDemo from "./pages/ReduxDemo";
 
-import './App.css';
+import Home from "./pages/Home";
+import Menu from "./pages/Menu";
+import Cart from "./pages/Cart";
+import Reports from "./pages/Reports";
 
-function Page({ title }: { title: string }) {
-  return (
-    <section className="cc-placeholder">
-      <p className="cc-eyebrow">Cherry Cake</p>
-      <h2>{title}</h2>
-      <p>This page is ready for development.</p>
-    </section>
-  );
-}
-
-function Home() {
-  return (
-    <section className="cc-hero">
-      <span className="cc-eyebrow">
-        Handmade with love
-      </span>
-
-      <h2>Life is sweeter with Cherry Cake.</h2>
-
-      <p>
-        Discover delicious cakes, fresh desserts,
-        and sweet moments made especially for you.
-      </p>
-
-      <Link to="/menu" className="cc-hero-action">
-        Explore Our Menu
-      </Link>
-    </section>
-  );
-}
+import "./App.css";
 
 export default function App() {
-  const toast = useSelector(
-    (state: RootState) => state.ui.toast
-  );
+  const toast = useSelector((state: RootState) => state.ui.toast);
 
   const dispatch = useDispatch();
 
@@ -54,10 +26,12 @@ export default function App() {
           <h1 className="cc-brand">🍒 Cherry Cake</h1>
 
           <nav className="cc-nav" aria-label="Main navigation">
-            <NavLink to="/" end>Home</NavLink>
+            <NavLink to="/" end>
+              Home
+            </NavLink>
             <NavLink to="/menu">Menu</NavLink>
             <NavLink to="/cart">Cart</NavLink>
-            <NavLink to="/orders">Orders</NavLink>
+            <NavLink to="/reports">Reports</NavLink>
             <NavLink to="/ui-kit">UI Kit</NavLink>
           </nav>
         </div>
@@ -66,9 +40,9 @@ export default function App() {
       <main className="cc-content">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/menu" element={<Page title="Menu" />} />
-          <Route path="/cart" element={<Page title="Cart" />} />
-          <Route path="/orders" element={<Page title="Orders" />} />
+          <Route path="/menu" element={<Menu />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/reports" element={<Reports />} />
           <Route path="/ui-kit" element={<UIKit />} />
           <Route path="/redux-demo" element={<ReduxDemo />} />
         </Routes>

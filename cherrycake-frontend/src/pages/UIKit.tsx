@@ -1,27 +1,27 @@
-import { useState } from 'react';
-import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
-import Select from '../components/ui/Select';
-import Card from '../components/ui/Card';
-import Modal from '../components/ui/Modal';
-import Toast from '../components/ui/Toast';
-import Loader from '../components/ui/Loader';
-import './UIKit.css';
+import { useState } from "react";
+import Button from "../components/ui/Button";
+import Input from "../components/ui/Input";
+import Select from "../components/ui/Select";
+import Card from "../components/ui/Card";
+import Modal from "../components/ui/Modal";
+import Toast from "../components/ui/Toast";
+import Loader from "../components/ui/Loader";
+import "./UIKit.css";
 
-type ToastType = 'success' | 'error' | 'warning';
+type ToastType = "success" | "error" | "warning";
 
 const regionOptions = [
-  { value: 'tashkent', label: 'Tashkent' },
-  { value: 'samarkand', label: 'Samarkand' },
-  { value: 'bukhara', label: 'Bukhara' },
+  { value: "tashkent", label: "Tashkent" },
+  { value: "samarkand", label: "Samarkand" },
+  { value: "bukhara", label: "Bukhara" },
 ];
 
 export default function UIKit() {
   const [modalOpen, setModalOpen] = useState(false);
-  const [toast, setToast] = useState('');
-  const [toastType, setToastType] = useState<ToastType>('success');
-  const [name, setName] = useState('');
-  const [region, setRegion] = useState('tashkent');
+  const [toast, setToast] = useState("");
+  const [toastType, setToastType] = useState<ToastType>("success");
+  const [name, setName] = useState("");
+  const [region, setRegion] = useState("tashkent");
 
   function showNotification(message: string, type: ToastType) {
     setToast(message);
@@ -33,8 +33,10 @@ export default function UIKit() {
       <h2>Cherry Cake — UI Kit</h2>
 
       <Card title="Buttons">
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <Button onClick={() => showNotification('Button clicked!', 'success')}>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <Button
+            onClick={() => showNotification("Button clicked!", "success")}
+          >
             Primary
           </Button>
           <Button variant="secondary">Secondary</Button>
@@ -44,7 +46,7 @@ export default function UIKit() {
       </Card>
 
       <Card title="Inputs">
-        <div style={{ display: 'grid', gap: 16 }}>
+        <div style={{ display: "grid", gap: 16 }}>
           <Input
             label="Your name"
             value={name}
@@ -56,16 +58,12 @@ export default function UIKit() {
             error="Invalid email"
             placeholder="Enter email"
           />
-          <Input
-            label="Disabled input"
-            disabled
-            placeholder="Unavailable"
-          />
+          <Input label="Disabled input" disabled placeholder="Unavailable" />
         </div>
       </Card>
 
       <Card title="Select">
-        <div style={{ display: 'grid', gap: 16 }}>
+        <div style={{ display: "grid", gap: 16 }}>
           <Select
             label="Choose your region"
             value={region}
@@ -77,18 +75,12 @@ export default function UIKit() {
             options={regionOptions}
             error="Please select a valid region"
           />
-          <Select
-            label="Disabled select"
-            options={regionOptions}
-            disabled
-          />
+          <Select label="Disabled select" options={regionOptions} disabled />
         </div>
       </Card>
 
       <Card title="Modal">
-        <Button onClick={() => setModalOpen(true)}>
-          Open Modal
-        </Button>
+        <Button onClick={() => setModalOpen(true)}>Open Modal</Button>
         <Modal
           open={modalOpen}
           onClose={() => setModalOpen(false)}
@@ -99,14 +91,20 @@ export default function UIKit() {
       </Card>
 
       <Card title="Toast">
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <Button onClick={() => showNotification('Success notification!', 'success')}>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <Button
+            onClick={() => showNotification("Success notification!", "success")}
+          >
             Success Toast
           </Button>
-          <Button onClick={() => showNotification('Error notification!', 'error')}>
+          <Button
+            onClick={() => showNotification("Error notification!", "error")}
+          >
             Error Toast
           </Button>
-          <Button onClick={() => showNotification('Warning notification!', 'warning')}>
+          <Button
+            onClick={() => showNotification("Warning notification!", "warning")}
+          >
             Warning Toast
           </Button>
         </div>
@@ -116,11 +114,7 @@ export default function UIKit() {
         <Loader />
       </Card>
 
-      <Toast
-        message={toast}
-        type={toastType}
-        onClose={() => setToast('')}
-      />
+      <Toast message={toast} type={toastType} onClose={() => setToast("")} />
     </section>
   );
 }

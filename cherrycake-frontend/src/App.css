@@ -41,7 +41,9 @@
   font-size: 14px;
   font-weight: 600;
   border-radius: var(--radius-md);
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .cc-nav a:hover {

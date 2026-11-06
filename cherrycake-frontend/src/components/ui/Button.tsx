@@ -1,18 +1,18 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
-import './Button.css';
+import type { ButtonHTMLAttributes, ReactNode } from "react";
+import "./Button.css";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode;
-  variant?: 'primary' | 'secondary';
+  variant?: "primary" | "secondary";
   loading?: boolean;
 };
 
 export default function Button({
   children,
-  variant = 'primary',
+  variant = "primary",
   loading = false,
   disabled,
-  className = '',
+  className = "",
   ...props
 }: ButtonProps) {
   return (
@@ -22,7 +22,7 @@ export default function Button({
       disabled={disabled || loading}
       aria-busy={loading}
     >
-      {loading ? 'Loading...' : children}
+      {loading ? "Loading..." : children}
     </button>
   );
 }

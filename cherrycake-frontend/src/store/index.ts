@@ -1,10 +1,11 @@
-import { configureStore, createSlice } from '@reduxjs/toolkit';
-import type { PayloadAction } from '@reduxjs/toolkit';
+import { configureStore, createSlice } from "@reduxjs/toolkit";
+import type { PayloadAction } from "@reduxjs/toolkit";
 
 const regionSlice = createSlice({
-  name: 'region',
+  name: "region",
   initialState: {
-  selected: import.meta.env.VITE_DEFAULT_REGION || 'Tashkent' , },
+    selected: import.meta.env.VITE_DEFAULT_REGION || "Tashkent",
+  },
   reducers: {
     setRegion: (state, action: PayloadAction<string>) => {
       state.selected = action.payload;
@@ -13,7 +14,7 @@ const regionSlice = createSlice({
 });
 
 const cartSlice = createSlice({
-  name: 'cart',
+  name: "cart",
   initialState: { items: [] as string[] },
   reducers: {
     addToCart: (state, action: PayloadAction<string>) => {
@@ -26,14 +27,14 @@ const cartSlice = createSlice({
 });
 
 const uiSlice = createSlice({
-  name: 'ui',
-  initialState: { toast: '' },
+  name: "ui",
+  initialState: { toast: "" },
   reducers: {
     showToast: (state, action: PayloadAction<string>) => {
       state.toast = action.payload;
     },
     hideToast: (state) => {
-      state.toast = '';
+      state.toast = "";
     },
   },
 });
