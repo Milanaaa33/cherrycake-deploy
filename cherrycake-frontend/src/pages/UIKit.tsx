@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿import { useState } from 'react';
 
 import Button from '../components/ui/Button';
@@ -15,10 +16,22 @@ import ErrorState from '../components/ui/ErrorState';
 
 import './UIKit.css';
 import '../components/ui/ExtraComponents.css';
+=======
+import { useState } from "react";
+import Button from "../components/ui/Button";
+import Input from "../components/ui/Input";
+import Select from "../components/ui/Select";
+import Card from "../components/ui/Card";
+import Modal from "../components/ui/Modal";
+import Toast from "../components/ui/Toast";
+import Loader from "../components/ui/Loader";
+import "./UIKit.css";
+>>>>>>> e7cd84a (CC-15: Add page skeletons and update App router)
 
 type ToastType = "success" | "error" | "warning";
 
 const regionOptions = [
+<<<<<<< HEAD
   { value: 'UZB', label: 'Uzbekistan' },
   { value: 'KAZ', label: 'Kazakhstan' },
   { value: 'GEO', label: 'Georgia' },
@@ -30,10 +43,16 @@ const cakeSizeOptions = [
   { value: 'small', label: 'Small cake' },
   { value: 'medium', label: 'Medium cake' },
   { value: 'large', label: 'Large cake' },
+=======
+  { value: "tashkent", label: "Tashkent" },
+  { value: "samarkand", label: "Samarkand" },
+  { value: "bukhara", label: "Bukhara" },
+>>>>>>> e7cd84a (CC-15: Add page skeletons and update App router)
 ];
 
 export default function UIKit() {
   const [modalOpen, setModalOpen] = useState(false);
+<<<<<<< HEAD
   const [toast, setToast] = useState('');
   const [toastType, setToastType] = useState<ToastType>('success');
   const [name, setName] = useState('');
@@ -41,6 +60,12 @@ export default function UIKit() {
   const [extraCream, setExtraCream] = useState(false);
   const [cakeSize, setCakeSize] = useState('medium');
   const [extraCherries, setExtraCherries] = useState(false);
+=======
+  const [toast, setToast] = useState("");
+  const [toastType, setToastType] = useState<ToastType>("success");
+  const [name, setName] = useState("");
+  const [region, setRegion] = useState("tashkent");
+>>>>>>> e7cd84a (CC-15: Add page skeletons and update App router)
 
   function showNotification(message: string, type: ToastType) {
     setToast(message);
@@ -52,8 +77,17 @@ export default function UIKit() {
       <h2>Cherry Cake - UI Kit</h2>
 
       <Card title="Buttons">
+<<<<<<< HEAD
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <Button onClick={() => showNotification('Button clicked!', 'success')}>Primary</Button>
+=======
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <Button
+            onClick={() => showNotification("Button clicked!", "success")}
+          >
+            Primary
+          </Button>
+>>>>>>> e7cd84a (CC-15: Add page skeletons and update App router)
           <Button variant="secondary">Secondary</Button>
           <Button disabled>Disabled</Button>
           <Button loading>Loading</Button>
@@ -68,7 +102,15 @@ export default function UIKit() {
             onChange={(event) => setName(event.target.value)}
             placeholder="Enter your name"
           />
+<<<<<<< HEAD
           <Input label="Email" error="Invalid email" placeholder="Enter email" />
+=======
+          <Input
+            label="Email"
+            error="Invalid email"
+            placeholder="Enter email"
+          />
+>>>>>>> e7cd84a (CC-15: Add page skeletons and update App router)
           <Input label="Disabled input" disabled placeholder="Unavailable" />
         </div>
       </Card>
@@ -84,7 +126,15 @@ export default function UIKit() {
           <Select
             label="Select with error"
             options={regionOptions}
+<<<<<<< HEAD
             error="Please select a valid region"
+=======
+<<<<<<< HEAD
+            error="Please select a valid country"
+=======
+            error="Please select a valid region"
+>>>>>>> e7cd84a (CC-15: Add page skeletons and update App router)
+>>>>>>> c45befe (CC-15: Add page skeletons and update App router)
           />
           <Select label="Disabled select" options={regionOptions} disabled />
         </div>
@@ -92,7 +142,15 @@ export default function UIKit() {
 
       <Card title="Modal">
         <Button onClick={() => setModalOpen(true)}>Open Modal</Button>
+<<<<<<< HEAD
         <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Cherry Cake Modal">
+=======
+        <Modal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          title="Cherry Cake Modal"
+        >
+>>>>>>> e7cd84a (CC-15: Add page skeletons and update App router)
           <p>This is a reusable modal component.</p>
         </Modal>
       </Card>
@@ -121,6 +179,7 @@ export default function UIKit() {
         <Loader />
       </Card>
 
+<<<<<<< HEAD
       <Card title="Checkbox">
         <div style={{ display: 'grid', gap: 12 }}>
           <Checkbox
@@ -181,6 +240,9 @@ export default function UIKit() {
       </Card>
 
       <Toast message={toast} type={toastType} onClose={() => setToast('')} />
+=======
+      <Toast message={toast} type={toastType} onClose={() => setToast("")} />
+>>>>>>> e7cd84a (CC-15: Add page skeletons and update App router)
     </section>
   );
 }

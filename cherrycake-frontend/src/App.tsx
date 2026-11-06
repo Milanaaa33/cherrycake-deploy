@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { NavLink, Routes, Route } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { hideToast } from "./store";
@@ -6,6 +7,13 @@ import type { RootState } from "./store";
 import { NavLink, Link, Routes, Route } from 'react-router-dom';
 ﻿
 import { Link, Routes, Route } from 'react-router-dom';
+=======
+import { Routes, Route } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+
+import { hideToast } from './store';
+import type { RootState } from './store';
+>>>>>>> c45befe (CC-15: Add page skeletons and update App router)
 
 import Toast from "./components/ui/Toast";
 import UIKit from "./pages/UIKit";
@@ -16,53 +24,29 @@ import Toast from './components/ui/Toast';
 import UIKit from './pages/UIKit';
 import ReduxDemo from './pages/ReduxDemo';
 
+<<<<<<< HEAD
 import Home from "./pages/Home";
 import Menu from "./pages/Menu";
 import Cart from "./pages/Cart";
 import Reports from "./pages/Reports";
+=======
+import Home from './pages/Home';
+import Menu from './pages/Menu';
+import Cart from './pages/Cart';
+import Reports from './pages/Reports';
+
+>>>>>>> c45befe (CC-15: Add page skeletons and update App router)
 import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
 
 import './App.css';
 
-function Page({ title }: { title: string }) {
+function Page({ title }: Readonly<{ title: string }>) {
   return (
     <section className="cc-placeholder">
       <p className="cc-eyebrow">Cherry Cake</p>
       <h2>{title}</h2>
       <p>This page is ready for development.</p>
-    </section>
-  );
-}
-
-function Home() {
-  return (
-    <section className="cc-hero">
-      <span className="cc-eyebrow">Handmade with love</span>
-      <h2>Life is sweeter with Cherry Cake.</h2>
-      <p>
-        Discover delicious cakes, fresh desserts, and sweet moments made
-        especially for you.
-      </p>
-      <Link to="/menu" className="cc-hero-action">
-        Explore Our Menu
-      </Link>
-    </section>
-  );
-}
-
-function Cart() {
-  return (
-    <section className="cc-placeholder">
-      <p className="cc-eyebrow">Cherry Cake</p>
-
-      <h2>Cart</h2>
-
-      <p>Your shopping cart is ready.</p>
-
-      <Link to="/checkout" className="cc-hero-action">
-        Proceed to Checkout
-      </Link>
     </section>
   );
 }
@@ -113,6 +97,7 @@ export default function App() {
           <Route path="/menu" element={<Menu />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/reports" element={<Reports />} />
+<<<<<<< HEAD
           <Route path="/ui-kit" element={<UIKit />} />
           <Route path="/redux-demo" element={<ReduxDemo />} />
 
@@ -151,6 +136,14 @@ export default function App() {
             path="/redux-demo"
             element={<ReduxDemo />}
           />
+=======
+          
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/order-success" element={<OrderSuccess />} />
+          <Route path="/orders" element={<Page title="Orders" />} />
+          <Route path="/ui-kit" element={<UIKit />} />
+          <Route path="/redux-demo" element={<ReduxDemo />} />
+>>>>>>> c45befe (CC-15: Add page skeletons and update App router)
         </Routes>
       </main>
 
@@ -164,5 +157,3 @@ export default function App() {
     </div>
   );
 }
-
-
