@@ -49,7 +49,7 @@ export default function UIKit() {
 
   return (
     <section className="cc-ui-kit">
-      <h2>Cherry Cake вЂ” UI Kit</h2>
+      <h2>Cherry Cake - UI Kit</h2>
 
       <Card title="Buttons">
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
@@ -178,4 +178,5 @@ export default function UIKit() {
     </section>
   );
 }
+
 
