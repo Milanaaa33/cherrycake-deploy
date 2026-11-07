@@ -3,12 +3,12 @@
     <footer className="cc-footer">
       <div className="cc-footer-inner">
         <div>
-          <h2>рџЌ’ Cherry Cake</h2>
+          <h2>&#127826; Cherry Cake</h2>
           <p>Handmade desserts for your sweetest moments.</p>
         </div>
 
         <p className="cc-footer-copy">
-          В© 2026 Cherry Cake. All rights reserved.
+          &copy; 2026 Cherry Cake. All rights reserved.
         </p>
       </div>
     </footer>

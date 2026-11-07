@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -19,9 +19,11 @@ import '../components/ui/ExtraComponents.css';
 type ToastType = 'success' | 'error' | 'warning';
 
 const regionOptions = [
-  { value: 'tashkent', label: 'Tashkent' },
-  { value: 'samarkand', label: 'Samarkand' },
-  { value: 'bukhara', label: 'Bukhara' },
+  { value: 'UZB', label: 'Uzbekistan' },
+  { value: 'KAZ', label: 'Kazakhstan' },
+  { value: 'GEO', label: 'Georgia' },
+  { value: 'UKR', label: 'Ukraine' },
+  { value: 'CHN', label: 'China' },
 ];
 
 const cakeSizeOptions = [
@@ -35,7 +37,7 @@ export default function UIKit() {
   const [toast, setToast] = useState('');
   const [toastType, setToastType] = useState<ToastType>('success');
   const [name, setName] = useState('');
-  const [region, setRegion] = useState('tashkent');
+  const [region, setRegion] = useState('UZB');
   const [extraCream, setExtraCream] = useState(false);
   const [cakeSize, setCakeSize] = useState('medium');
   const [extraCherries, setExtraCherries] = useState(false);
@@ -47,7 +49,7 @@ export default function UIKit() {
 
   return (
     <section className="cc-ui-kit">
-      <h2>Cherry Cake — UI Kit</h2>
+      <h2>Cherry Cake вЂ” UI Kit</h2>
 
       <Card title="Buttons">
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
@@ -74,7 +76,7 @@ export default function UIKit() {
       <Card title="Select">
         <div style={{ display: 'grid', gap: 16 }}>
           <Select
-            label="Choose your region"
+            label="Choose your country"
             value={region}
             onChange={(event) => setRegion(event.target.value)}
             options={regionOptions}
@@ -82,7 +84,7 @@ export default function UIKit() {
           <Select
             label="Select with error"
             options={regionOptions}
-            error="Please select a valid region"
+            error="Please select a valid country"
           />
           <Select label="Disabled select" options={regionOptions} disabled />
         </div>
@@ -176,3 +178,4 @@ export default function UIKit() {
     </section>
   );
 }
+

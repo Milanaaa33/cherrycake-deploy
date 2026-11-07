@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'vitest';
+﻿import { describe, it, expect } from 'vitest';
 import { store, setRegion, addToCart, clearCart, showToast, hideToast } from './index';
 
 describe('Redux Store', () => {
   it('should update selected region', () => {
-    store.dispatch(setRegion('Samarkand'));
-    expect(store.getState().region.selected).toBe('Samarkand');
+    store.dispatch(setRegion('KAZ'));
+    expect(store.getState().region.selected).toBe('KAZ');
   });
 
   it('should add items to cart', () => {
@@ -26,3 +26,4 @@ describe('Redux Store', () => {
     expect(store.getState().ui.toast).toBe('');
   });
 });
+

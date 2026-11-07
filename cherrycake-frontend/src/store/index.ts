@@ -1,29 +1,44 @@
-import { configureStore, createSlice } from '@reduxjs/toolkit';
+﻿import { configureStore, createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
+type RegionCode = 'UZB' | 'KAZ' | 'GEO' | 'UKR' | 'CHN';
+
 type RegionState = {
-  selected: string;
-  code: string;
-  currencyCode: string | null;
-  currencySymbol: string | null;
-  vatRate: number | null;
+  code: RegionCode;
+  selected: RegionCode;
+  currencyCode: string;
+  currencySymbol: string;
+  vatRate: number;
 };
 
-const validCountries = ['UZB', 'KAZ', 'GEO', 'UKR', 'CHN'];
+const countries: Record<
+  RegionCode,
+  { currencyCode: string; currencySymbol: string; vatRate: number }
+> = {
+  UZB: { currencyCode: 'UZS', currencySymbol: "so'm", vatRate: 0.15 },
+  KAZ: { currencyCode: 'KZT', currencySymbol: 'KZT', vatRate: 0.16 },
+  GEO: { currencyCode: 'GEL', currencySymbol: 'GEL', vatRate: 0.18 },
+  UKR: { currencyCode: 'UAH', currencySymbol: 'UAH', vatRate: 0.20 },
+  CHN: { currencyCode: 'CNY', currencySymbol: 'CNY', vatRate: 0.13 },
+};
+
+const isRegionCode = (value: string): value is RegionCode =>
+  Object.prototype.hasOwnProperty.call(countries, value);
 
 const savedRegion = localStorage.getItem('cc_region');
+const envRegion = import.meta.env.VITE_DEFAULT_REGION || 'UZB';
 
-const initialCode =
-  savedRegion && validCountries.includes(savedRegion)
+const initialCode: RegionCode =
+  savedRegion && isRegionCode(savedRegion)
     ? savedRegion
-    : 'UZB';
+    : isRegionCode(envRegion)
+      ? envRegion
+      : 'UZB';
 
 const initialRegionState: RegionState = {
-  selected: initialCode,
   code: initialCode,
-  currencyCode: initialCode === 'UZB' ? 'UZS' : null,
-  currencySymbol: initialCode === 'UZB' ? "so'm" : null,
-  vatRate: initialCode === 'UZB' ? 0.15 : null,
+  selected: initialCode,
+  ...countries[initialCode],
 };
 
 const regionSlice = createSlice({
@@ -31,32 +46,17 @@ const regionSlice = createSlice({
   initialState: initialRegionState,
   reducers: {
     setRegion: (state, action: PayloadAction<string>) => {
-      state.selected = action.payload;
+      if (!isRegionCode(action.payload)) return;
+      const code = action.payload;
+      Object.assign(state, { code, selected: code, ...countries[code] });
     },
-
     setRegionCode: (state, action: PayloadAction<string>) => {
-      const newCode = action.payload;
-
-      if (!validCountries.includes(newCode)) {
-        return;
-      }
-
-      state.code = newCode;
-      state.selected = newCode;
-
-      if (newCode === 'UZB') {
-        state.currencyCode = 'UZS';
-        state.currencySymbol = "so'm";
-        state.vatRate = 0.15;
-      } else {
-        state.currencyCode = null;
-        state.currencySymbol = null;
-        state.vatRate = null;
-      }
+      if (!isRegionCode(action.payload)) return;
+      const code = action.payload;
+      Object.assign(state, { code, selected: code, ...countries[code] });
     },
   },
 });
-
 const cartSlice = createSlice({
   name: 'cart',
   initialState: {
@@ -105,3 +105,4 @@ export const store = configureStore({
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+

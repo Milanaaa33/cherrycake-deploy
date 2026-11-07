@@ -1,4 +1,4 @@
-
+﻿
 import { Link, Routes, Route } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -95,6 +95,7 @@ export default function App() {
             element={<Page title="Orders" />}
           />
 
+          <Route path="/reports" element={<Page title="Reports" />} />
           <Route
             path="/ui-kit"
             element={<UIKit />}
@@ -117,3 +118,5 @@ export default function App() {
     </div>
   );
 }
+
+
