@@ -10,9 +10,7 @@ export default function Header() {
   return (
     <header className="cc-header">
       <div className="cc-header-inner">
-        <Link to="/" className="cc-layout-brand">
-          рџЌ’ Cherry Cake
-        </Link>
+        <Link to="/" className="cc-layout-brand">&#127826; Cherry Cake</Link>
 
         <nav className="cc-nav" aria-label="Main navigation">
           <NavLink to="/" end>
@@ -33,4 +31,5 @@ export default function Header() {
     </header>
   );
 }
+
 
