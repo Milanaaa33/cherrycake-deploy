@@ -7,11 +7,10 @@ import {
 } from '@testing-library/react';
 import Button from './Button';
 
-afterEach(() => {
-  cleanup();
-});
-
 describe('Button component', () => {
+  afterEach(() => {
+    cleanup();
+  });
   it('renders button text', () => {
     render(<Button>Order Now</Button>);
 

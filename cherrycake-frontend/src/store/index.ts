@@ -16,10 +16,10 @@ const countries: Record<
   { currencyCode: string; currencySymbol: string; vatRate: number }
 > = {
   UZB: { currencyCode: 'UZS', currencySymbol: "so'm", vatRate: 0.15 },
-  KAZ: { currencyCode: 'KZT', currencySymbol: 'KZT', vatRate: 0.16 },
-  GEO: { currencyCode: 'GEL', currencySymbol: 'GEL', vatRate: 0.18 },
-  UKR: { currencyCode: 'UAH', currencySymbol: 'UAH', vatRate: 0.20 },
-  CHN: { currencyCode: 'CNY', currencySymbol: 'CNY', vatRate: 0.13 },
+  KAZ: { currencyCode: 'KZT', currencySymbol: '₸', vatRate: 0.20 },
+  GEO: { currencyCode: 'GEL', currencySymbol: '₾', vatRate: 0.12 },
+  UKR: { currencyCode: 'UAH', currencySymbol: '₴', vatRate: 0.08 },
+  CHN: { currencyCode: 'CNY', currencySymbol: '¥', vatRate: 0.18 },
 };
 
 const isRegionCode = (value: string): value is RegionCode =>
@@ -49,26 +49,40 @@ const regionSlice = createSlice({
       if (!isRegionCode(action.payload)) return;
       const code = action.payload;
       Object.assign(state, { code, selected: code, ...countries[code] });
+      localStorage.setItem('cc_region', code);
     },
     setRegionCode: (state, action: PayloadAction<string>) => {
       if (!isRegionCode(action.payload)) return;
       const code = action.payload;
       Object.assign(state, { code, selected: code, ...countries[code] });
+      localStorage.setItem('cc_region', code);
     },
   },
 });
+const savedCart = localStorage.getItem('cc_cart');
+let initialCart: string[] = [];
+if (savedCart) {
+  try {
+    initialCart = JSON.parse(savedCart);
+  } catch {
+    initialCart = [];
+  }
+}
+
 const cartSlice = createSlice({
   name: 'cart',
   initialState: {
-    items: [] as string[],
+    items: initialCart,
   },
   reducers: {
     addToCart: (state, action: PayloadAction<string>) => {
       state.items.push(action.payload);
+      localStorage.setItem('cc_cart', JSON.stringify(state.items));
     },
 
     clearCart: (state) => {
       state.items = [];
+      localStorage.removeItem('cc_cart');
     },
   },
 });
