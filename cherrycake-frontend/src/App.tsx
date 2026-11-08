@@ -4,13 +4,17 @@ import { hideToast } from "./store";
 import type { RootState } from "./store";
 
 import { NavLink, Link, Routes, Route } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { hideToast } from './store';
-import type { RootState } from './store';
+﻿
+import { Link, Routes, Route } from 'react-router-dom';
 
 import Toast from "./components/ui/Toast";
 import UIKit from "./pages/UIKit";
 import ReduxDemo from "./pages/ReduxDemo";
+import Header from './components/layout/Header';
+import Footer from './components/layout/Footer';
+import Toast from './components/ui/Toast';
+import UIKit from './pages/UIKit';
+import ReduxDemo from './pages/ReduxDemo';
 
 import Home from "./pages/Home";
 import Menu from "./pages/Menu";
@@ -21,7 +25,31 @@ import OrderSuccess from './pages/OrderSuccess';
 
 import './App.css';
 
-import "./App.css";
+function Page({ title }: { title: string }) {
+  return (
+    <section className="cc-placeholder">
+      <p className="cc-eyebrow">Cherry Cake</p>
+      <h2>{title}</h2>
+      <p>This page is ready for development.</p>
+    </section>
+  );
+}
+
+function Home() {
+  return (
+    <section className="cc-hero">
+      <span className="cc-eyebrow">Handmade with love</span>
+      <h2>Life is sweeter with Cherry Cake.</h2>
+      <p>
+        Discover delicious cakes, fresh desserts, and sweet moments made
+        especially for you.
+      </p>
+      <Link to="/menu" className="cc-hero-action">
+        Explore Our Menu
+      </Link>
+    </section>
+  );
+}
 
 function Cart() {
   return (
@@ -77,6 +105,7 @@ export default function App() {
           </nav>
         </div>
       </header>
+      <Header />
 
       <main className="cc-content">
         <Routes>
@@ -112,6 +141,7 @@ export default function App() {
             element={<Page title="Orders" />}
           />
 
+          <Route path="/reports" element={<Page title="Reports" />} />
           <Route
             path="/ui-kit"
             element={<UIKit />}
@@ -124,6 +154,8 @@ export default function App() {
         </Routes>
       </main>
 
+      <Footer />
+
       <Toast
         message={toast}
         type="error"
@@ -132,3 +164,5 @@ export default function App() {
     </div>
   );
 }
+
+

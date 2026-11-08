@@ -3,6 +3,7 @@ import { store, showToast } from "../store";
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "/api/v1",
+
   timeout: 10000,
 });
 
@@ -14,6 +15,7 @@ api.interceptors.response.use(
       "Server bilan bog‘lanishda xatolik yuz berdi";
 
     store.dispatch(showToast(message));
+
     return Promise.reject(error);
   },
 );

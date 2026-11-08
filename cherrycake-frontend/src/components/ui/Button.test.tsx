@@ -2,12 +2,11 @@ import { afterEach, describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import Button from "./Button";
 
-afterEach(() => {
-  cleanup();
-});
-
-describe("Button component", () => {
-  it("renders button text", () => {
+describe('Button component', () => {
+  afterEach(() => {
+    cleanup();
+  });
+  it('renders button text', () => {
     render(<Button>Order Now</Button>);
 
     expect(screen.getByRole("button", { name: "Order Now" })).toBeTruthy();
