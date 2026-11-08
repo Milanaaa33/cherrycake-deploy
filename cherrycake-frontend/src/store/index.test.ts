@@ -1,10 +1,12 @@
-import { describe, it, expect } from 'vitest';
+﻿import { describe, it, expect } from 'vitest';
 import { store, setRegion, addToCart, clearCart, showToast, hideToast } from './index';
 
 describe('Redux Store', () => {
   it('should update selected region', () => {
-    store.dispatch(setRegion('Samarkand'));
-    expect(store.getState().region.selected).toBe('Samarkand');
+    store.dispatch(setRegion('KAZ'));
+    expect(store.getState().region.selected).toBe('KAZ');
+    expect(store.getState().region.currencyCode).toBe('KZT');
+    expect(store.getState().region.vatRate).toBe(0.20);
   });
 
   it('should add items to cart', () => {
@@ -26,3 +28,4 @@ describe('Redux Store', () => {
     expect(store.getState().ui.toast).toBe('');
   });
 });
+

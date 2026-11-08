@@ -1,6 +1,8 @@
 /* Main layout */
 
 .cc-app {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
 }
 
@@ -10,28 +12,11 @@
 }
 
 .cc-header-inner {
+  width: 100%;
   max-width: 1180px;
   margin: 0 auto;
-  padding: 22px 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.cc-brand {
-  margin: 0;
-  font-size: 30px;
-  font-weight: 800;
-  color: var(--color-primary);
-  letter-spacing: -1px;
-}
-
-.cc-nav {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  padding: 20px 24px;
+  box-sizing: border-box;
 }
 
 .cc-nav a {
@@ -41,7 +26,9 @@
   font-size: 14px;
   font-weight: 600;
   border-radius: var(--radius-md);
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .cc-nav a:hover {
@@ -49,20 +36,29 @@
   background: var(--color-surface-soft);
 }
 
+.cc-nav a.active {
+  color: var(--color-primary);
+  background: var(--color-surface-soft);
+}
+
 .cc-content {
+  width: 100%;
   max-width: 1180px;
   margin: 0 auto;
-  padding: 36px 24px 64px;
+  padding: 32px 24px 48px;
+  box-sizing: border-box;
+  flex: 1;
 }
 
 /* Home */
 
 .cc-hero {
+  width: 100%;
   background: linear-gradient(125deg, #fff0e8, #f7e5e5);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
-  padding: 64px 48px;
-  margin-top: 18px;
+  padding: 64px;
+  box-sizing: border-box;
 }
 
 .cc-eyebrow {
@@ -74,15 +70,15 @@
 }
 
 .cc-hero h2 {
-  max-width: 650px;
-  font-size: clamp(36px, 5vw, 60px);
-  line-height: 1.12;
+  max-width: 780px;
+  font-size: clamp(36px, 4.5vw, 56px);
+  line-height: 1.15;
   letter-spacing: -2px;
   margin: 18px 0;
 }
 
 .cc-hero p {
-  max-width: 520px;
+  max-width: 600px;
   font-size: 18px;
   color: var(--color-muted);
   line-height: 1.7;
@@ -115,23 +111,26 @@
 
 @media (max-width: 700px) {
   .cc-header-inner {
-    align-items: flex-start;
-    padding: 18px;
-  }
-
-  .cc-brand {
-    font-size: 25px;
-  }
-
-  .cc-content {
-    padding: 20px 16px 40px;
-  }
-
-  .cc-hero {
-    padding: 40px 24px;
+    padding: 16px;
   }
 
   .cc-nav a {
     padding: 8px 10px;
+  }
+
+  .cc-content {
+    padding: 20px 16px 32px;
+  }
+
+  .cc-hero {
+    padding: 36px 24px;
+  }
+
+  .cc-hero h2 {
+    font-size: clamp(32px, 7vw, 44px);
+  }
+
+  .cc-placeholder {
+    padding: 24px;
   }
 }

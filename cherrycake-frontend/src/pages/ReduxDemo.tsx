@@ -1,4 +1,4 @@
-import { useDispatch, useSelector } from 'react-redux';
+﻿import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../store';
 import {
   setRegion,
@@ -20,7 +20,7 @@ export default function ReduxDemo() {
 
   return (
     <section style={{ padding: 24 }}>
-      <h2>Cherry Cake — Redux Demo</h2>
+      <h2>Cherry Cake вЂ” Redux Demo</h2>
 
       <h3>Region</h3>
       <p>Selected region: {region}</p>
@@ -31,9 +31,11 @@ export default function ReduxDemo() {
           dispatch(setRegion(event.target.value))
         }
       >
-        <option value="Tashkent">Tashkent</option>
-        <option value="Samarkand">Samarkand</option>
-        <option value="Bukhara">Bukhara</option>
+        <option value="UZB">Uzbekistan</option>
+        <option value="KAZ">Kazakhstan</option>
+        <option value="GEO">Georgia</option>
+        <option value="UKR">Ukraine</option>
+        <option value="CHN">China</option>
       </select>
 
       <hr />
@@ -72,3 +74,4 @@ export default function ReduxDemo() {
     </section>
   );
 }
+

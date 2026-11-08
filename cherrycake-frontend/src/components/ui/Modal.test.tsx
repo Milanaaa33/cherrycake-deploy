@@ -3,11 +3,10 @@ import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { afterEach } from 'vitest';
 import Modal from './Modal';
 
-afterEach(() => {
-  cleanup();
-});
-
 describe('Modal component', () => {
+  afterEach(() => {
+    cleanup();
+  });
   it('does not render when closed', () => {
     render(
       <Modal open={false} title="Test Modal" onClose={() => {}}>

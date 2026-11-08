@@ -1,9 +1,12 @@
-
-import { NavLink, Link, Routes, Route } from 'react-router-dom';
+﻿
+import { Link, Routes, Route } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+
 import { hideToast } from './store';
 import type { RootState } from './store';
 
+import Header from './components/layout/Header';
+import Footer from './components/layout/Footer';
 import Toast from './components/ui/Toast';
 import UIKit from './pages/UIKit';
 import ReduxDemo from './pages/ReduxDemo';
@@ -26,17 +29,12 @@ function Page({ title }: { title: string }) {
 function Home() {
   return (
     <section className="cc-hero">
-      <span className="cc-eyebrow">
-        Handmade with love
-      </span>
-
+      <span className="cc-eyebrow">Handmade with love</span>
       <h2>Life is sweeter with Cherry Cake.</h2>
-
       <p>
-        Discover delicious cakes, fresh desserts,
-        and sweet moments made especially for you.
+        Discover delicious cakes, fresh desserts, and sweet moments made
+        especially for you.
       </p>
-
       <Link to="/menu" className="cc-hero-action">
         Explore Our Menu
       </Link>
@@ -61,41 +59,12 @@ function Cart() {
 }
 
 export default function App() {
-  const toast = useSelector(
-    (state: RootState) => state.ui.toast
-  );
-
+  const toast = useSelector((state: RootState) => state.ui.toast);
   const dispatch = useDispatch();
 
   return (
     <div className="cc-app">
-      <header className="cc-header">
-        <div className="cc-header-inner">
-          <h1 className="cc-brand">🍒 Cherry Cake</h1>
-
-          <nav className="cc-nav" aria-label="Main navigation">
-            <NavLink to="/" end>
-              Home
-            </NavLink>
-
-            <NavLink to="/menu">
-              Menu
-            </NavLink>
-
-            <NavLink to="/cart">
-              Cart
-            </NavLink>
-
-            <NavLink to="/orders">
-              Orders
-            </NavLink>
-
-            <NavLink to="/ui-kit">
-              UI Kit
-            </NavLink>
-          </nav>
-        </div>
-      </header>
+      <Header />
 
       <main className="cc-content">
         <Routes>
@@ -126,6 +95,7 @@ export default function App() {
             element={<Page title="Orders" />}
           />
 
+          <Route path="/reports" element={<Page title="Reports" />} />
           <Route
             path="/ui-kit"
             element={<UIKit />}
@@ -138,6 +108,8 @@ export default function App() {
         </Routes>
       </main>
 
+      <Footer />
+
       <Toast
         message={toast}
         type="error"
@@ -146,3 +118,5 @@ export default function App() {
     </div>
   );
 }
+
+
