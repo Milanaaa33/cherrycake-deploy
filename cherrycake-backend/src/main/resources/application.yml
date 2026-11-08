@@ -9,6 +9,11 @@ spring:
       ddl-auto: validate
   flyway:
     locations: classpath:db/migration
+    # V3 (catalog seed) can reach master before V2 (orders); this lets V2 still run on databases that already have V3.
+    out-of-order: true
+
+springdoc:
+  paths-to-match: /api/**
 
 app:
   cors:

@@ -3,6 +3,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { hideToast } from "./store";
 import type { RootState } from "./store";
 
+import { NavLink, Link, Routes, Route } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { hideToast } from './store';
+import type { RootState } from './store';
+
 import Toast from "./components/ui/Toast";
 import UIKit from "./pages/UIKit";
 import ReduxDemo from "./pages/ReduxDemo";
@@ -11,8 +16,28 @@ import Home from "./pages/Home";
 import Menu from "./pages/Menu";
 import Cart from "./pages/Cart";
 import Reports from "./pages/Reports";
+import Checkout from './pages/Checkout';
+import OrderSuccess from './pages/OrderSuccess';
+
+import './App.css';
 
 import "./App.css";
+
+function Cart() {
+  return (
+    <section className="cc-placeholder">
+      <p className="cc-eyebrow">Cherry Cake</p>
+
+      <h2>Cart</h2>
+
+      <p>Your shopping cart is ready.</p>
+
+      <Link to="/checkout" className="cc-hero-action">
+        Proceed to Checkout
+      </Link>
+    </section>
+  );
+}
 
 export default function App() {
   const toast = useSelector((state: RootState) => state.ui.toast);
@@ -33,6 +58,22 @@ export default function App() {
             <NavLink to="/cart">Cart</NavLink>
             <NavLink to="/reports">Reports</NavLink>
             <NavLink to="/ui-kit">UI Kit</NavLink>
+
+            <NavLink to="/menu">
+              Menu
+            </NavLink>
+
+            <NavLink to="/cart">
+              Cart
+            </NavLink>
+
+            <NavLink to="/orders">
+              Orders
+            </NavLink>
+
+            <NavLink to="/ui-kit">
+              UI Kit
+            </NavLink>
           </nav>
         </div>
       </header>
@@ -45,6 +86,41 @@ export default function App() {
           <Route path="/reports" element={<Reports />} />
           <Route path="/ui-kit" element={<UIKit />} />
           <Route path="/redux-demo" element={<ReduxDemo />} />
+
+          <Route
+            path="/menu"
+            element={<Page title="Menu" />}
+          />
+
+          <Route
+            path="/cart"
+            element={<Cart />}
+          />
+
+          <Route
+            path="/checkout"
+            element={<Checkout />}
+          />
+
+          <Route
+            path="/order-success"
+            element={<OrderSuccess />}
+          />
+
+          <Route
+            path="/orders"
+            element={<Page title="Orders" />}
+          />
+
+          <Route
+            path="/ui-kit"
+            element={<UIKit />}
+          />
+
+          <Route
+            path="/redux-demo"
+            element={<ReduxDemo />}
+          />
         </Routes>
       </main>
 

@@ -21,6 +21,24 @@ mvn spring-boot:run
 
 The application uses the `dev` profile by default, reads `.env` and listens on http://localhost:8080.
 
+API docs: Swagger UI at http://localhost:8080/swagger-ui.html, OpenAPI spec at http://localhost:8080/v3/api-docs.
+
+## Errors
+
+Every failed request returns the same JSON:
+
+```json
+{
+  "status": 400,
+  "message": "Validation failed",
+  "errors": [{ "field": "quantity", "message": "must be greater than or equal to 1" }],
+  "timestamp": "2026-11-05T06:00:00Z",
+  "path": "/api/cart/calculate"
+}
+```
+
+`errors` is empty unless request fields failed validation. Status codes: 400 validation, 404 not found, 409 conflict (for example, out of stock), 500 unexpected error. In code, throw `NotFoundException`, `ConflictException` or `BadRequestException` from `com.cherrycake.common.exception`.
+
 ## Run the tests
 
 ```bash
