@@ -40,7 +40,8 @@ public record CreateOrderRequest(
             @Size(max = 150)
             String name,
 
-            @Schema(example = "+998901234567")
+            @Schema(example = "+998901234567",
+                    description = "Spaces, hyphens and parentheses are removed before validation")
             @NotBlank(message = "customer phone is required")
             @Pattern(regexp = "\\+?[1-9][0-9]{6,14}",
                     message = "phone must contain 7 to 15 digits with an optional leading +")
@@ -51,5 +52,11 @@ public record CreateOrderRequest(
             @Email(message = "customer email must be valid")
             @Size(max = 150)
             String email) {
+
+        public Customer {
+            if (phone != null) {
+                phone = phone.replaceAll("[\\s()-]", "");
+            }
+        }
     }
 }

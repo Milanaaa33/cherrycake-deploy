@@ -15,6 +15,7 @@ import java.time.Year;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -202,6 +203,32 @@ class OrderControllerTests {
     void rejectsBlankContactsWithoutSaving(String field) throws Exception {
         ObjectNode body = validOrder();
         ((ObjectNode) body.get("customer")).put(field, " ");
+        assertRejectedWithoutSaving(body, 400);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"+998901234567", "+998 90 123 45 67", "+998-90-123-45-67",
+            "+998 (90) 123-45-67", "\t +998 (90) 123-45-67 \n"})
+    void normalizesFormattedPhoneBeforeValidationAndPersistence(String phone) throws Exception {
+        ObjectNode body = validOrder();
+        ((ObjectNode) body.get("customer")).put("phone", phone);
+        MvcResult result = mvc.perform(post("/api/orders")
+                        .contentType(MediaType.APPLICATION_JSON).content(body.toString()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.customer.phone").value("+998901234567"))
+                .andReturn();
+        String orderNumber = objectMapper.readTree(result.getResponse().getContentAsString())
+                .path("orderNumber").asText();
+        assertThat(jdbc.queryForObject("SELECT phone FROM orders WHERE order_number = ?",
+                String.class, orderNumber)).isEqualTo("+998901234567");
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" ()- \t", "+998 (90) abc-45-67", "+998 (90) 1", "+1234567890123456"})
+    void rejectsInvalidPhonesAfterNormalizationWithoutSaving(String phone) throws Exception {
+        ObjectNode body = validOrder();
+        ((ObjectNode) body.get("customer")).put("phone", phone);
         assertRejectedWithoutSaving(body, 400);
     }
 

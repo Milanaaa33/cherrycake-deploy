@@ -62,8 +62,10 @@ required modifiers. Replace the product ID with the ID returned by your catalog 
 }
 ```
 
-Names and emails are required and limited to 150 characters. The phone must contain 7 to 15 digits,
-optionally prefixed with `+`. Dates before today, empty carts, null items and quantities below 1 return 400.
+Names and emails are required and limited to 150 characters. Spaces, hyphens and parentheses are removed
+from the phone before validation and storage: `+998 (90) 123-45-67` becomes `+998901234567`.
+The normalized phone must contain 7 to 15 digits, optionally prefixed with `+`.
+Dates before today, empty carts, null items and quantities below 1 return 400.
 Invalid modifier selections return 400, unknown regions/products return 404, and unavailable products return 409.
 
 The server ignores client-supplied prices, taxes, discounts and totals. Both order creation and cart calculation
