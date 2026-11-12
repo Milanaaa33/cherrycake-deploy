@@ -1,10 +1,5 @@
-<<<<<<< HEAD
 ﻿import { configureStore, createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
-=======
-import { configureStore, createSlice } from "@reduxjs/toolkit";
-import type { PayloadAction } from "@reduxjs/toolkit";
->>>>>>> e7cd84a (CC-15: Add page skeletons and update App router)
 
 type RegionCode = 'UZB' | 'KAZ' | 'GEO' | 'UKR' | 'CHN';
 
@@ -47,15 +42,8 @@ const initialRegionState: RegionState = {
 };
 
 const regionSlice = createSlice({
-<<<<<<< HEAD
   name: 'region',
   initialState: initialRegionState,
-=======
-  name: "region",
-  initialState: {
-    selected: import.meta.env.VITE_DEFAULT_REGION || "Tashkent",
-  },
->>>>>>> e7cd84a (CC-15: Add page skeletons and update App router)
   reducers: {
     setRegion: (state, action: PayloadAction<string>) => {
       if (!isRegionCode(action.payload)) return;
@@ -82,15 +70,10 @@ if (savedCart) {
 }
 
 const cartSlice = createSlice({
-<<<<<<< HEAD
   name: 'cart',
   initialState: {
     items: initialCart,
   },
-=======
-  name: "cart",
-  initialState: { items: [] as string[] },
->>>>>>> e7cd84a (CC-15: Add page skeletons and update App router)
   reducers: {
     addToCart: (state, action: PayloadAction<string>) => {
       state.items.push(action.payload);
@@ -105,15 +88,10 @@ const cartSlice = createSlice({
 });
 
 const uiSlice = createSlice({
-<<<<<<< HEAD
   name: 'ui',
   initialState: {
     toast: '',
   },
-=======
-  name: "ui",
-  initialState: { toast: "" },
->>>>>>> e7cd84a (CC-15: Add page skeletons and update App router)
   reducers: {
     showToast: (state, action: PayloadAction<string>) => {
       state.toast = action.payload;

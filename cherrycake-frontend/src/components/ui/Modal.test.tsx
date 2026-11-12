@@ -3,20 +3,11 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { afterEach } from "vitest";
 import Modal from "./Modal";
 
-<<<<<<< HEAD
 describe('Modal component', () => {
   afterEach(() => {
     cleanup();
   });
   it('does not render when closed', () => {
-=======
-afterEach(() => {
-  cleanup();
-});
-
-describe("Modal component", () => {
-  it("does not render when closed", () => {
->>>>>>> e7cd84a (CC-15: Add page skeletons and update App router)
     render(
       <Modal open={false} title="Test Modal" onClose={() => {}}>
         <p>Modal content</p>

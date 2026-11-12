@@ -1,9 +1,3 @@
-<<<<<<< HEAD
-import { useDispatch, useSelector } from "react-redux";
-import type { RootState } from "../store";
-import { setRegion, addToCart, clearCart, showToast } from "../store";
-=======
-<<<<<<< HEAD
 ﻿import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../store';
 import {
@@ -12,12 +6,6 @@ import {
   clearCart,
   showToast,
 } from '../store';
-=======
-import { useDispatch, useSelector } from "react-redux";
-import type { RootState } from "../store";
-import { setRegion, addToCart, clearCart, showToast } from "../store";
->>>>>>> e7cd84a (CC-15: Add page skeletons and update App router)
->>>>>>> c45befe (CC-15: Add page skeletons and update App router)
 
 export default function ReduxDemo() {
   const dispatch = useDispatch();

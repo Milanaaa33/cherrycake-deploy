@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 ﻿import { describe, it, expect } from 'vitest';
 import { store, setRegion, addToCart, clearCart, showToast, hideToast } from './index';
 
@@ -8,22 +7,6 @@ describe('Redux Store', () => {
     expect(store.getState().region.selected).toBe('KAZ');
     expect(store.getState().region.currencyCode).toBe('KZT');
     expect(store.getState().region.vatRate).toBe(0.20);
-=======
-import { describe, it, expect } from "vitest";
-import {
-  store,
-  setRegion,
-  addToCart,
-  clearCart,
-  showToast,
-  hideToast,
-} from "./index";
-
-describe("Redux Store", () => {
-  it("should update selected region", () => {
-    store.dispatch(setRegion("Samarkand"));
-    expect(store.getState().region.selected).toBe("Samarkand");
->>>>>>> e7cd84a (CC-15: Add page skeletons and update App router)
   });
 
   it("should add items to cart", () => {
