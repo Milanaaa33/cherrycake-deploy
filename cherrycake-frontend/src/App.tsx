@@ -1,5 +1,4 @@
-﻿
-import { Link, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { hideToast } from './store';
@@ -11,6 +10,10 @@ import Toast from './components/ui/Toast';
 import UIKit from './pages/UIKit';
 import ReduxDemo from './pages/ReduxDemo';
 
+import Home from './pages/Home';
+import Menu from './pages/Menu';
+import Cart from './pages/Cart';
+import Reports from './pages/Reports';
 import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
 
@@ -26,38 +29,6 @@ function Page({ title }: { title: string }) {
   );
 }
 
-function Home() {
-  return (
-    <section className="cc-hero">
-      <span className="cc-eyebrow">Handmade with love</span>
-      <h2>Life is sweeter with Cherry Cake.</h2>
-      <p>
-        Discover delicious cakes, fresh desserts, and sweet moments made
-        especially for you.
-      </p>
-      <Link to="/menu" className="cc-hero-action">
-        Explore Our Menu
-      </Link>
-    </section>
-  );
-}
-
-function Cart() {
-  return (
-    <section className="cc-placeholder">
-      <p className="cc-eyebrow">Cherry Cake</p>
-
-      <h2>Cart</h2>
-
-      <p>Your shopping cart is ready.</p>
-
-      <Link to="/checkout" className="cc-hero-action">
-        Proceed to Checkout
-      </Link>
-    </section>
-  );
-}
-
 export default function App() {
   const toast = useSelector((state: RootState) => state.ui.toast);
   const dispatch = useDispatch();
@@ -69,42 +40,14 @@ export default function App() {
       <main className="cc-content">
         <Routes>
           <Route path="/" element={<Home />} />
-
-          <Route
-            path="/menu"
-            element={<Page title="Menu" />}
-          />
-
-          <Route
-            path="/cart"
-            element={<Cart />}
-          />
-
-          <Route
-            path="/checkout"
-            element={<Checkout />}
-          />
-
-          <Route
-            path="/order-success"
-            element={<OrderSuccess />}
-          />
-
-          <Route
-            path="/orders"
-            element={<Page title="Orders" />}
-          />
-
-          <Route path="/reports" element={<Page title="Reports" />} />
-          <Route
-            path="/ui-kit"
-            element={<UIKit />}
-          />
-
-          <Route
-            path="/redux-demo"
-            element={<ReduxDemo />}
-          />
+          <Route path="/menu" element={<Menu />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/order-success" element={<OrderSuccess />} />
+          <Route path="/orders" element={<Page title="Orders" />} />
+          <Route path="/ui-kit" element={<UIKit />} />
+          <Route path="/redux-demo" element={<ReduxDemo />} />
         </Routes>
       </main>
 
@@ -118,5 +61,3 @@ export default function App() {
     </div>
   );
 }
-
-

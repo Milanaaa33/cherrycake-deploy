@@ -98,7 +98,7 @@ const uiSlice = createSlice({
     },
 
     hideToast: (state) => {
-      state.toast = '';
+      state.toast = "";
     },
   },
 });

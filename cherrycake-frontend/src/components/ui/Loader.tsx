@@ -1,4 +1,4 @@
-import './Loader.css';
+import "./Loader.css";
 export default function Loader() {
   return (
     <div className="cc-loader" role="status" aria-label="Loading">

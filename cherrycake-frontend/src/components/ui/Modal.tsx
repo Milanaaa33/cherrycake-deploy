@@ -1,5 +1,5 @@
-import { useEffect, useId, useRef } from 'react';
-import type { ReactNode } from 'react';
+import { useEffect, useId, useRef } from "react";
+import type { ReactNode } from "react";
 
 type ModalProps = {
   open: boolean;
@@ -8,12 +8,7 @@ type ModalProps = {
   onClose: () => void;
 };
 
-export default function Modal({
-  open,
-  title,
-  children,
-  onClose,
-}: ModalProps) {
+export default function Modal({ open, title, children, onClose }: ModalProps) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -25,19 +20,19 @@ export default function Modal({
     const focusable = () =>
       Array.from(
         dialog?.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), input:not([disabled]), select:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
-        ) ?? []
+          'button:not([disabled]), input:not([disabled]), select:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
       );
 
     focusable()[0]?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         event.preventDefault();
         onClose();
       }
 
-      if (event.key === 'Tab') {
+      if (event.key === "Tab") {
         const elements = focusable();
         if (elements.length === 0) {
           event.preventDefault();
@@ -57,9 +52,9 @@ export default function Modal({
       }
     }
 
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown);
       previousFocus?.focus();
     };
   }, [open, onClose]);
@@ -69,11 +64,11 @@ export default function Modal({
   return (
     <div
       style={{
-        position: 'fixed',
+        position: "fixed",
         inset: 0,
-        background: 'rgba(0, 0, 0, 0.6)',
-        display: 'grid',
-        placeItems: 'center',
+        background: "rgba(0, 0, 0, 0.6)",
+        display: "grid",
+        placeItems: "center",
         zIndex: 1000,
       }}
     >
@@ -83,15 +78,15 @@ export default function Modal({
         aria-modal="true"
         aria-labelledby={titleId}
         style={{
-          background: 'var(--color-surface)',
-          color: 'var(--color-text)',
+          background: "var(--color-surface)",
+          color: "var(--color-text)",
           padding: 32,
-          borderRadius: 'var(--radius-xl)',
-          width: 'min(90%, 460px)',
-          boxShadow: '0 24px 80px rgba(35, 10, 20, 0.25)',
+          borderRadius: "var(--radius-xl)",
+          width: "min(90%, 460px)",
+          boxShadow: "0 24px 80px rgba(35, 10, 20, 0.25)",
         }}
       >
-        <h2 id={titleId} style={{ color: 'var(--color-text)' }}>
+        <h2 id={titleId} style={{ color: "var(--color-text)" }}>
           {title}
         </h2>
 

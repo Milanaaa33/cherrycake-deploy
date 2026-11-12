@@ -16,7 +16,7 @@ import ErrorState from '../components/ui/ErrorState';
 import './UIKit.css';
 import '../components/ui/ExtraComponents.css';
 
-type ToastType = 'success' | 'error' | 'warning';
+type ToastType = "success" | "error" | "warning";
 
 const regionOptions = [
   { value: 'UZB', label: 'Uzbekistan' },
@@ -61,7 +61,7 @@ export default function UIKit() {
       </Card>
 
       <Card title="Inputs">
-        <div style={{ display: 'grid', gap: 16 }}>
+        <div style={{ display: "grid", gap: 16 }}>
           <Input
             label="Your name"
             value={name}
@@ -74,7 +74,7 @@ export default function UIKit() {
       </Card>
 
       <Card title="Select">
-        <div style={{ display: 'grid', gap: 16 }}>
+        <div style={{ display: "grid", gap: 16 }}>
           <Select
             label="Choose your country"
             value={region}
@@ -98,14 +98,20 @@ export default function UIKit() {
       </Card>
 
       <Card title="Toast">
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <Button onClick={() => showNotification('Success notification!', 'success')}>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <Button
+            onClick={() => showNotification("Success notification!", "success")}
+          >
             Success Toast
           </Button>
-          <Button onClick={() => showNotification('Error notification!', 'error')}>
+          <Button
+            onClick={() => showNotification("Error notification!", "error")}
+          >
             Error Toast
           </Button>
-          <Button onClick={() => showNotification('Warning notification!', 'warning')}>
+          <Button
+            onClick={() => showNotification("Warning notification!", "warning")}
+          >
             Warning Toast
           </Button>
         </div>
