@@ -1,6 +1,9 @@
 spring:
   application:
     name: cherrycake-backend
+  jackson:
+    deserialization:
+      accept-float-as-int: false
   profiles:
     default: dev
   jpa:
@@ -13,7 +16,7 @@ spring:
     out-of-order: true
 
 springdoc:
-  paths-to-match: /api/**
+  paths-to-match: /api/regions,/api/categories,/api/products,/api/products/*,/api/cart/calculate,/api/orders
 
 app:
   cors:
