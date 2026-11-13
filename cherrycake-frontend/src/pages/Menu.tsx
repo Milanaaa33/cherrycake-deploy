@@ -1,95 +1,138 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
+import { api } from '../api/client';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Checkbox from '../components/ui/Checkbox';
 import Modal from '../components/ui/Modal';
 import Radio from '../components/ui/Radio';
+import type { RootState } from '../store';
 
-type Category = 'all' | 'cakes' | 'cupcakes' | 'tarts';
+type Category = {
+  id: number;
+  name: string;
+};
 
 type Product = {
   id: number;
   name: string;
-  category: Exclude<Category, 'all'>;
   description: string;
   price: number;
-  image: string;
+  photoUrl: string | null;
+  inStock: boolean;
 };
 
-const categories: ReadonlyArray<{ value: Category; label: string }> = [
-  { value: 'all', label: 'All' },
-  { value: 'cakes', label: 'Cakes' },
-  { value: 'cupcakes', label: 'Cupcakes' },
-  { value: 'tarts', label: 'Tarts' },
-];
+type Modifier = {
+  id: number;
+  name: string;
+  priceDelta: number;
+};
 
-const products: Product[] = [
-  {
-    id: 1,
-    name: 'Cherry Cheesecake',
-    category: 'cakes',
-    description: 'Creamy cheesecake with a bright cherry topping.',
-    price: 8,
-    image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=640&q=80',
-  },
-  {
-    id: 2,
-    name: 'Chocolate Cake',
-    category: 'cakes',
-    description: 'Rich chocolate cake with smooth chocolate frosting.',
-    price: 7.5,
-    image: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=640&q=80',
-  },
-  {
-    id: 3,
-    name: 'Vanilla Cupcake',
-    category: 'cupcakes',
-    description: 'Soft vanilla cupcake finished with buttercream.',
-    price: 3,
-    image: 'https://images.unsplash.com/photo-1587668178277-295251f900ce?auto=format&fit=crop&w=640&q=80',
-  },
-  {
-    id: 4,
-    name: 'Berry Fruit Tart',
-    category: 'tarts',
-    description: 'A crisp tart filled with custard and fresh berries.',
-    price: 6.5,
-    image: 'https://images.unsplash.com/photo-1519915028121-7d3463d20b13?auto=format&fit=crop&w=640&q=80',
-  },
-];
+type ModifierGroup = {
+  id: number;
+  name: string;
+  type: 'SINGLE' | 'MULTI';
+  isRequired: boolean;
+  modifiers: Modifier[];
+};
 
-function isCategory(value: string | null): value is Category {
-  return categories.some((category) => category.value === value);
-}
+type ProductDetails = Product & {
+  modifierGroups: ModifierGroup[];
+};
 
 function ProductModal({
   product,
   open,
+  currentRegion,
   onClose,
 }: {
   product: Product | null;
   open: boolean;
+  currentRegion: string;
   onClose: () => void;
 }) {
   const [quantity, setQuantity] = useState(1);
-  const [topping, setTopping] = useState('classic');
-  const [addSprinkles, setAddSprinkles] = useState(false);
+  const [details, setDetails] = useState<ProductDetails | null>(null);
+  const [selectedModifiers, setSelectedModifiers] = useState<Record<number, number[]>>({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!product || !open) return;
+
+    let active = true;
+    setLoading(true);
+    setError('');
+    setDetails(null);
+    setQuantity(1);
+    setSelectedModifiers({});
+
+    api
+      .get<ProductDetails>(`/products/${product.id}`, {
+        params: { region: currentRegion },
+      })
+      .then(({ data }) => {
+        if (active) setDetails(data);
+      })
+      .catch(() => {
+        if (active) setError('Unable to load product options. Please try again.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [currentRegion, open, product]);
+
+  const selectedModifierPrice = useMemo(() => {
+    if (!details) return 0;
+
+    return details.modifierGroups.reduce(
+      (total, group) =>
+        total +
+        group.modifiers
+          .filter((modifier) => selectedModifiers[group.id]?.includes(modifier.id))
+          .reduce((groupTotal, modifier) => groupTotal + modifier.priceDelta, 0),
+      0,
+    );
+  }, [details, selectedModifiers]);
 
   if (!product) return null;
 
-  const total = product.price * quantity + (addSprinkles ? 0.5 * quantity : 0);
+  const productDetails = details ?? product;
+  const total = (productDetails.price + selectedModifierPrice) * quantity;
+  const requiredGroupsComplete =
+    details?.modifierGroups
+      .filter((group) => group.isRequired)
+      .every((group) => (selectedModifiers[group.id]?.length ?? 0) > 0) ?? false;
+
+  function updateModifierSelection(group: ModifierGroup, modifierId: number, checked: boolean) {
+    setSelectedModifiers((current) => {
+      const currentSelection = current[group.id] ?? [];
+      const nextSelection =
+        group.type === 'SINGLE'
+          ? [modifierId]
+          : checked
+            ? [...currentSelection, modifierId]
+            : currentSelection.filter((id) => id !== modifierId);
+
+      return { ...current, [group.id]: nextSelection };
+    });
+  }
 
   return (
     <Modal open={open} title={product.name} onClose={onClose}>
       <div style={{ display: 'grid', gap: 20 }}>
         <img
-          src={product.image}
-          alt=""
+          src={productDetails.photoUrl ?? '/favicon.svg'}
+          alt={productDetails.name}
           style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 'var(--radius-md)' }}
         />
-        <p>{product.description}</p>
+        <p>{productDetails.description}</p>
 
         <div style={{ display: 'grid', gap: 10 }}>
           <strong>Quantity</strong>
@@ -114,32 +157,49 @@ function ProductModal({
           </div>
         </div>
 
-        <fieldset style={{ display: 'grid', gap: 8, border: 0, padding: 0 }}>
-          <legend style={{ fontWeight: 700 }}>Topping</legend>
-          <Radio
-            name="topping"
-            value="classic"
-            label="Classic cream"
-            checked={topping === 'classic'}
-            onChange={(event) => setTopping(event.target.value)}
-          />
-          <Radio
-            name="topping"
-            value="chocolate"
-            label="Chocolate cream (+$1.00)"
-            checked={topping === 'chocolate'}
-            onChange={(event) => setTopping(event.target.value)}
-          />
-        </fieldset>
+        {loading && <p>Loading product options...</p>}
+        {error && <p role="alert">{error}</p>}
+        {details?.modifierGroups.map((group) => (
+          <fieldset key={group.id} style={{ display: 'grid', gap: 8, border: 0, padding: 0 }}>
+            <legend style={{ fontWeight: 700 }}>
+              {group.name}
+              {group.isRequired ? ' (Required)' : ' (Optional)'}
+            </legend>
+            {group.modifiers.map((modifier) => {
+              const checked = selectedModifiers[group.id]?.includes(modifier.id) ?? false;
+              const label = `${modifier.name}${modifier.priceDelta > 0 ? ` (+$${modifier.priceDelta.toFixed(2)})` : ''}`;
 
-        <Checkbox
-          label="Add sprinkles (+$0.50)"
-          checked={addSprinkles}
-          onChange={(event) => setAddSprinkles(event.target.checked)}
-        />
+              return group.type === 'SINGLE' ? (
+                <Radio
+                  key={modifier.id}
+                  name={`modifier-group-${group.id}`}
+                  value={String(modifier.id)}
+                  label={label}
+                  checked={checked}
+                  onChange={() => updateModifierSelection(group, modifier.id, true)}
+                />
+              ) : (
+                <Checkbox
+                  key={modifier.id}
+                  label={label}
+                  checked={checked}
+                  onChange={(event) =>
+                    updateModifierSelection(group, modifier.id, event.target.checked)
+                  }
+                />
+              );
+            })}
+          </fieldset>
+        ))}
 
-        <Button type="button" onClick={onClose}>
-          Add · ${total.toFixed(2)}
+        <strong aria-live="polite">Total Price: ${total.toFixed(2)}</strong>
+
+        <Button
+          type="button"
+          disabled={loading || Boolean(error) || !requiredGroupsComplete}
+          onClick={onClose}
+        >
+          Add to Cart
         </Button>
       </div>
     </Modal>
@@ -147,23 +207,70 @@ function ProductModal({
 }
 
 export default function Menu() {
+  const currentRegion = useSelector((state: RootState) => state.region.code);
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryParam = searchParams.get('category');
-  const activeCategory: Category = isCategory(categoryParam) ? categoryParam : 'all';
+  const selectedCategoryId = categoryParam ? Number(categoryParam) : undefined;
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [error, setError] = useState('');
 
-  const visibleProducts =
-    activeCategory === 'all'
-      ? products
-      : products.filter((product) => product.category === activeCategory);
+  useEffect(() => {
+    let active = true;
+    setLoadingCategories(true);
 
-  function selectCategory(category: Category) {
-    if (category === 'all') {
+    api.get<Category[]>('/categories')
+      .then(({ data }) => {
+        if (active) setCategories(data);
+      })
+      .catch(() => {
+        if (active) setError('Unable to load categories. Please try again.');
+      })
+      .finally(() => {
+        if (active) setLoadingCategories(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const params: { region: string; categoryId?: number } = { region: currentRegion };
+    if (selectedCategoryId !== undefined && Number.isInteger(selectedCategoryId)) {
+      params.categoryId = selectedCategoryId;
+    }
+
+    setLoadingProducts(true);
+    setError('');
+
+    api.get<Product[]>('/products', { params })
+      .then(({ data }) => {
+        if (active) setProducts(data);
+      })
+      .catch(() => {
+        if (active) setError('Unable to load products. Please try again.');
+      })
+      .finally(() => {
+        if (active) setLoadingProducts(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [currentRegion, selectedCategoryId]);
+
+  function selectCategory(categoryId?: number) {
+    if (categoryId === undefined) {
       setSearchParams({});
       return;
     }
 
-    setSearchParams({ category });
+    setSearchParams({ category: String(categoryId) });
   }
 
   return (
@@ -174,26 +281,40 @@ export default function Menu() {
       </div>
 
       <div role="tablist" aria-label="Product categories" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={selectedCategoryId === undefined}
+          onClick={() => selectCategory()}
+          style={{
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-md)',
+            padding: '10px 16px',
+            cursor: 'pointer',
+            color: selectedCategoryId === undefined ? 'white' : 'var(--color-text)',
+            background: selectedCategoryId === undefined ? 'var(--color-primary)' : 'var(--color-surface)',
+          }}
+        >
+          All
+        </button>
         {categories.map((category) => (
           <button
-            key={category.value}
-            id={`tab-${category.value}`}
+            key={category.id}
+            id={`tab-${category.id}`}
             type="button"
             role="tab"
-            aria-selected={activeCategory === category.value}
-            aria-controls="product-grid"
-            tabIndex={activeCategory === category.value ? 0 : -1}
-            onClick={() => selectCategory(category.value)}
+            aria-selected={selectedCategoryId === category.id}
+            onClick={() => selectCategory(category.id)}
             style={{
               border: '1px solid var(--color-border)',
               borderRadius: 'var(--radius-md)',
               padding: '10px 16px',
               cursor: 'pointer',
-              color: activeCategory === category.value ? 'white' : 'var(--color-text)',
-              background: activeCategory === category.value ? 'var(--color-primary)' : 'var(--color-surface)',
+              color: selectedCategoryId === category.id ? 'white' : 'var(--color-text)',
+              background: selectedCategoryId === category.id ? 'var(--color-primary)' : 'var(--color-surface)',
             }}
           >
-            {category.label}
+            {category.name}
           </button>
         ))}
       </div>
@@ -201,23 +322,30 @@ export default function Menu() {
       <div
         id="product-grid"
         role="tabpanel"
-        aria-labelledby={`tab-${activeCategory}`}
+        aria-labelledby={selectedCategoryId ? `tab-${selectedCategoryId}` : undefined}
         style={{
           display: 'grid',
           gap: 16,
           gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
         }}
       >
-        {visibleProducts.map((product) => (
+        {loadingCategories || loadingProducts ? (
+          <p>Loading products...</p>
+        ) : error ? (
+          <p role="alert">{error}</p>
+        ) : products.length === 0 ? (
+          <p>No products are available for this selection.</p>
+        ) : products.map((product) => (
           <Card key={product.id} title={product.name} onClick={() => setSelectedProduct(product)} style={{ cursor: 'pointer' }}>
             <img
-              src={product.image}
+              src={product.photoUrl ?? '/favicon.svg'}
               alt={product.name}
               style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 'var(--radius-md)', marginBottom: 12 }}
             />
             <p>{product.description}</p>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-              <strong>${product.price.toFixed(2)}</strong>
+              <strong>{product.price.toFixed(2)} {currentRegion}</strong>
+              {product.inStock && <span>In Stock</span>}
               <Button
                 type="button"
                 onClick={(event) => {
@@ -235,6 +363,7 @@ export default function Menu() {
       <ProductModal
         product={selectedProduct}
         open={selectedProduct !== null}
+        currentRegion={currentRegion}
         onClose={() => setSelectedProduct(null)}
       />
     </section>
