@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { api } from '../api/client';
 import Button from '../components/ui/Button';
@@ -8,7 +8,8 @@ import Card from '../components/ui/Card';
 import Checkbox from '../components/ui/Checkbox';
 import Modal from '../components/ui/Modal';
 import Radio from '../components/ui/Radio';
-import type { RootState } from '../store';
+import { addToCart } from '../store';
+import type { AppDispatch, RootState } from '../store';
 
 type Category = {
   id: number;
@@ -46,11 +47,19 @@ function ProductModal({
   product,
   open,
   currentRegion,
+  onAdd,
   onClose,
 }: {
   product: Product | null;
   open: boolean;
   currentRegion: string;
+  onAdd: (item: {
+    productId: number;
+    name: string;
+    quantity: number;
+    modifierIds: number[];
+    photoUrl: string | null;
+  }) => void;
   onClose: () => void;
 }) {
   const [quantity, setQuantity] = useState(1);
@@ -88,23 +97,9 @@ function ProductModal({
     };
   }, [currentRegion, open, product]);
 
-  const selectedModifierPrice = useMemo(() => {
-    if (!details) return 0;
-
-    return details.modifierGroups.reduce(
-      (total, group) =>
-        total +
-        group.modifiers
-          .filter((modifier) => selectedModifiers[group.id]?.includes(modifier.id))
-          .reduce((groupTotal, modifier) => groupTotal + modifier.priceDelta, 0),
-      0,
-    );
-  }, [details, selectedModifiers]);
-
   if (!product) return null;
 
   const productDetails = details ?? product;
-  const total = (productDetails.price + selectedModifierPrice) * quantity;
   const requiredGroupsComplete =
     details?.modifierGroups
       .filter((group) => group.isRequired)
@@ -192,12 +187,19 @@ function ProductModal({
           </fieldset>
         ))}
 
-        <strong aria-live="polite">Total Price: ${total.toFixed(2)}</strong>
-
         <Button
           type="button"
           disabled={loading || Boolean(error) || !requiredGroupsComplete}
-          onClick={onClose}
+          onClick={() => {
+            onAdd({
+              productId: productDetails.id,
+              name: productDetails.name,
+              quantity,
+              modifierIds: Object.values(selectedModifiers).flat(),
+              photoUrl: productDetails.photoUrl,
+            });
+            onClose();
+          }}
         >
           Add to Cart
         </Button>
@@ -207,6 +209,7 @@ function ProductModal({
 }
 
 export default function Menu() {
+  const dispatch = useDispatch<AppDispatch>();
   const currentRegion = useSelector((state: RootState) => state.region.code);
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryParam = searchParams.get('category');
@@ -364,6 +367,7 @@ export default function Menu() {
         product={selectedProduct}
         open={selectedProduct !== null}
         currentRegion={currentRegion}
+        onAdd={(item) => dispatch(addToCart(item))}
         onClose={() => setSelectedProduct(null)}
       />
     </section>

@@ -1,98 +1,83 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 
+import { api } from '../api/client';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
+import {
+  isCartItem,
+  removeFromCart,
+  updateCartQuantity,
+} from '../store';
+import type { CartItem, AppDispatch, RootState } from '../store';
 
-type CartItem = {
-  id: number;
-  name: string;
-  price: number;
+type CalculatedCartItem = {
+  productId: number;
+  unitPrice: number;
+  modifiersPrice: number;
   quantity: number;
-  image: string;
+  lineTotal: number;
 };
 
-const initialItems: CartItem[] = [
-  {
-    id: 1,
-    name: 'Cherry Cheesecake',
-    price: 8,
-    quantity: 1,
-    image:
-      'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=320&q=80',
-  },
-  {
-    id: 2,
-    name: 'Vanilla Cupcake',
-    price: 3,
-    quantity: 2,
-    image:
-      'https://images.unsplash.com/photo-1587668178277-295251f900ce?auto=format&fit=crop&w=320&q=80',
-  },
-];
+type CartCalculation = {
+  items: CalculatedCartItem[];
+  subtotal: number;
+  vatRate: number;
+  vatAmount: number;
+  amountInclVat: number;
+  discountRate: number;
+  discountAmount: number;
+  deliveryFee: number;
+  total: number;
+  currencyCode: string;
+};
 
-// Mock checkout values used until cart data is connected to the backend.
-const VAT_RATE = 0.12;
-const DISCOUNT_RATE = 0.1;
-const DISCOUNT_THRESHOLD = 20;
-const DELIVERY_FEE = 4;
-const ORDER_TYPE = 'DELIVERY';
-
-function formatCurrency(value: number) {
-  return `$${value.toFixed(2)}`;
+function formatMoney(value: number, currencyCode: string) {
+  return new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency: currencyCode,
+  }).format(value);
 }
 
-function roundAmount(value: number) {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
-}
-
-function CartSummary({ subtotal }: { subtotal: number }) {
-  const vat = roundAmount(subtotal * VAT_RATE);
-  const amountIncludingVat = roundAmount(subtotal + vat);
-  const discount =
-    amountIncludingVat >= DISCOUNT_THRESHOLD
-      ? roundAmount(amountIncludingVat * DISCOUNT_RATE)
-      : 0;
-  const delivery = ORDER_TYPE === 'DELIVERY' ? DELIVERY_FEE : 0;
-  const total = roundAmount(amountIncludingVat - discount + delivery);
-
+function CartSummary({ calculation }: { calculation: CartCalculation }) {
   return (
     <Card title="Order Summary">
       <dl style={{ display: 'grid', gap: 12, margin: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
           <dt>Subtotal</dt>
           <dd data-testid="cart-subtotal" style={{ margin: 0 }}>
-            {formatCurrency(subtotal)}
+            {formatMoney(calculation.subtotal, calculation.currencyCode)}
           </dd>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
-          <dt>VAT ({VAT_RATE * 100}%)</dt>
+          <dt>VAT ({calculation.vatRate * 100}%)</dt>
           <dd data-testid="cart-vat" style={{ margin: 0 }}>
-            {formatCurrency(vat)}
+            {formatMoney(calculation.vatAmount, calculation.currencyCode)}
           </dd>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
           <dt>Amount including VAT</dt>
           <dd data-testid="cart-amount-incl-vat" style={{ margin: 0 }}>
-            {formatCurrency(amountIncludingVat)}
+            {formatMoney(calculation.amountInclVat, calculation.currencyCode)}
           </dd>
         </div>
-        {discount > 0 && (
+        {calculation.discountAmount > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
-            <dt>Discount ({DISCOUNT_RATE * 100}%)</dt>
+            <dt>Discount ({calculation.discountRate * 100}%)</dt>
             <dd
               data-testid="cart-discount"
               style={{ margin: 0, color: 'var(--color-primary)' }}
             >
-              -{formatCurrency(discount)}
+              -{formatMoney(calculation.discountAmount, calculation.currencyCode)}
             </dd>
           </div>
         )}
-        {ORDER_TYPE === 'DELIVERY' && (
+        {calculation.deliveryFee > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
             <dt>Delivery</dt>
             <dd data-testid="cart-delivery-fee" style={{ margin: 0 }}>
-              {formatCurrency(delivery)}
+              {formatMoney(calculation.deliveryFee, calculation.currencyCode)}
             </dd>
           </div>
         )}
@@ -109,7 +94,7 @@ function CartSummary({ subtotal }: { subtotal: number }) {
         >
           <dt>TOTAL</dt>
           <dd data-testid="cart-total" style={{ margin: 0 }}>
-            {formatCurrency(total)}
+            {formatMoney(calculation.total, calculation.currencyCode)}
           </dd>
         </div>
       </dl>
@@ -117,28 +102,133 @@ function CartSummary({ subtotal }: { subtotal: number }) {
   );
 }
 
-export default function Cart() {
-  const [items, setItems] = useState<CartItem[]>(initialItems);
-  const navigate = useNavigate();
-
-  const subtotal = useMemo(
-    () => roundAmount(items.reduce((total, item) => total + item.price * item.quantity, 0)),
-    [items],
+function CartItemRow({
+  item,
+  calculatedItem,
+  currencyCode,
+  onDecrease,
+  onIncrease,
+  onRemove,
+}: {
+  item: CartItem;
+  calculatedItem: CalculatedCartItem;
+  currencyCode: string;
+  onDecrease: () => void;
+  onIncrease: () => void;
+  onRemove: () => void;
+}) {
+  return (
+    <li
+      data-testid={`cart-item-${item.id}`}
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '80px minmax(0, 1fr)',
+        gap: 16,
+        alignItems: 'center',
+        paddingBottom: 16,
+        borderBottom: '1px solid var(--color-border)',
+      }}
+    >
+      <img
+        src={item.photoUrl ?? '/favicon.svg'}
+        alt={item.name}
+        style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 'var(--radius-md)' }}
+      />
+      <div style={{ display: 'grid', gap: 6, minWidth: 0 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'baseline',
+            gap: 12,
+            flexWrap: 'wrap',
+          }}
+        >
+          <strong>{item.name}</strong>
+          <strong>{formatMoney(calculatedItem.lineTotal, currencyCode)}</strong>
+        </div>
+        <span>
+          {formatMoney(calculatedItem.unitPrice, currencyCode)} each
+        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <Button
+            type="button"
+            variant="secondary"
+            aria-label={`Decrease quantity of ${item.name}`}
+            onClick={onDecrease}
+          >
+            -
+          </Button>
+          <span data-testid={`cart-qty-${item.id}`} aria-live="polite">
+            {item.quantity}
+          </span>
+          <Button
+            type="button"
+            variant="secondary"
+            aria-label={`Increase quantity of ${item.name}`}
+            onClick={onIncrease}
+          >
+            +
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            aria-label={`Remove ${item.name} from cart`}
+            data-testid={`cart-remove-${item.id}`}
+            onClick={onRemove}
+          >
+            Remove
+          </Button>
+        </div>
+      </div>
+    </li>
   );
+}
 
-  function updateQuantity(id: number, change: number) {
-    setItems((currentItems) =>
-      currentItems.map((item) =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, item.quantity + change) }
-          : item,
-      ),
-    );
-  }
+export default function Cart() {
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+  const storedItems = useSelector((state: RootState) => state.cart.items);
+  const items = storedItems.filter(isCartItem);
+  const currentRegion = useSelector((state: RootState) => state.region.code);
+  const [calculation, setCalculation] = useState<CartCalculation | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  function removeItem(id: number) {
-    setItems((currentItems) => currentItems.filter((item) => item.id !== id));
-  }
+  useEffect(() => {
+    if (items.length === 0) {
+      setCalculation(null);
+      setError('');
+      return;
+    }
+
+    let active = true;
+    setLoading(true);
+    setError('');
+
+    api
+      .post<CartCalculation>('/cart/calculate', {
+        region: currentRegion,
+        items: items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          modifierIds: item.modifierIds,
+        })),
+      })
+      .then(({ data }) => {
+        if (active) setCalculation(data);
+      })
+      .catch(() => {
+        if (active) setError('Unable to calculate your cart. Please try again.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [currentRegion, items]);
 
   if (items.length === 0) {
     return (
@@ -160,96 +250,54 @@ export default function Cart() {
         <h2>Your Cart</h2>
       </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gap: 24,
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          alignItems: 'start',
-        }}
-      >
-        <Card title="Cart Items">
-          <ul style={{ display: 'grid', gap: 16, padding: 0, margin: 0, listStyle: 'none' }}>
-            {items.map((item) => (
-              <li
-                key={item.id}
-                data-testid={`cart-item-${item.id}`}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '80px minmax(0, 1fr)',
-                  gap: 16,
-                  alignItems: 'center',
-                  paddingBottom: 16,
-                  borderBottom: '1px solid var(--color-border)',
-                }}
-              >
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 'var(--radius-md)' }}
-                />
-                <div style={{ display: 'grid', gap: 6, minWidth: 0 }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'baseline',
-                      gap: 12,
-                      flexWrap: 'wrap',
-                    }}
-                  >
-                    <strong>{item.name}</strong>
-                    <strong>{formatCurrency(item.price * item.quantity)}</strong>
-                  </div>
-                  <span>{formatCurrency(item.price)} each</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        style={{ padding: '4px 10px', minHeight: 'auto' }}
-                        aria-label={`Decrease quantity of ${item.name}`}
-                        onClick={() => updateQuantity(item.id, -1)}
-                      >
-                        -
-                      </Button>
-                      <span aria-live="polite" style={{ padding: '0 8px', fontWeight: 600 }}>
-                        {item.quantity}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        style={{ padding: '4px 10px', minHeight: 'auto' }}
-                        aria-label={`Increase quantity of ${item.name}`}
-                        onClick={() => updateQuantity(item.id, 1)}
-                      >
-                        +
-                      </Button>
-                    </div>
+      {loading && <p>Calculating your cart...</p>}
+      {error && <p role="alert">{error}</p>}
 
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      style={{ padding: '4px 12px', minHeight: 'auto', color: '#b91c1c' }}
-                      aria-label={`Remove ${item.name} from cart`}
-                      onClick={() => removeItem(item.id)}
-                    >
-                      Remove
-                    </Button>
-                  </div>
+      {calculation && !error && (
+        <div
+          style={{
+            display: 'grid',
+            gap: 24,
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            alignItems: 'start',
+          }}
+        >
+          <Card title="Cart Items">
+            <ul style={{ display: 'grid', gap: 16, padding: 0, margin: 0, listStyle: 'none' }}>
+              {items.map((item) => {
+                const calculatedItem = calculation.items.find(
+                  (line) => line.productId === item.productId,
+                );
 
-                </div>
-              </li>
-            ))}
-          </ul>
-        </Card>
+                if (!calculatedItem) return null;
 
-        <CartSummary subtotal={subtotal} />
-      </div>
+                return (
+                  <CartItemRow
+                    key={item.id}
+                    item={item}
+                    calculatedItem={calculatedItem}
+                    currencyCode={calculation.currencyCode}
+                    onDecrease={() =>
+                      dispatch(updateCartQuantity({ id: item.id, quantity: item.quantity - 1 }))
+                    }
+                    onIncrease={() =>
+                      dispatch(updateCartQuantity({ id: item.id, quantity: item.quantity + 1 }))
+                    }
+                    onRemove={() => dispatch(removeFromCart(item.id))}
+                  />
+                );
+              })}
+            </ul>
+          </Card>
+
+          <CartSummary calculation={calculation} />
+        </div>
+      )}
 
       <Button
         type="button"
         data-testid="cart-checkout"
+        disabled={loading || Boolean(error) || !calculation}
         onClick={() => navigate('/checkout')}
       >
         Proceed to Checkout

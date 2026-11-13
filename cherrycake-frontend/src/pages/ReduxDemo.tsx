@@ -49,7 +49,9 @@ export default function ReduxDemo() {
 
       <ul>
         {cart.map((item, index) => (
-          <li key={`${item}-${index}`}>{item}</li>
+          <li key={`${typeof item === 'string' ? item : item.id}-${index}`}>
+            {typeof item === 'string' ? item : item.name}
+          </li>
         ))}
       </ul>
 
@@ -62,4 +64,3 @@ export default function ReduxDemo() {
     </section>
   );
 }
-
