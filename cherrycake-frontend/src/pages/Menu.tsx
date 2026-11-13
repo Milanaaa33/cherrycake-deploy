@@ -62,6 +62,13 @@ function ProductModal({
   }) => void;
   onClose: () => void;
 }) {
+  const currency = useSelector(
+    (state: RootState) => state.region.currencyCode
+  );
+  const symbol = useSelector(
+    (state: RootState) => state.region.currencySymbol
+  );
+
   const [quantity, setQuantity] = useState(1);
   const [details, setDetails] = useState<ProductDetails | null>(null);
   const [selectedModifiers, setSelectedModifiers] = useState<Record<number, number[]>>({});
@@ -162,7 +169,13 @@ function ProductModal({
             </legend>
             {group.modifiers.map((modifier) => {
               const checked = selectedModifiers[group.id]?.includes(modifier.id) ?? false;
-              const label = `${modifier.name}${modifier.priceDelta > 0 ? ` (+$${modifier.priceDelta.toFixed(2)})` : ''}`;
+              const label = `${modifier.name}${
+                modifier.priceDelta > 0
+                  ? ` (+${symbol} ${modifier.priceDelta.toLocaleString('en-US', {
+                      maximumFractionDigits: 2,
+                    })} ${currency})`
+                  : ''
+              }`;
 
               return group.type === 'SINGLE' ? (
                 <Radio
@@ -211,6 +224,8 @@ function ProductModal({
 export default function Menu() {
   const dispatch = useDispatch<AppDispatch>();
   const currentRegion = useSelector((state: RootState) => state.region.code);
+  const currency = useSelector((state: RootState) => state.region.currencyCode);
+  const symbol = useSelector((state: RootState) => state.region.currencySymbol);
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryParam = searchParams.get('category');
   const selectedCategoryId = categoryParam ? Number(categoryParam) : undefined;
@@ -347,7 +362,11 @@ export default function Menu() {
             />
             <p>{product.description}</p>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-              <strong>{product.price.toFixed(2)} {currentRegion}</strong>
+              <strong>
+                {symbol} {product.price.toLocaleString('en-US', {
+                  maximumFractionDigits: 2,
+                })} {currency}
+              </strong>
               {product.inStock && <span>In Stock</span>}
               <Button
                 type="button"
