@@ -1,5 +1,6 @@
 package com.cherrycake.pricing.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -18,6 +19,7 @@ public record CalculateCartResponse(
         BigDecimal total,
         String currencyCode) {
 
+    @Schema(name = "CalculateCartItemResponse")
     public record Item(
             Long productId,
             BigDecimal unitPrice,

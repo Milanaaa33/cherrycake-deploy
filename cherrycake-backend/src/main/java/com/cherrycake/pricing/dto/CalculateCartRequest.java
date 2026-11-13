@@ -16,6 +16,7 @@ public record CalculateCartRequest(
         @NotEmpty(message = "cart is empty")
         List<@NotNull @Valid Item> items) {
 
+    @Schema(name = "CalculateCartItemRequest")
     public record Item(
             @NotNull(message = "productId is required")
             Long productId,
