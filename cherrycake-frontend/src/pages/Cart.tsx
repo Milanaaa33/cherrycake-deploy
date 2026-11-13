@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -106,6 +106,7 @@ function CartItemRow({
   item,
   calculatedItem,
   currencyCode,
+  disabled,
   onDecrease,
   onIncrease,
   onRemove,
@@ -113,6 +114,7 @@ function CartItemRow({
   item: CartItem;
   calculatedItem: CalculatedCartItem;
   currencyCode: string;
+  disabled?: boolean;
   onDecrease: () => void;
   onIncrease: () => void;
   onRemove: () => void;
@@ -154,6 +156,7 @@ function CartItemRow({
           <Button
             type="button"
             variant="secondary"
+            disabled={disabled}
             aria-label={`Decrease quantity of ${item.name}`}
             onClick={onDecrease}
           >
@@ -165,6 +168,7 @@ function CartItemRow({
           <Button
             type="button"
             variant="secondary"
+            disabled={disabled}
             aria-label={`Increase quantity of ${item.name}`}
             onClick={onIncrease}
           >
@@ -173,6 +177,7 @@ function CartItemRow({
           <Button
             type="button"
             variant="secondary"
+            disabled={disabled}
             aria-label={`Remove ${item.name} from cart`}
             data-testid={`cart-remove-${item.id}`}
             onClick={onRemove}
@@ -189,7 +194,7 @@ export default function Cart() {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const storedItems = useSelector((state: RootState) => state.cart.items);
-  const items = storedItems.filter(isCartItem);
+  const items = useMemo(() => storedItems.filter(isCartItem), [storedItems]);
   const currentRegion = useSelector((state: RootState) => state.region.code);
   const [calculation, setCalculation] = useState<CartCalculation | null>(null);
   const [loading, setLoading] = useState(false);
@@ -250,7 +255,7 @@ export default function Cart() {
         <h2>Your Cart</h2>
       </div>
 
-      {loading && <p>Calculating your cart...</p>}
+      {loading && !calculation && <p>Calculating your cart...</p>}
       {error && <p role="alert">{error}</p>}
 
       {calculation && !error && (
@@ -260,6 +265,8 @@ export default function Cart() {
             gap: 24,
             gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
             alignItems: 'start',
+            opacity: loading ? 0.7 : 1,
+            transition: 'opacity 0.15s ease',
           }}
         >
           <Card title="Cart Items">
@@ -277,6 +284,7 @@ export default function Cart() {
                     item={item}
                     calculatedItem={calculatedItem}
                     currencyCode={calculation.currencyCode}
+                    disabled={loading}
                     onDecrease={() =>
                       dispatch(updateCartQuantity({ id: item.id, quantity: item.quantity - 1 }))
                     }

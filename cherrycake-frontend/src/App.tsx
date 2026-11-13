@@ -8,7 +8,6 @@ import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import Toast from './components/ui/Toast';
 import UIKit from './pages/UIKit';
-import ReduxDemo from './pages/ReduxDemo';
 
 import Home from './pages/Home';
 import Menu from './pages/Menu';
@@ -18,16 +17,6 @@ import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
 
 import './App.css';
-
-function Page({ title }: { title: string }) {
-  return (
-    <section className="cc-placeholder">
-      <p className="cc-eyebrow">Cherry Cake</p>
-      <h2>{title}</h2>
-      <p>This page is ready for development.</p>
-    </section>
-  );
-}
 
 export default function App() {
   const toast = useSelector((state: RootState) => state.ui.toast);
@@ -45,9 +34,7 @@ export default function App() {
           <Route path="/reports" element={<Reports />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/order-success" element={<OrderSuccess />} />
-          <Route path="/orders" element={<Page title="Orders" />} />
           <Route path="/ui-kit" element={<UIKit />} />
-          <Route path="/redux-demo" element={<ReduxDemo />} />
         </Routes>
       </main>
 
