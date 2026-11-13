@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
@@ -24,32 +24,115 @@ type Product = {
   inStock: boolean;
 };
 
+type Modifier = {
+  id: number;
+  name: string;
+  priceDelta: number;
+};
+
+type ModifierGroup = {
+  id: number;
+  name: string;
+  type: 'SINGLE' | 'MULTI';
+  isRequired: boolean;
+  modifiers: Modifier[];
+};
+
+type ProductDetails = Product & {
+  modifierGroups: ModifierGroup[];
+};
+
 function ProductModal({
   product,
   open,
+  currentRegion,
   onClose,
 }: {
   product: Product | null;
   open: boolean;
+  currentRegion: string;
   onClose: () => void;
 }) {
   const [quantity, setQuantity] = useState(1);
-  const [topping, setTopping] = useState('classic');
-  const [addSprinkles, setAddSprinkles] = useState(false);
+  const [details, setDetails] = useState<ProductDetails | null>(null);
+  const [selectedModifiers, setSelectedModifiers] = useState<Record<number, number[]>>({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!product || !open) return;
+
+    let active = true;
+    setLoading(true);
+    setError('');
+    setDetails(null);
+    setQuantity(1);
+    setSelectedModifiers({});
+
+    api
+      .get<ProductDetails>(`/products/${product.id}`, {
+        params: { region: currentRegion },
+      })
+      .then(({ data }) => {
+        if (active) setDetails(data);
+      })
+      .catch(() => {
+        if (active) setError('Unable to load product options. Please try again.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [currentRegion, open, product]);
+
+  const selectedModifierPrice = useMemo(() => {
+    if (!details) return 0;
+
+    return details.modifierGroups.reduce(
+      (total, group) =>
+        total +
+        group.modifiers
+          .filter((modifier) => selectedModifiers[group.id]?.includes(modifier.id))
+          .reduce((groupTotal, modifier) => groupTotal + modifier.priceDelta, 0),
+      0,
+    );
+  }, [details, selectedModifiers]);
 
   if (!product) return null;
 
-  const total = product.price * quantity + (addSprinkles ? 0.5 * quantity : 0);
+  const productDetails = details ?? product;
+  const total = (productDetails.price + selectedModifierPrice) * quantity;
+  const requiredGroupsComplete =
+    details?.modifierGroups
+      .filter((group) => group.isRequired)
+      .every((group) => (selectedModifiers[group.id]?.length ?? 0) > 0) ?? false;
+
+  function updateModifierSelection(group: ModifierGroup, modifierId: number, checked: boolean) {
+    setSelectedModifiers((current) => {
+      const currentSelection = current[group.id] ?? [];
+      const nextSelection =
+        group.type === 'SINGLE'
+          ? [modifierId]
+          : checked
+            ? [...currentSelection, modifierId]
+            : currentSelection.filter((id) => id !== modifierId);
+
+      return { ...current, [group.id]: nextSelection };
+    });
+  }
 
   return (
     <Modal open={open} title={product.name} onClose={onClose}>
       <div style={{ display: 'grid', gap: 20 }}>
         <img
-          src={product.photoUrl ?? '/favicon.svg'}
-          alt={product.name}
+          src={productDetails.photoUrl ?? '/favicon.svg'}
+          alt={productDetails.name}
           style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 'var(--radius-md)' }}
         />
-        <p>{product.description}</p>
+        <p>{productDetails.description}</p>
 
         <div style={{ display: 'grid', gap: 10 }}>
           <strong>Quantity</strong>
@@ -74,20 +157,49 @@ function ProductModal({
           </div>
         </div>
 
-        <fieldset style={{ display: 'grid', gap: 8, border: 0, padding: 0 }}>
-          <legend style={{ fontWeight: 700 }}>Topping</legend>
-          <Radio name="topping" value="classic" label="Classic cream" checked={topping === 'classic'} onChange={(event) => setTopping(event.target.value)} />
-          <Radio name="topping" value="chocolate" label="Chocolate cream (+$1.00)" checked={topping === 'chocolate'} onChange={(event) => setTopping(event.target.value)} />
-        </fieldset>
+        {loading && <p>Loading product options...</p>}
+        {error && <p role="alert">{error}</p>}
+        {details?.modifierGroups.map((group) => (
+          <fieldset key={group.id} style={{ display: 'grid', gap: 8, border: 0, padding: 0 }}>
+            <legend style={{ fontWeight: 700 }}>
+              {group.name}
+              {group.isRequired ? ' (Required)' : ' (Optional)'}
+            </legend>
+            {group.modifiers.map((modifier) => {
+              const checked = selectedModifiers[group.id]?.includes(modifier.id) ?? false;
+              const label = `${modifier.name}${modifier.priceDelta > 0 ? ` (+$${modifier.priceDelta.toFixed(2)})` : ''}`;
 
-        <Checkbox
-          label="Add sprinkles (+$0.50)"
-          checked={addSprinkles}
-          onChange={(event) => setAddSprinkles(event.target.checked)}
-        />
+              return group.type === 'SINGLE' ? (
+                <Radio
+                  key={modifier.id}
+                  name={`modifier-group-${group.id}`}
+                  value={String(modifier.id)}
+                  label={label}
+                  checked={checked}
+                  onChange={() => updateModifierSelection(group, modifier.id, true)}
+                />
+              ) : (
+                <Checkbox
+                  key={modifier.id}
+                  label={label}
+                  checked={checked}
+                  onChange={(event) =>
+                    updateModifierSelection(group, modifier.id, event.target.checked)
+                  }
+                />
+              );
+            })}
+          </fieldset>
+        ))}
 
-        <Button type="button" onClick={onClose}>
-          Add · ${total.toFixed(2)}
+        <strong aria-live="polite">Total Price: ${total.toFixed(2)}</strong>
+
+        <Button
+          type="button"
+          disabled={loading || Boolean(error) || !requiredGroupsComplete}
+          onClick={onClose}
+        >
+          Add to Cart
         </Button>
       </div>
     </Modal>
@@ -251,6 +363,7 @@ export default function Menu() {
       <ProductModal
         product={selectedProduct}
         open={selectedProduct !== null}
+        currentRegion={currentRegion}
         onClose={() => setSelectedProduct(null)}
       />
     </section>
