@@ -11,6 +11,7 @@ import {
   updateCartQuantity,
 } from '../store';
 import type { CartItem, AppDispatch, RootState } from '../store';
+import { getProductImage } from '../constants/productImages';
 
 type CalculatedCartItem = {
   productId: number;
@@ -132,7 +133,7 @@ function CartItemRow({
       }}
     >
       <img
-        src={item.photoUrl ?? '/favicon.svg'}
+        src={getProductImage(item.name)}
         alt={item.name}
         style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 'var(--radius-md)' }}
       />

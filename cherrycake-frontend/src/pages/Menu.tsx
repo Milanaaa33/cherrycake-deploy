@@ -8,6 +8,7 @@ import Card from '../components/ui/Card';
 import Checkbox from '../components/ui/Checkbox';
 import Modal from '../components/ui/Modal';
 import Radio from '../components/ui/Radio';
+import { getProductImage } from '../constants/productImages';
 import { addToCart } from '../store';
 import type { AppDispatch, RootState } from '../store';
 
@@ -130,7 +131,7 @@ function ProductModal({
     <Modal open={open} title={product.name} onClose={onClose}>
       <div style={{ display: 'grid', gap: 20 }}>
         <img
-          src={productDetails.photoUrl ?? '/favicon.svg'}
+          src={getProductImage(productDetails.name)}
           alt={productDetails.name}
           style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 'var(--radius-md)' }}
         />
@@ -209,7 +210,7 @@ function ProductModal({
               name: productDetails.name,
               quantity,
               modifierIds: Object.values(selectedModifiers).flat(),
-              photoUrl: productDetails.photoUrl,
+              photoUrl: getProductImage(productDetails.name),
             });
             onClose();
           }}
@@ -356,7 +357,7 @@ export default function Menu() {
         ) : products.map((product) => (
           <Card key={product.id} title={product.name} onClick={() => setSelectedProduct(product)} style={{ cursor: 'pointer' }}>
             <img
-              src={product.photoUrl ?? '/favicon.svg'}
+              src={getProductImage(product.name)}
               alt={product.name}
               style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 'var(--radius-md)', marginBottom: 12 }}
             />
