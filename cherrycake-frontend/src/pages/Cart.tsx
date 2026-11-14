@@ -135,7 +135,7 @@ function CartItemRow({
       <img
         src={getProductImage(item.name)}
         alt={item.name}
-        style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 'var(--radius-md)' }}
+        style={{ width: 80, height: 80, objectFit: 'contain', background: 'var(--color-surface-soft)', borderRadius: 'var(--radius-md)' }}
       />
       <div style={{ display: 'grid', gap: 6, minWidth: 0 }}>
         <div

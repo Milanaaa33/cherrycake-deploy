@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -42,6 +43,27 @@ type ModifierGroup = {
 
 type ProductDetails = Product & {
   modifierGroups: ModifierGroup[];
+};
+
+// Одинаковая рамка 4:3 для всех фото; картинка целиком помещается внутрь, ничего не обрезается
+const imageBoxStyle: CSSProperties = {
+  width: '100%',
+  aspectRatio: '4 / 3',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: 'var(--color-surface-soft)',
+  borderRadius: 'var(--radius-md)',
+  overflow: 'hidden',
+  marginBottom: 12,
+};
+
+const imageStyle: CSSProperties = {
+  maxWidth: '100%',
+  maxHeight: '100%',
+  width: '100%',
+  height: '100%',
+  objectFit: 'contain',
 };
 
 function ProductModal({
@@ -130,11 +152,13 @@ function ProductModal({
   return (
     <Modal open={open} title={product.name} onClose={onClose}>
       <div style={{ display: 'grid', gap: 20 }}>
-        <img
-          src={getProductImage(productDetails.name)}
-          alt={productDetails.name}
-          style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 'var(--radius-md)' }}
-        />
+        <div style={imageBoxStyle}>
+          <img
+            src={getProductImage(productDetails.name)}
+            alt={productDetails.name}
+            style={imageStyle}
+          />
+        </div>
         <p>{productDetails.description}</p>
 
         <div style={{ display: 'grid', gap: 10 }}>
@@ -356,19 +380,21 @@ export default function Menu() {
           <p>No products are available for this selection.</p>
         ) : products.map((product) => (
           <Card key={product.id} title={product.name} onClick={() => setSelectedProduct(product)} style={{ cursor: 'pointer' }}>
-            <img
-              src={getProductImage(product.name)}
-              alt={product.name}
-              style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 'var(--radius-md)', marginBottom: 12 }}
-            />
+            <div style={imageBoxStyle}>
+              <img
+                src={getProductImage(product.name)}
+                alt={product.name}
+                style={imageStyle}
+              />
+            </div>
             <p>{product.description}</p>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-              <strong>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <strong style={{ whiteSpace: 'nowrap' }}>
                 {symbol} {product.price.toLocaleString('en-US', {
                   maximumFractionDigits: 2,
                 })} {currency}
               </strong>
-              {product.inStock && <span>In Stock</span>}
+              {product.inStock && <span style={{ whiteSpace: 'nowrap' }}>In Stock</span>}
               <Button
                 type="button"
                 onClick={(event) => {
