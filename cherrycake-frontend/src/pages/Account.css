@@ -1,0 +1,59 @@
+/* Personal account: order history (same look as checkout) */
+.account-page .cc-loader { justify-content: center; padding: 40px 0; }
+.account-empty-link { display:inline-block; padding:12px 22px; border-radius:9px; background:#7b1e3c; color:#fff; font-size:14px; font-weight:700; text-decoration:none; }
+.account-empty-link:hover { background:#5e1530; }
+
+.account-main { background:#fff; border:1px solid #eadfda; border-radius:18px; box-shadow:0 8px 28px rgba(80,30,45,.045); padding:26px 28px; min-width:0; }
+.account-list-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-bottom:18px; border-bottom:1px solid #f0e8e4; }
+.account-list-top h3 { margin:0; font-size:20px; letter-spacing:-.4px; }
+.account-orders { display:grid; gap:14px; }
+
+.account-order { padding:18px 20px; border:1px solid #eadfda; border-radius:14px; background:#fffdfc; transition:border-color .15s, box-shadow .15s; }
+.account-order:hover { border-color:#d9c3c3; box-shadow:0 6px 20px rgba(80,30,45,.06); }
+.account-order-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; }
+.account-order-id { display:grid; gap:5px; min-width:0; }
+.account-order-id strong { font-size:15px; color:#282124; letter-spacing:.2px; }
+.account-order-id span { color:#8a7f82; font-size:12px; }
+.account-order-side { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+.account-order-total { color:#7b1e3c; font-size:18px; letter-spacing:-.3px; white-space:nowrap; }
+.account-order-preview { margin:12px 0 0; color:#82777a; font-size:13px; line-height:1.5; }
+
+.account-toggle { margin-top:12px; padding:0; border:0; background:none; color:#7b1e3c; font-size:13px; font-weight:800; cursor:pointer; }
+.account-toggle:hover { text-decoration:underline; }
+.account-toggle:focus-visible { outline:3px solid #b9770e; outline-offset:3px; border-radius:4px; }
+.account-order-details { margin-top:16px; padding-top:16px; border-top:1px dashed #e7dcd8; }
+.account-order-details .checkout-summary-product { padding:12px 0; }
+.account-order-details .checkout-summary-total { padding-bottom:0; }
+
+.account-profile { text-align:center; }
+.account-avatar { display:grid; place-items:center; width:72px; height:72px; margin:0 auto 14px; border-radius:50%; background:#fff2f3; color:#8c2948; font-size:24px; font-weight:800; letter-spacing:1px; }
+.account-profile h3 { margin:0 0 8px; font-size:20px; letter-spacing:-.4px; overflow-wrap:anywhere; }
+.account-profile-line { margin:4px 0; color:#82777a; font-size:13px; overflow-wrap:anywhere; }
+.account-stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:20px 0; }
+.account-stats > div { display:grid; gap:4px; padding:12px 8px; border-radius:10px; background:#f8f3ef; }
+.account-stats strong { color:#7b1e3c; font-size:15px; }
+.account-stats span { color:#8a7f82; font-size:11px; }
+.account-profile .checkout-summary-note { text-align:left; }
+
+@media (max-width: 900px) { .account-profile { order:-1; } }
+@media (max-width: 600px) {
+  .account-main { padding:20px 16px; }
+  .account-order { padding:16px; }
+  .account-order-head { flex-direction:column; gap:10px; }
+  .account-order-side { width:100%; justify-content:space-between; }
+}
+
+/* Find earlier orders */
+.account-claim { margin-top:24px; padding:22px 28px; background:#fff; border:1px solid #eadfda; border-radius:18px; box-shadow:0 8px 28px rgba(80,30,45,.045); }
+.account-claim-top { display:flex; justify-content:space-between; align-items:center; gap:16px; }
+.account-claim-top h3 { margin:0; font-size:17px; letter-spacing:-.3px; }
+.account-claim-top p { margin:5px 0 0; color:#8a7f82; font-size:13px; }
+.account-claim-top .checkout-button { flex-shrink:0; }
+.account-claim form { margin-top:20px; }
+.account-claim .checkout-form-actions { margin-top:20px; padding-top:18px; }
+.account-claim-message { margin:14px 0 0; padding:11px 14px; border-radius:10px; background:#f8f3ef; color:#6f5d63; font-size:13px; }
+.account-claim-error { display:block; margin-top:12px; }
+@media (max-width: 600px) {
+  .account-claim { padding:20px 16px; }
+  .account-claim-top { flex-direction:column; align-items:stretch; }
+}

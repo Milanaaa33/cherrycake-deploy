@@ -17,6 +17,7 @@ export default function Header() {
             Home
           </NavLink>
           <NavLink to="/menu">Menu</NavLink>
+          <NavLink to="/account">My Account</NavLink>
           <NavLink to="/reports">Reports</NavLink>
           <NavLink to="/ui-kit">UI Kit</NavLink>
         </nav>

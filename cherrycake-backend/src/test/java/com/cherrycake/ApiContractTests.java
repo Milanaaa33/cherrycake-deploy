@@ -28,12 +28,12 @@ class ApiContractTests {
     private ObjectMapper mapper;
 
     @Test
-    void publishesOnlyTheSixAgreedEndpointsWithTypedSuccessAndErrorResponses() throws Exception {
+    void publishesOnlyTheEightAgreedEndpointsWithTypedSuccessAndErrorResponses() throws Exception {
         JsonNode spec = spec();
         Set<String> paths = new HashSet<>();
         spec.path("paths").fieldNames().forEachRemaining(paths::add);
         assertThat(paths).containsExactlyInAnyOrder("/api/regions", "/api/categories", "/api/products",
-                "/api/products/{id}", "/api/cart/calculate", "/api/orders");
+                "/api/products/{id}", "/api/cart/calculate", "/api/orders", "/api/orders/my", "/api/orders/my/claim");
         assertThat(spec.at("/info/version").asText()).isEqualTo("v1");
         assertThat(spec.path("security").isMissingNode() || spec.path("security").isEmpty()).isTrue();
         assertSuccess(spec, "/api/regions", "get", "200", "RegionResponse", true);
@@ -50,6 +50,10 @@ class ApiContractTests {
         }
         assertSuccess(spec, "/api/cart/calculate", "post", "409", "ErrorResponse", false);
         assertSuccess(spec, "/api/orders", "post", "409", "ErrorResponse", false);
+        assertSuccess(spec, "/api/orders/my", "get", "200", "OrderResponse", true);
+        assertSuccess(spec, "/api/orders/my", "get", "400", "ErrorResponse", false);
+        assertSuccess(spec, "/api/orders/my/claim", "post", "200", "OrderResponse", true);
+        assertSuccess(spec, "/api/orders/my/claim", "post", "400", "ErrorResponse", false);
     }
 
     @Test

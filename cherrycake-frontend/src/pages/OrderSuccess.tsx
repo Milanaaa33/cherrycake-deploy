@@ -36,6 +36,7 @@ export default function OrderSuccess() {
       <p>Thank you, {order.customer.name}!</p>
       <p><strong>Order number:</strong> {order.orderNumber}</p>
       <p><strong>Order date:</strong> {order.orderDate} · <strong>Total:</strong> {formatMoney(order.total, order.currencyCode)}</p>
+      <Link to="/account">View my orders</Link>{' '}
       <Link to="/menu">Back to menu</Link>
     </section>
   );

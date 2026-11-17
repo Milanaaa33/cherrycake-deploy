@@ -2,6 +2,7 @@ package com.cherrycake.order.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.startsWith;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -274,6 +275,120 @@ class OrderControllerTests {
         body = validOrder();
         ((ObjectNode) body.at("/items/0")).put("productId", product("Cherry Cake"));
         assertRejectedWithoutSaving(body, 400);
+    }
+
+    @Test
+    void ordersPlacedWithClientIdAppearInMyOrdersNewestFirst() throws Exception {
+        String clientId = "11111111-2222-3333-4444-555555555555";
+        String otherClientId = "99999999-8888-7777-6666-555555555555";
+
+        mvc.perform(post("/api/orders").header("X-Client-Id", clientId)
+                        .contentType(MediaType.APPLICATION_JSON).content(validOrder().toString()))
+                .andExpect(status().isCreated());
+        mvc.perform(post("/api/orders").header("X-Client-Id", clientId)
+                        .contentType(MediaType.APPLICATION_JSON).content(validOrder().toString()))
+                .andExpect(status().isCreated());
+        mvc.perform(post("/api/orders").header("X-Client-Id", otherClientId)
+                        .contentType(MediaType.APPLICATION_JSON).content(validOrder().toString()))
+                .andExpect(status().isCreated());
+        // Guest order without the header is still created, it just has no history owner.
+        mvc.perform(post("/api/orders")
+                        .contentType(MediaType.APPLICATION_JSON).content(validOrder().toString()))
+                .andExpect(status().isCreated());
+
+        MvcResult result = mvc.perform(get("/api/orders/my").header("X-Client-Id", clientId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].orderNumber").value(startsWith("CC-")))
+                .andExpect(jsonPath("$[0].items[0].productName").isNotEmpty())
+                .andExpect(jsonPath("$[0].region").isNotEmpty())
+                .andExpect(jsonPath("$[0].total").isNumber())
+                .andReturn();
+
+        JsonNode orders = objectMapper.readTree(result.getResponse().getContentAsString());
+        assertThat(orders.get(0).get("orderNumber").asText())
+                .isGreaterThan(orders.get(1).get("orderNumber").asText());
+    }
+
+    @Test
+    void myOrdersIsEmptyForUnknownClientAndRejectsMissingOrMalformedClientId() throws Exception {
+        mvc.perform(get("/api/orders/my").header("X-Client-Id", "00000000-0000-0000-0000-000000000000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+        mvc.perform(get("/api/orders/my"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
+        mvc.perform(get("/api/orders/my").header("X-Client-Id", "short"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void claimsEarlierOrdersOnlyWhenEmailAndPhoneBothMatch() throws Exception {
+        String clientId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+        // Placed before order history existed: no client id. Unique contact details keep the test isolated.
+        ObjectNode earlier = validOrder();
+        ((ObjectNode) earlier.get("customer")).put("email", "claim.test@example.com");
+        ((ObjectNode) earlier.get("customer")).put("phone", "+998900000001");
+        mvc.perform(post("/api/orders")
+                        .contentType(MediaType.APPLICATION_JSON).content(earlier.toString()))
+                .andExpect(status().isCreated());
+
+        mvc.perform(post("/api/orders/my/claim").header("X-Client-Id", clientId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"claim.test@example.com\",\"phone\":\"+998 90 999 99 99\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        mvc.perform(post("/api/orders/my/claim").header("X-Client-Id", clientId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"CLAIM.TEST@example.com\",\"phone\":\"+998 90 000 00 01\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].customer.email").value("claim.test@example.com"));
+
+        mvc.perform(get("/api/orders/my").header("X-Client-Id", clientId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+
+        // An order already owned by someone is never taken over.
+        mvc.perform(post("/api/orders/my/claim").header("X-Client-Id", "ffffffff-0000-1111-2222-333333333333")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"claim.test@example.com\",\"phone\":\"+998900000001\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void newOrderPullsEarlierOrdersWithSameEmailAndPhoneIntoHistory() throws Exception {
+        String clientId = "12345678-1234-1234-1234-123456789abc";
+        ObjectNode earlier = validOrder();
+        ((ObjectNode) earlier.get("customer")).put("email", "auto.link@example.com");
+        ((ObjectNode) earlier.get("customer")).put("phone", "+998900000002");
+        ObjectNode someoneElse = validOrder();
+        ((ObjectNode) someoneElse.get("customer")).put("email", "other.person@example.com");
+        ((ObjectNode) someoneElse.get("customer")).put("phone", "+998900000003");
+
+        // Both placed before the history existed (no client id).
+        for (ObjectNode body : List.of(earlier, someoneElse)) {
+            mvc.perform(post("/api/orders")
+                            .contentType(MediaType.APPLICATION_JSON).content(body.toString()))
+                    .andExpect(status().isCreated());
+        }
+
+        // Nothing is shown before the customer orders again.
+        mvc.perform(get("/api/orders/my").header("X-Client-Id", clientId))
+                .andExpect(jsonPath("$.length()").value(0));
+
+        // New order with the same contact details: the earlier one joins automatically.
+        mvc.perform(post("/api/orders").header("X-Client-Id", clientId)
+                        .contentType(MediaType.APPLICATION_JSON).content(earlier.toString()))
+                .andExpect(status().isCreated());
+
+        mvc.perform(get("/api/orders/my").header("X-Client-Id", clientId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].customer.email").value("auto.link@example.com"))
+                .andExpect(jsonPath("$[1].customer.email").value("auto.link@example.com"));
     }
 
     private ObjectNode validOrder() throws Exception {

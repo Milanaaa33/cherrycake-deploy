@@ -15,6 +15,7 @@ import Cart from './pages/Cart';
 import Reports from './pages/Reports';
 import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
+import Account from './pages/Account';
 
 import './App.css';
 
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="/reports" element={<Reports />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/order-success" element={<OrderSuccess />} />
+          <Route path="/account" element={<Account />} />
           <Route path="/ui-kit" element={<UIKit />} />
         </Routes>
       </main>
