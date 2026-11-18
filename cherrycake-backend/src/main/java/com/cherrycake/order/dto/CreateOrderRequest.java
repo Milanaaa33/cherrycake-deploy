@@ -1,5 +1,6 @@
 package com.cherrycake.order.dto;
 
+import com.cherrycake.fulfillment.entity.FulfillmentType;
 import com.cherrycake.pricing.dto.CalculateCartRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -31,7 +32,20 @@ public record CreateOrderRequest(
         LocalDate orderDate,
 
         @NotEmpty(message = "items must not be empty")
-        List<CalculateCartRequest.@NotNull @Valid Item> items) {
+        List<CalculateCartRequest.@NotNull @Valid Item> items,
+
+        @Schema(example = "DELIVERY", description = "Optional (CC-38). PICKUP needs pickupPointId, "
+                + "DELIVERY needs deliveryZoneId; both need timeSlotId")
+        FulfillmentType fulfillmentType,
+
+        @Schema(example = "1", description = "From GET /api/pickup-points; only for PICKUP")
+        Long pickupPointId,
+
+        @Schema(example = "2", description = "From GET /api/delivery-zones; only for DELIVERY")
+        Long deliveryZoneId,
+
+        @Schema(example = "3", description = "From GET /api/time-slots for orderDate")
+        Long timeSlotId) {
 
     @Schema(name = "OrderCustomerRequest")
     public record Customer(
