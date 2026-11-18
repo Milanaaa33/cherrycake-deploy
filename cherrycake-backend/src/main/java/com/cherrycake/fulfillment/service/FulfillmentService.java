@@ -68,6 +68,20 @@ public class FulfillmentService {
     }
 
     /**
+     * Delivery price of a zone in the region's currency, used to show the total before the order is placed.
+     */
+    public BigDecimal getDeliveryFee(Long deliveryZoneId, Region region) {
+        DeliveryZone zone = deliveryZoneRepository.findById(deliveryZoneId)
+                .filter(z -> z.getRegionId().equals(region.getId()))
+                .orElseThrow(() -> new NotFoundException(
+                        "Delivery zone " + deliveryZoneId + " not found in " + region.getCode()));
+        if (!zone.isAvailable()) {
+            throw new ConflictException("Delivery zone " + deliveryZoneId + " is not available");
+        }
+        return region.toLocalCurrency(zone.getDeliveryFee());
+    }
+
+    /**
      * All slots of the day with the places left; a full or closed slot stays in the list with isAvailable = false.
      */
     public List<TimeSlotResponse> getTimeSlots(LocalDate date) {

@@ -94,6 +94,23 @@ class CartControllerTests {
     }
 
     @Test
+    void deliveryZoneAddsItsFeeToTheTotal() throws Exception {
+        long zone = jdbc.queryForObject(
+                "SELECT dz.id FROM delivery_zones dz JOIN regions r ON r.id = dz.region_id "
+                        + "WHERE r.code = 'UZB' AND dz.name = 'Center'", Long.class);
+        String items = "\"items\": [" + item(product("Tiramisu"), 1) + "]";
+
+        send("{\"region\":\"UZB\"," + items + "}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.deliveryFee").value(0.0));
+        send("{\"region\":\"UZB\",\"deliveryZoneId\":" + zone + "," + items + "}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.deliveryFee").value(15000.0));
+        send("{\"region\":\"UZB\",\"deliveryZoneId\":999999," + items + "}")
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void missingRegionIsRejected() throws Exception {
         send("{\"items\": [" + item(product("Tiramisu"), 1) + "]}")
                 .andExpect(status().isBadRequest())

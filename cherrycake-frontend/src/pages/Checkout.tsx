@@ -38,18 +38,21 @@ type PickupPoint = {
   id: number;
   name: string;
   address: string;
+  openingHours: string;
 };
 
 type DeliveryZone = {
   id: number;
   name: string;
   deliveryFee: number;
+  currencyCode: string;
 };
 
 type TimeSlot = {
   id: number;
-  slotDate: string;
   startTime: string;
+  endTime: string;
+  remaining: number;
   isAvailable: boolean;
 };
 
@@ -101,85 +104,81 @@ export default function Checkout() {
   const [submitting, setSubmitting] = useState(false);
   const [deliveryType, setDeliveryType] = useState<DeliveryType>('delivery');
 
-const [pickupPoints, setPickupPoints] = useState<PickupPoint[]>([]);
-const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
-const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+  const [pickupPoints, setPickupPoints] = useState<PickupPoint[]>([]);
+  const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
 
-const [selectedPickupPointId, setSelectedPickupPointId] = useState<number | ''>('');
-const [selectedDeliveryZoneId, setSelectedDeliveryZoneId] = useState<number | ''>('');
-const [selectedTimeSlotId, setSelectedTimeSlotId] = useState<number | ''>('');
+  const [selectedPickupPointId, setSelectedPickupPointId] = useState<number | ''>('');
+  const [selectedDeliveryZoneId, setSelectedDeliveryZoneId] = useState<number | ''>('');
+  const [selectedTimeSlotId, setSelectedTimeSlotId] = useState<number | ''>('');
 
-const [optionsLoading, setOptionsLoading] = useState(false);
-const [slotsLoading, setSlotsLoading] = useState(false);
-const [optionsError, setOptionsError] = useState('');
-const [slotsError, setSlotsError] = useState('');
-// Load pickup points and delivery zones from the backend.
-useEffect(() => {
-  let active = true;
+  const [optionsLoading, setOptionsLoading] = useState(false);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [optionsError, setOptionsError] = useState('');
+  const [slotsError, setSlotsError] = useState('');
 
-  setOptionsLoading(true);
-  setOptionsError('');
+  // Pickup points and delivery zones belong to a region: reload them (and forget the old choice) when it changes.
+  useEffect(() => {
+    let active = true;
 
-  Promise.all([
-    api.get<PickupPoint[]>('/pickup-points', {
-      params: { region },
-    }),
-    api.get<DeliveryZone[]>('/delivery-zones', {
-      params: { region },
-    }),
-  ])
-    .then(([pickupResponse, deliveryResponse]) => {
-      if (!active) return;
+    setOptionsLoading(true);
+    setOptionsError('');
+    setSelectedPickupPointId('');
+    setSelectedDeliveryZoneId('');
 
-      setPickupPoints(pickupResponse.data);
-      setDeliveryZones(deliveryResponse.data);
-    })
-    .catch(() => {
-      if (active) {
-        setOptionsError('Unable to load delivery and pickup options.');
-      }
-    })
-    .finally(() => {
-      if (active) setOptionsLoading(false);
-    });
+    Promise.all([
+      api.get<PickupPoint[]>('/pickup-points', { params: { region } }),
+      api.get<DeliveryZone[]>('/delivery-zones', { params: { region } }),
+    ])
+      .then(([pickupResponse, deliveryResponse]) => {
+        if (!active) return;
+        setPickupPoints(pickupResponse.data);
+        setDeliveryZones(deliveryResponse.data);
+      })
+      .catch(() => {
+        if (active) setOptionsError('Unable to load delivery and pickup options.');
+      })
+      .finally(() => {
+        if (active) setOptionsLoading(false);
+      });
 
-  return () => {
-    active = false;
-  };
-}, [region]);
+    return () => {
+      active = false;
+    };
+  }, [region]);
 
-// Load available time slots whenever the order date changes.
-useEffect(() => {
-  if (!form.orderDate) {
+  // Time slots (with the places left) are loaded again whenever the order date changes.
+  useEffect(() => {
+    if (!form.orderDate || form.orderDate < todayString()) {
+      setTimeSlots([]);
+      setSelectedTimeSlotId('');
+      return;
+    }
+
+    let active = true;
+
+    setSlotsLoading(true);
+    setSlotsError('');
+    setSelectedTimeSlotId('');
     setTimeSlots([]);
-    return;
-  }
 
-  let active = true;
+    api
+      .get<TimeSlot[]>('/time-slots', { params: { date: form.orderDate } })
+      .then(({ data }) => {
+        if (active) setTimeSlots(data);
+      })
+      .catch(() => {
+        if (active) setSlotsError('Unable to load available time slots.');
+      })
+      .finally(() => {
+        if (active) setSlotsLoading(false);
+      });
 
-  setSlotsLoading(true);
-  setSlotsError('');
-  setSelectedTimeSlotId('');
-  setTimeSlots([]);
+    return () => {
+      active = false;
+    };
+  }, [form.orderDate]);
 
-  api
-    .get<TimeSlot[]>('/time-slots', {
-      params: { date: form.orderDate },
-    })
-    .then(({ data }) => {
-      if (active) setTimeSlots(data);
-    })
-    .catch(() => {
-      if (active) setSlotsError('Unable to load available time slots.');
-    })
-    .finally(() => {
-      if (active) setSlotsLoading(false);
-    });
-
-  return () => {
-    active = false;
-  };
-}, [form.orderDate]);
   // Totals always come from the backend, the frontend never calculates them itself.
   useEffect(() => {
     if (items.length === 0) {
@@ -214,6 +213,10 @@ useEffect(() => {
     };
   }, [region, storedItems, deliveryType, selectedDeliveryZoneId]);
 
+  const selectedZone = deliveryZones.find((zone) => zone.id === selectedDeliveryZoneId);
+  const selectedPoint = pickupPoints.find((point) => point.id === selectedPickupPointId);
+  const selectedSlot = timeSlots.find((slot) => slot.id === selectedTimeSlotId);
+
   const update = (key: keyof CheckoutForm, value: string) => {
     setForm((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: '' }));
@@ -243,34 +246,30 @@ useEffect(() => {
     return Object.keys(next).length === 0;
   };
 
-const validateDate = () => {
-  const next: Record<string, string> = {};
+  const validateDate = () => {
+    const next: Record<string, string> = {};
 
-  if (!form.orderDate) {
-    next.orderDate = 'Please choose the order date.';
-  } else if (form.orderDate < todayString()) {
-    next.orderDate = 'The order date must not be in the past.';
-  }
+    if (!form.orderDate) {
+      next.orderDate = 'Please choose the order date.';
+    } else if (form.orderDate < todayString()) {
+      next.orderDate = 'The order date must not be in the past.';
+    }
 
-  if (deliveryType === 'delivery' && selectedDeliveryZoneId === '') {
-    next.deliveryZoneId = 'Please choose a delivery area.';
-  }
+    if (deliveryType === 'delivery' && selectedDeliveryZoneId === '') {
+      next.deliveryZoneId = 'Please choose a delivery area.';
+    }
 
-  if (deliveryType === 'pickup' && selectedPickupPointId === '') {
-    next.pickupPointId = 'Please choose a pickup point.';
-  }
+    if (deliveryType === 'pickup' && selectedPickupPointId === '') {
+      next.pickupPointId = 'Please choose a pickup point.';
+    }
 
-  const selectedSlot = timeSlots.find(
-    (slot) => slot.id === selectedTimeSlotId
-  );
+    if (!selectedSlot || !selectedSlot.isAvailable) {
+      next.timeSlotId = 'Please choose an available time slot.';
+    }
 
-  if (!selectedSlot || !selectedSlot.isAvailable) {
-    next.timeSlotId = 'Please choose an available time slot.';
-  }
-
-  setErrors(next);
-  return Object.keys(next).length === 0;
-};
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
 
   const placeOrder = () => {
     setSubmitting(true);
@@ -285,10 +284,11 @@ const validateDate = () => {
           email: form.email.trim(),
         },
         orderDate: form.orderDate,
-        pickupPointId:
-        deliveryType === 'pickup' ? selectedPickupPointId : null,
-        deliveryZoneId:
-          deliveryType === 'delivery' ? selectedDeliveryZoneId : null,
+        // The backend requires fulfillmentType whenever a point, zone or time slot is sent.
+        fulfillmentType: deliveryType === 'delivery' ? 'DELIVERY' : 'PICKUP',
+        ...(deliveryType === 'delivery'
+          ? { deliveryZoneId: selectedDeliveryZoneId }
+          : { pickupPointId: selectedPickupPointId }),
         timeSlotId: selectedTimeSlotId,
         items: items.map((item) => ({
           productId: item.productId,
@@ -307,8 +307,10 @@ const validateDate = () => {
         };
       }) => {
         if (error.response?.status === 409) {
+          // Out of stock, time slot is full or zone/point is closed: the backend message says which one.
           setSubmitError(
-            'Your order could not be placed because some items are no longer available. Please review your order and try again.',
+            error.response?.data?.message ??
+              'Your order could not be placed because something is no longer available. Please review your order and try again.',
           );
         } else {
           setSubmitError(
@@ -392,92 +394,96 @@ const validateDate = () => {
                   </div>
                 </div>
 
-                {optionsLoading ? (
-                  <p>Loading delivery options...</p>
-                ) : optionsError ? (
-                  <p className="checkout-error">{optionsError}</p>
-                ) : (
-                  <>
-                    <div className="checkout-fields">
-                      <div className="checkout-field">
-                        <label>Receiving method</label>
-                        <div className="checkout-choice-grid">
-                          <button
-                            type="button"
-                            className={`checkout-choice ${deliveryType === 'delivery' ? 'is-selected' : ''}`}
-                            onClick={() => {
-                              setDeliveryType('delivery');
-                              setSelectedPickupPointId('');
-                            }}
-                          >
-                            Delivery
-                          </button>
+                <div className="checkout-fields">
+                  <div className="checkout-field">
+                    <span className="checkout-label" id="receiving-method-label">Receiving method</span>
+                    <div className="checkout-choice-grid" role="radiogroup" aria-labelledby="receiving-method-label">
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={deliveryType === 'delivery'}
+                        className={`checkout-choice ${deliveryType === 'delivery' ? 'is-selected' : ''}`}
+                        onClick={() => {
+                          setDeliveryType('delivery');
+                          setSelectedPickupPointId('');
+                          setErrors((current) => ({ ...current, pickupPointId: '' }));
+                        }}
+                      >
+                        <span className="checkout-choice-title">Delivery</span>
+                        <span className="checkout-choice-description">We bring it to you</span>
+                      </button>
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={deliveryType === 'pickup'}
+                        className={`checkout-choice ${deliveryType === 'pickup' ? 'is-selected' : ''}`}
+                        onClick={() => {
+                          setDeliveryType('pickup');
+                          setSelectedDeliveryZoneId('');
+                          setErrors((current) => ({ ...current, deliveryZoneId: '' }));
+                        }}
+                      >
+                        <span className="checkout-choice-title">Pickup</span>
+                        <span className="checkout-choice-description">Collect it at our café</span>
+                      </button>
+                    </div>
+                  </div>
 
-                          <button
-                            type="button"
-                            className={`checkout-choice ${deliveryType === 'pickup' ? 'is-selected' : ''}`}
-                            onClick={() => {
-                              setDeliveryType('pickup');
-                              setSelectedDeliveryZoneId('');
-                            }}
-                          >
-                            Pickup
-                          </button>
-                        </div>
-                      </div>
+                  {optionsLoading && <p className="checkout-hint">Loading delivery options...</p>}
+                  {!optionsLoading && optionsError && (
+                    <p role="alert" className="checkout-field-error">{optionsError}</p>
+                  )}
 
-                      {deliveryType === 'delivery' ? (
-                        <div className="checkout-field">
-                          <label htmlFor="deliveryZone">Delivery area</label>
-                          <select
-                            id="deliveryZone"
-                            value={selectedDeliveryZoneId}
-                            onChange={(e) =>
-                              setSelectedDeliveryZoneId(
-                                e.target.value ? Number(e.target.value) : ''
-                              )
-                            }
-                          >
-                            <option value="">Choose delivery area</option>
-                            {deliveryZones.map((zone) => (
-                              <option key={zone.id} value={zone.id}>
-                                {zone.name} — {zone.deliveryFee}
-                              </option>
-                            ))}
-                          </select>
-                          {errors.deliveryZoneId && (
-                            <p className="checkout-error">{errors.deliveryZoneId}</p>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="checkout-field">
-                          <label htmlFor="pickupPoint">Pickup point</label>
-                          <select
-                            id="pickupPoint"
-                            value={selectedPickupPointId}
-                            onChange={(e) =>
-                              setSelectedPickupPointId(
-                                e.target.value ? Number(e.target.value) : ''
-                              )
-                            }
-                          >
-                            <option value="">Choose pickup point</option>
-                            {pickupPoints.map((point) => (
-                              <option key={point.id} value={point.id}>
-                                {point.name} — {point.address}
-                              </option>
-                            ))}
-                          </select>
-                          {errors.pickupPointId && (
-                            <p className="checkout-error">{errors.pickupPointId}</p>
-                          )}
-                        </div>
+                  {!optionsLoading && !optionsError && deliveryType === 'delivery' && (
+                    <div className="checkout-field">
+                      <label htmlFor="deliveryZone">Delivery area</label>
+                      <select
+                        id="deliveryZone"
+                        value={selectedDeliveryZoneId}
+                        aria-invalid={Boolean(errors.deliveryZoneId)}
+                        onChange={(e) => {
+                          setSelectedDeliveryZoneId(e.target.value ? Number(e.target.value) : '');
+                          setErrors((current) => ({ ...current, deliveryZoneId: '' }));
+                        }}
+                      >
+                        <option value="">Choose delivery area</option>
+                        {deliveryZones.map((zone) => (
+                          <option key={zone.id} value={zone.id}>
+                            {zone.name} — {formatMoney(zone.deliveryFee, zone.currencyCode)}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.deliveryZoneId && (
+                        <small className="checkout-field-error">{errors.deliveryZoneId}</small>
                       )}
                     </div>
-                  </>
-                )}
+                  )}
 
-                <div className="checkout-fields">
+                  {!optionsLoading && !optionsError && deliveryType === 'pickup' && (
+                    <div className="checkout-field">
+                      <label htmlFor="pickupPoint">Pickup point</label>
+                      <select
+                        id="pickupPoint"
+                        value={selectedPickupPointId}
+                        aria-invalid={Boolean(errors.pickupPointId)}
+                        onChange={(e) => {
+                          setSelectedPickupPointId(e.target.value ? Number(e.target.value) : '');
+                          setErrors((current) => ({ ...current, pickupPointId: '' }));
+                        }}
+                      >
+                        <option value="">Choose pickup point</option>
+                        {pickupPoints.map((point) => (
+                          <option key={point.id} value={point.id}>
+                            {point.name} — {point.address}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.pickupPointId && (
+                        <small className="checkout-field-error">{errors.pickupPointId}</small>
+                      )}
+                    </div>
+                  )}
+
                   <Field
                     label="Order date"
                     value={form.orderDate}
@@ -486,39 +492,42 @@ const validateDate = () => {
                     type="date"
                     min={todayString()}
                   />
-                </div>
 
-                <div className="checkout-field">
-                  <label>Available time slots</label>
+                  <div className="checkout-field">
+                    <span className="checkout-label" id="time-slot-label">Available time slots</span>
 
-                  {slotsLoading ? (
-                    <p>Loading time slots...</p>
-                  ) : slotsError ? (
-                    <p className="checkout-error">{slotsError}</p>
-                  ) : timeSlots.length === 0 ? (
-                    <p>No time slots available for this date.</p>
-                  ) : (
-                    <div className="checkout-choice-grid">
-                      {timeSlots.map((slot) => (
-                        <button
-                          key={slot.id}
-                          type="button"
-                          disabled={!slot.isAvailable}
-                          className={`checkout-choice ${
-                            selectedTimeSlotId === slot.id ? 'is-selected' : ''
-                          }`}
-                          onClick={() => setSelectedTimeSlotId(slot.id)}
-                        >
-                          {slot.startTime}
-                          {!slot.isAvailable ? ' (Unavailable)' : ''}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                    {slotsLoading ? (
+                      <p className="checkout-hint">Loading time slots...</p>
+                    ) : slotsError ? (
+                      <small role="alert" className="checkout-field-error">{slotsError}</small>
+                    ) : timeSlots.length === 0 ? (
+                      <p className="checkout-hint">No time slots available for this date.</p>
+                    ) : (
+                      <div className="checkout-slot-grid" role="radiogroup" aria-labelledby="time-slot-label">
+                        {timeSlots.map((slot) => (
+                          <button
+                            key={slot.id}
+                            type="button"
+                            role="radio"
+                            aria-checked={selectedTimeSlotId === slot.id}
+                            disabled={!slot.isAvailable}
+                            className={`checkout-slot ${selectedTimeSlotId === slot.id ? 'is-selected' : ''}`}
+                            onClick={() => {
+                              setSelectedTimeSlotId(slot.id);
+                              setErrors((current) => ({ ...current, timeSlotId: '' }));
+                            }}
+                          >
+                            <strong>{slot.startTime}–{slot.endTime}</strong>
+                            <small>{slot.isAvailable ? `${slot.remaining} left` : 'Unavailable'}</small>
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
-                  {errors.timeSlotId && (
-                    <p className="checkout-error">{errors.timeSlotId}</p>
-                  )}
+                    {errors.timeSlotId && (
+                      <small className="checkout-field-error">{errors.timeSlotId}</small>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -537,6 +546,12 @@ const validateDate = () => {
                     <strong>{form.name.trim()}</strong>
                     <p>{form.phone.trim()} · {form.email.trim()}</p>
                     <p>Order date: {form.orderDate} · Country: {region}</p>
+                    <p>
+                      {deliveryType === 'delivery'
+                        ? `Delivery · ${selectedZone?.name ?? ''}`
+                        : `Pickup · ${selectedPoint?.name ?? ''}${selectedPoint ? `, ${selectedPoint.address}` : ''}`}
+                    </p>
+                    {selectedSlot && <p>Time: {selectedSlot.startTime}–{selectedSlot.endTime}</p>}
                   </div>
                 </div>
                 {submitError && <p role="alert" className="checkout-field-error">{submitError}</p>}
