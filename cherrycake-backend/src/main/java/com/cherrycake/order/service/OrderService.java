@@ -7,6 +7,8 @@ import com.cherrycake.catalog.repository.RegionRepository;
 import com.cherrycake.catalog.service.CatalogService;
 import com.cherrycake.common.exception.BadRequestException;
 import com.cherrycake.common.exception.NotFoundException;
+import com.cherrycake.fulfillment.service.FulfillmentChoice;
+import com.cherrycake.fulfillment.service.FulfillmentService;
 import com.cherrycake.order.dto.CreateOrderRequest;
 import com.cherrycake.order.dto.OrderResponse;
 import com.cherrycake.order.entity.Order;
@@ -41,6 +43,7 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final RegionRepository regionRepository;
     private final ObjectMapper objectMapper;
+    private final FulfillmentService fulfillmentService;
 
     public OrderService(
             OrderRepository orderRepository,
@@ -48,13 +51,15 @@ public class OrderService {
             CartCalculationService cartCalculationService,
             ProductRepository productRepository,
             RegionRepository regionRepository,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            FulfillmentService fulfillmentService) {
         this.orderRepository = orderRepository;
         this.catalogService = catalogService;
         this.cartCalculationService = cartCalculationService;
         this.productRepository = productRepository;
         this.regionRepository = regionRepository;
         this.objectMapper = objectMapper;
+        this.fulfillmentService = fulfillmentService;
     }
 
     @Transactional
@@ -75,9 +80,12 @@ public class OrderService {
                     request.customer().email().trim(), request.customer().phone().trim());
         }
         Region region = catalogService.getRegion(request.region());
+        FulfillmentChoice fulfillment = fulfillmentService.resolve(request.fulfillmentType(),
+                request.pickupPointId(), request.deliveryZoneId(), request.timeSlotId(), region);
 
+        // The delivery fee goes in last, so it never helps the order reach a discount threshold.
         CalculateCartResponse calculated = cartCalculationService.calculate(
-                new CalculateCartRequest(region.getCode(), request.items()));
+                new CalculateCartRequest(region.getCode(), request.items()), fulfillment.deliveryFee());
 
         List<Long> productIds = request.items().stream()
                 .map(CalculateCartRequest.Item::productId)
@@ -106,6 +114,10 @@ public class OrderService {
         order.setCurrencyCode(calculated.currencyCode());
         order.setCreatedAt(createdAt);
         order.setClientId(normalizedClientId);
+        order.setFulfillmentType(fulfillment.type());
+        order.setPickupPointId(fulfillment.pickupPointId());
+        order.setDeliveryZoneId(fulfillment.deliveryZoneId());
+        order.setTimeSlotId(fulfillment.timeSlotId());
 
         List<CalculateCartResponse.Item> pricedItems = calculated.items();
         for (int i = 0; i < pricedItems.size(); i++) {
@@ -127,6 +139,10 @@ public class OrderService {
             order.addItem(item);
         }
 
+        if (fulfillment.timeSlotId() != null) {
+            // Last step before saving, so the slot lock is held for as short a time as possible.
+            fulfillmentService.reserveSlot(fulfillment.timeSlotId(), request.orderDate());
+        }
         Order saved = orderRepository.save(order);
         return toResponse(saved, region.getCode());
     }
@@ -210,6 +226,10 @@ public class OrderService {
                 order.getDeliveryFee(),
                 order.getTotal(),
                 order.getCurrencyCode(),
-                order.getCreatedAt());
+                order.getCreatedAt(),
+                order.getFulfillmentType(),
+                order.getPickupPointId(),
+                order.getDeliveryZoneId(),
+                order.getTimeSlotId());
     }
 }

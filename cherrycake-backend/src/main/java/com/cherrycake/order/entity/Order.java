@@ -1,8 +1,11 @@
 package com.cherrycake.order.entity;
 
+import com.cherrycake.fulfillment.entity.FulfillmentType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -73,6 +76,19 @@ public class Order {
     // Anonymous browser id (X-Client-Id header); lets a guest see their own order history.
     @Column(name = "client_id", length = 64)
     private String clientId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "fulfillment_type", length = 20)
+    private FulfillmentType fulfillmentType;
+
+    @Column(name = "pickup_point_id")
+    private Long pickupPointId;
+
+    @Column(name = "delivery_zone_id")
+    private Long deliveryZoneId;
+
+    @Column(name = "time_slot_id")
+    private Long timeSlotId;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
@@ -218,6 +234,38 @@ public class Order {
 
     public void setClientId(String clientId) {
         this.clientId = clientId;
+    }
+
+    public FulfillmentType getFulfillmentType() {
+        return fulfillmentType;
+    }
+
+    public void setFulfillmentType(FulfillmentType fulfillmentType) {
+        this.fulfillmentType = fulfillmentType;
+    }
+
+    public Long getPickupPointId() {
+        return pickupPointId;
+    }
+
+    public void setPickupPointId(Long pickupPointId) {
+        this.pickupPointId = pickupPointId;
+    }
+
+    public Long getDeliveryZoneId() {
+        return deliveryZoneId;
+    }
+
+    public void setDeliveryZoneId(Long deliveryZoneId) {
+        this.deliveryZoneId = deliveryZoneId;
+    }
+
+    public Long getTimeSlotId() {
+        return timeSlotId;
+    }
+
+    public void setTimeSlotId(Long timeSlotId) {
+        this.timeSlotId = timeSlotId;
     }
 
     public List<OrderItem> getItems() {
