@@ -20,6 +20,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (axios.isCancel(error)) return Promise.reject(error);
     const message =
       error.response?.data?.message ||
       "Cannot reach the server. Please try again.";

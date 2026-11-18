@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { api } from '../api/client';
+import { downloadSalesCsv, downloadSalesPdf, getSalesReport } from '../api/reports';
+import type { ReportFilters, SalesReport } from '../api/reports';
 import {
   BarElement,
   CategoryScale,
@@ -30,58 +33,80 @@ ChartJS.register(
   Filler,
 );
 
-type Grouping = 'daily' | 'weekly' | 'monthly';
+const groupingOptions = [
+  { value: 'MONTH', label: 'Month' },
+  { value: 'REGION', label: 'Region' },
+] as const;
 
-const regionOptions = [
-  { value: 'all', label: 'All regions' },
-  { value: 'tashkent', label: 'Tashkent' },
-  { value: 'samarkand', label: 'Samarkand' },
-  { value: 'bukhara', label: 'Bukhara' },
-];
-
-const groupingOptions: ReadonlyArray<{ value: Grouping; label: string }> = [
-  { value: 'daily', label: 'Daily' },
-  { value: 'weekly', label: 'Weekly' },
-  { value: 'monthly', label: 'Monthly' },
-];
-
-const chartLabels: Record<Grouping, string[]> = {
-  daily: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-  weekly: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-  monthly: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-};
-
-const chartOrders: Record<Grouping, number[]> = {
-  daily: [18, 24, 21, 32, 28, 41, 36],
-  weekly: [96, 124, 118, 142],
-  monthly: [420, 510, 480, 620, 590, 680],
-};
-
-const chartRevenue: Record<Grouping, number[]> = {
-  daily: [240, 320, 290, 420, 380, 560, 490],
-  weekly: [1320, 1680, 1540, 1920],
-  monthly: [5200, 6400, 6100, 7800, 7300, 8600],
-};
-
-function exportCsv() {
-  const csv = 'Metric,Value\nTotal Revenue,$12480.00\nTotal Orders,680\nAverage Order Value,$18.35';
-  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'cherry-cake-report.csv';
-  link.click();
-  URL.revokeObjectURL(url);
+function localDate(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
 export default function Reports() {
-  const [region, setRegion] = useState('all');
-  const [grouping, setGrouping] = useState<Grouping>('weekly');
-  const [startDate, setStartDate] = useState('2026-01-01');
-  const [endDate, setEndDate] = useState('2026-01-31');
+  const [region, setRegion] = useState('UZB');
+  const [grouping, setGrouping] = useState<ReportFilters['groupBy']>('MONTH');
+  const [startDate, setStartDate] = useState(() => {
+    const now = new Date();
+    return localDate(new Date(now.getFullYear(), now.getMonth() - 5, 1));
+  });
+  const [endDate, setEndDate] = useState(() => localDate(new Date()));
+  const [regions, setRegions] = useState<{ code: string; name: string }[]>([]);
+  const [regionsFailed, setRegionsFailed] = useState(false);
+  const [result, setResult] = useState<{ key: string; report: SalesReport } | null>(null);
+  const [failure, setFailure] = useState<{ key: string; message: string } | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
+  const filters = useMemo<ReportFilters>(() => ({
+    from: startDate, to: endDate, region: region || undefined, groupBy: grouping,
+  }), [startDate, endDate, region, grouping]);
+  const key = JSON.stringify(filters);
+  const invalidRange = !startDate || !endDate || startDate > endDate;
+  const report = result?.key === key ? result.report : null;
+  const error = invalidRange ? 'Select a valid date range; start date must be on or before end date.'
+    : failure?.key === key ? failure.message : '';
+  const loading = !invalidRange && !error && !report;
 
-  const labels = chartLabels[grouping];
-  const orders = chartOrders[grouping];
-  const revenue = chartRevenue[grouping];
+  useEffect(() => {
+    const controller = new AbortController();
+    api.get<{ code: string; name: string }[]>('/regions', { signal: controller.signal })
+      .then(({ data }) => { if (!controller.signal.aborted) setRegions(data); })
+      .catch(() => { if (!controller.signal.aborted) setRegionsFailed(true); });
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    if (!invalidRange) {
+      getSalesReport(filters, controller.signal)
+        .then(data => {
+          if (!controller.signal.aborted) {
+            setResult({ key, report: data });
+            setFailure(null);
+            setExportError('');
+          }
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) setFailure({ key, message: 'Could not load sales. Please try changing the filters or reload the page.' });
+        });
+    }
+    return () => controller.abort();
+  }, [filters, key, invalidRange]);
+
+  async function exportPdf() {
+    setExporting(true);
+    setExportError('');
+    try { await downloadSalesPdf(filters); }
+    catch { setExportError('Could not download the PDF. Please try again.'); }
+    finally { setExporting(false); }
+  }
+
+  const labels = report?.rows.map(row => row.label) ?? [];
+  const orders = report?.rows.map(row => row.ordersCount) ?? [];
+  const revenue = report?.rows.map(row => row.total) ?? [];
+  const currency = report?.currencyCode;
+  const money = (value: number) => `${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${currency && currency !== 'MIXED' ? ` ${currency}` : ''}`;
+  const regionOptions = [{ value: '', label: 'All regions' }, ...regions.map(r => ({ value: r.code, label: `${r.name} (${r.code})` }))];
+  if (!regions.some(r => r.code === 'UZB')) regionOptions.push({ value: 'UZB', label: 'Uzbekistan (UZB)' });
 
   const barData = {
     labels,
@@ -99,7 +124,7 @@ export default function Reports() {
     labels,
     datasets: [
       {
-        label: 'Revenue ($)',
+        label: `Revenue${currency ? ` (${currency})` : ''}`,
         data: revenue,
         borderColor: '#7c3f58',
         backgroundColor: 'rgba(201, 76, 109, 0.16)',
@@ -112,6 +137,7 @@ export default function Reports() {
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    scales: { y: { beginAtZero: true } },
     plugins: {
       legend: { position: 'bottom' as const },
     },
@@ -132,9 +158,12 @@ export default function Reports() {
         }}
       >
         {[
-          ['Total Revenue', '$12,480.00'],
-          ['Total Orders', '680'],
-          ['Average Order Value', '$18.35'],
+          ['Total Revenue', report ? money(report.kpi.totalSum) : '...'],
+          ['Total Orders', report ? String(report.kpi.ordersCount) : '...'],
+          ['Average Order Value', report ? money(report.kpi.ordersCount ? report.kpi.totalSum / report.kpi.ordersCount : 0) : '...'],
+          ['Subtotal', report ? money(report.kpi.subtotalSum) : '...'],
+          ['VAT', report ? money(report.kpi.vatSum) : '...'],
+          ['Discount', report ? money(report.kpi.discountSum) : '...'],
         ].map(([label, value]) => (
           <Card key={label} title={label}>
             <strong style={{ fontSize: 28 }}>{value}</strong>
@@ -142,6 +171,8 @@ export default function Reports() {
         ))}
       </div>
 
+      {currency === 'MIXED' && <p role="note">Totals combine stored local-currency amounts. Select one region for a single-currency report; no currency conversion is applied.</p>}
+      {regionsFailed && <p role="alert">Could not load countries. Reload the page to access all country filters.</p>}
       <Card title="Filters">
         <div
           style={{
@@ -193,8 +224,11 @@ export default function Reports() {
         </div>
       </Card>
 
-      <div style={{ display: 'grid', gap: 24, gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
-        <Card title="Orders by period">
+      {loading && <p role="status">Loading sales report...</p>}
+      {error && <p role="alert">{error}</p>}
+      {report && !report.rows.length && <p role="status">No orders match the selected filters.</p>}
+      {report && <div style={{ display: 'grid', gap: 24, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))' }}>
+        <Card title={grouping === 'REGION' ? 'Orders by region' : 'Orders by month'}>
           <div style={{ height: 300 }}>
             <Bar data={barData} options={chartOptions} />
           </div>
@@ -204,15 +238,16 @@ export default function Reports() {
             <Line data={lineData} options={chartOptions} />
           </div>
         </Card>
-      </div>
+      </div>}
 
       <Card title="Export report">
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <Button type="button" onClick={exportCsv}>Download CSV</Button>
-          <Button type="button" variant="secondary" onClick={() => window.print()}>
+          <Button type="button" disabled={!report || Boolean(error)} onClick={() => report && downloadSalesCsv(report)}>Download CSV</Button>
+          <Button type="button" variant="secondary" disabled={!report || Boolean(error)} loading={exporting} onClick={exportPdf}>
             Generate PDF
           </Button>
         </div>
+        {exportError && <p role="alert">{exportError}</p>}
       </Card>
     </section>
   );

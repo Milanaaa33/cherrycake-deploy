@@ -16,7 +16,7 @@ public class OpenApiConfig {
         return new OpenAPI().info(new Info()
                 .title("Cherry Cake API")
                 .version("v1")
-                .description("API v1: regions, categories, products, cart calculation and guest orders. "
+                .description("API v1: regions, categories, products, cart calculation, guest orders and sales reports. "
                         + "All endpoints are public. Rates are fractions; money is in the selected region's currency. "
                         + "Cart calculation and order creation share the BE1 calculator. "
                         + "Every error is returned as ErrorResponse."));

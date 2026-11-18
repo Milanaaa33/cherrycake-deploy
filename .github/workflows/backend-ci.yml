@@ -3,10 +3,10 @@ name: Backend CI
 on:
   push:
     branches: [master]
-    paths: ['cherrycake-backend/**', '.github/workflows/backend-ci.yml']
+    paths: ['cherrycake-backend/**', 'cherrycake-frontend/**', '.github/workflows/backend-ci.yml']
   pull_request:
     branches: [master]
-    paths: ['cherrycake-backend/**', '.github/workflows/backend-ci.yml']
+    paths: ['cherrycake-backend/**', 'cherrycake-frontend/**', '.github/workflows/backend-ci.yml']
 
 permissions:
   contents: read
@@ -31,3 +31,20 @@ jobs:
         with:
           name: backend-test-results
           path: cherrycake-backend/target/surefire-reports/
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cherrycake-frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: cherrycake-frontend/package-lock.json
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run build
+      - run: npm test
+      - run: npm run lint
