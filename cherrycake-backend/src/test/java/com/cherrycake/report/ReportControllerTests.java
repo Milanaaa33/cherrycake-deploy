@@ -68,6 +68,8 @@ class ReportControllerTests {
             assertThat(report.path("kpi").path(fields[i]).decimalValue())
                     .isEqualByComparingTo((BigDecimal) expected.get(columns[i]));
         }
+        // (100.10 + 200.20 + 40.04) / 3 orders = 113.4466..., rounded half up.
+        assertThat(report.at("/kpi/averageOrderValue").decimalValue()).isEqualByComparingTo("113.45");
         assertThat(report.path("rows").size()).isEqualTo(2);
         assertThat(report.at("/rows/0/label").asText()).isEqualTo("GEO");
         assertThat(report.at("/rows/0/total").decimalValue()).isEqualByComparingTo("40.04");
@@ -80,6 +82,7 @@ class ReportControllerTests {
         JsonNode report = report("&region=UZB");
         assertThat(report.at("/kpi/ordersCount").asInt()).isEqualTo(2);
         assertThat(report.at("/kpi/totalSum").decimalValue()).isEqualByComparingTo("300.30");
+        assertThat(report.at("/kpi/averageOrderValue").decimalValue()).isEqualByComparingTo("150.15");
         assertThat(report.at("/rows/0/label").asText()).isEqualTo("2026-01");
         assertThat(report.path("currencyCode").asText()).isEqualTo("UZS");
         mvc.perform(get("/api/reports/sales?from=2026-01-31&to=2026-01-31&region=UZB"))
@@ -104,6 +107,7 @@ class ReportControllerTests {
                 .andExpect(jsonPath("$.kpi.vatSum").value(0))
                 .andExpect(jsonPath("$.kpi.discountSum").value(0))
                 .andExpect(jsonPath("$.kpi.totalSum").value(0))
+                .andExpect(jsonPath("$.kpi.averageOrderValue").value(0))
                 .andExpect(jsonPath("$.rows").isEmpty()).andExpect(jsonPath("$.currencyCode").value("UZS"));
     }
 
@@ -138,7 +142,7 @@ class ReportControllerTests {
         try (PdfReader reader = new PdfReader(bytes)) {
             String text = text(reader);
             assertThat(text).contains("2026-01-01", "2026-01-31", "All regions", "REGION", "MIXED");
-            for (String field : new String[]{"subtotalSum", "vatSum", "discountSum", "totalSum"}) {
+            for (String field : new String[]{"subtotalSum", "vatSum", "discountSum", "totalSum", "averageOrderValue"}) {
                 assertThat(text).contains(report.path("kpi").path(field).decimalValue().setScale(2).toPlainString());
             }
             assertThat(text).contains("GEO", "UZB", "40.04", "300.30");
@@ -165,7 +169,7 @@ class ReportControllerTests {
                     1, new BigDecimal("123456789.12")));
         }
         var kpi = new SalesReportResponse.Kpi(40, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
-                new BigDecimal("4938271564.80"));
+                new BigDecimal("4938271564.80"), new BigDecimal("123456789.12"));
         var filters = new ReportFilters(LocalDate.of(2020, 1, 1), LocalDate.of(2023, 12, 31), "UZB", ReportFilters.GroupBy.MONTH);
         byte[] bytes = pdf.render(filters, new SalesReportResponse(kpi, rows, "UZS"));
         try (PdfReader reader = new PdfReader(bytes)) {

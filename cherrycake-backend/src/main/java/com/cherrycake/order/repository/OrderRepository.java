@@ -17,6 +17,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @EntityGraph(attributePaths = "items")
     List<Order> findByClientIdOrderByCreatedAtDescIdDesc(String clientId);
 
+    // History of a signed-in customer: orders with their email plus orders made in this browser.
+    // Pass "" (never a stored id) instead of null for clientId, null would match every order without an owner.
+    @EntityGraph(attributePaths = "items")
+    List<Order> findByClientIdOrEmailIgnoreCaseOrderByCreatedAtDescIdDesc(String clientId, String email);
+
     // Database allocation is safe across application restarts and concurrent instances.
     @Query(value = "SELECT nextval('order_number_seq')", nativeQuery = true)
     long nextOrderNumber();

@@ -160,7 +160,7 @@ export default function Reports() {
         {[
           ['Total Revenue', report ? money(report.kpi.totalSum) : '...'],
           ['Total Orders', report ? String(report.kpi.ordersCount) : '...'],
-          ['Average Order Value', report ? money(report.kpi.ordersCount ? report.kpi.totalSum / report.kpi.ordersCount : 0) : '...'],
+          ['Average Order Value', report ? money(report.kpi.averageOrderValue) : '...'],
           ['Subtotal', report ? money(report.kpi.subtotalSum) : '...'],
           ['VAT', report ? money(report.kpi.vatSum) : '...'],
           ['Discount', report ? money(report.kpi.discountSum) : '...'],
@@ -244,7 +244,7 @@ export default function Reports() {
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <Button type="button" disabled={!report || Boolean(error)} onClick={() => report && downloadSalesCsv(report)}>Download CSV</Button>
           <Button type="button" variant="secondary" disabled={!report || Boolean(error)} loading={exporting} onClick={exportPdf}>
-            Generate PDF
+            Download PDF
           </Button>
         </div>
         {exportError && <p role="alert">{exportError}</p>}

@@ -6,6 +6,7 @@ import Badge from '../components/ui/Badge';
 import EmptyState from '../components/ui/EmptyState';
 import ErrorState from '../components/ui/ErrorState';
 import Loader from '../components/ui/Loader';
+import { clearAuth, getAuthEmail, saveAuth } from '../utils/auth';
 import '../components/ui/ExtraComponents.css';
 import './Checkout.css';
 import './Account.css';
@@ -36,6 +37,7 @@ type HistoryOrder = {
   total: number;
   currencyCode: string;
   createdAt: string;
+  fulfillmentType?: 'PICKUP' | 'DELIVERY' | null;
 };
 
 function formatMoney(value: number, currencyCode: string) {
@@ -70,13 +72,15 @@ export default function Account() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [reloadKey, setReloadKey] = useState(0);
 
-  // "Find my earlier orders": orders placed before the history existed are matched by email + phone.
-  const [claimOpen, setClaimOpen] = useState(false);
-  const [claimEmail, setClaimEmail] = useState('');
-  const [claimPhone, setClaimPhone] = useState('');
-  const [claimError, setClaimError] = useState('');
-  const [claimMessage, setClaimMessage] = useState('');
-  const [claiming, setClaiming] = useState(false);
+  // Sign-in by email code: orders then follow the email on any device.
+  const [authEmail, setAuthEmail] = useState<string | null>(getAuthEmail());
+  const [step, setStep] = useState<'email' | 'code'>('email');
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginCode, setLoginCode] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [loginMessage, setLoginMessage] = useState('');
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -88,8 +92,16 @@ export default function Account() {
       .then(({ data }) => {
         if (active) setOrders(data);
       })
-      .catch(() => {
-        if (active) setError('Unable to load your orders. Please try again.');
+      .catch((err: { response?: { status?: number } }) => {
+        if (!active) return;
+        if (err.response?.status === 401) {
+          // The saved session expired: fall back to this browser's history.
+          clearAuth();
+          setAuthEmail(null);
+          setReloadKey((key) => key + 1);
+          return;
+        }
+        setError('Unable to load your orders. Please try again.');
       });
 
     return () => {
@@ -106,44 +118,63 @@ export default function Account() {
     });
   };
 
-  const claimEarlierOrders = (event: FormEvent) => {
-    event.preventDefault();
-    setClaimMessage('');
+  const errorMessage = (err: { response?: { data?: { message?: string } } }, fallback: string) =>
+    err.response?.data?.message ?? fallback;
 
-    const email = claimEmail.trim();
-    const phone = claimPhone.replace(/[\s()-]/g, '');
-    // Same rules as the backend.
+  const sendCode = (event?: FormEvent) => {
+    event?.preventDefault();
+    const email = loginEmail.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setClaimError('Please enter a valid email address.');
-      return;
-    }
-    if (!/^\+?[1-9][0-9]{6,14}$/.test(phone)) {
-      setClaimError('Phone must contain 7 to 15 digits, with an optional leading +.');
+      setLoginError('Please enter a valid email address.');
       return;
     }
 
-    setClaimError('');
-    setClaiming(true);
-    const before = orders?.length ?? 0;
-
+    setLoginError('');
+    setLoginMessage('');
+    setBusy(true);
     api
-      .post<HistoryOrder[]>('/orders/my/claim', { email, phone })
+      .post('/auth/request-code', { email })
+      .then(() => {
+        setStep('code');
+        setLoginCode('');
+        setLoginMessage(`We sent a 6-digit code to ${email}. It is valid for 10 minutes.`);
+      })
+      .catch((err) => setLoginError(errorMessage(err, 'Unable to send the code. Please try again.')))
+      .finally(() => setBusy(false));
+  };
+
+  const verifyCode = (event: FormEvent) => {
+    event.preventDefault();
+    const code = loginCode.trim();
+    if (!/^[0-9]{6}$/.test(code)) {
+      setLoginError('Enter the 6-digit code from the email.');
+      return;
+    }
+
+    setLoginError('');
+    setBusy(true);
+    api
+      .post<{ token: string; email: string }>('/auth/verify-code', { email: loginEmail.trim(), code })
       .then(({ data }) => {
-        setOrders(data);
-        const added = data.length - before;
-        if (added > 0) {
-          setClaimMessage(`Added ${added} earlier ${added === 1 ? 'order' : 'orders'} to your history.`);
-          setClaimOpen(false);
-          setClaimEmail('');
-          setClaimPhone('');
-        } else {
-          setClaimMessage('No earlier orders found for these details.');
-        }
+        saveAuth(data.token, data.email);
+        setAuthEmail(data.email);
+        setLoginOpen(false);
+        setStep('email');
+        setLoginEmail('');
+        setLoginCode('');
+        setLoginMessage('');
+        setReloadKey((key) => key + 1);
       })
-      .catch(() => {
-        setClaimError('Unable to search for your orders. Please try again.');
-      })
-      .finally(() => setClaiming(false));
+      .catch((err) => setLoginError(errorMessage(err, 'Unable to verify the code. Please try again.')))
+      .finally(() => setBusy(false));
+  };
+
+  const signOut = () => {
+    api.post('/auth/logout').catch(() => undefined).finally(() => {
+      clearAuth();
+      setAuthEmail(null);
+      setReloadKey((key) => key + 1);
+    });
   };
 
   // No registration: contact details are taken from the most recent order.
@@ -159,6 +190,13 @@ export default function Account() {
         </div>
         <Link to="/menu" className="checkout-back-link">← Browse the menu</Link>
       </div>
+
+      {authEmail && (
+        <div className="account-signed">
+          <span>Signed in as <strong>{authEmail}</strong></span>
+          <button type="button" className="account-toggle" onClick={signOut}>Sign out</button>
+        </div>
+      )}
 
       {error && (
         <ErrorState
@@ -200,6 +238,9 @@ export default function Account() {
                         <span>Placed {formatDate(order.createdAt)} · For {formatDate(order.orderDate)}</span>
                       </div>
                       <div className="account-order-side">
+                        {order.fulfillmentType && (
+                          <Badge>{order.fulfillmentType === 'DELIVERY' ? 'Delivery' : 'Pickup'}</Badge>
+                        )}
                         <Badge>{order.region}</Badge>
                         <strong className="account-order-total">
                           {formatMoney(order.total, order.currencyCode)}
@@ -262,7 +303,7 @@ export default function Account() {
             <div className="account-avatar" aria-hidden="true">{initials(latest.customer.name) || '♡'}</div>
             <h3>{latest.customer.name}</h3>
             <p className="account-profile-line">{latest.customer.phone}</p>
-            <p className="account-profile-line">{latest.customer.email}</p>
+            <p className="account-profile-line">{authEmail ?? latest.customer.email}</p>
 
             <div className="account-stats">
               <div>
@@ -284,53 +325,75 @@ export default function Account() {
         </div>
       )}
 
-      {!error && orders !== null && (
-        <section className="account-claim">
-          <div className="account-claim-top">
+      {!error && orders !== null && !authEmail && (
+        <section className="account-login">
+          <div className="account-login-top">
             <div>
-              <h3>Missing an older order?</h3>
-              <p>Orders made earlier on this device appear automatically after your next order. To see them right now, enter the email and phone you used.</p>
+              <h3>Sign in to see your orders on any device</h3>
+              <p>No password: we email you a 6-digit code. You will see every order made with that email.</p>
             </div>
             <button
               type="button"
               className="checkout-button secondary"
-              aria-expanded={claimOpen}
-              onClick={() => setClaimOpen((open) => !open)}
+              aria-expanded={loginOpen}
+              onClick={() => setLoginOpen((open) => !open)}
             >
-              {claimOpen ? 'Close' : 'Find my earlier orders'}
+              {loginOpen ? 'Close' : 'Sign in with email'}
             </button>
           </div>
 
-          {claimMessage && <p role="status" className="account-claim-message">{claimMessage}</p>}
+          {loginOpen && (
+            <form onSubmit={step === 'email' ? sendCode : verifyCode} noValidate>
+              {loginMessage && <p role="status" className="account-login-message">{loginMessage}</p>}
 
-          {claimOpen && (
-            <form onSubmit={claimEarlierOrders} noValidate>
               <div className="checkout-fields two-columns">
                 <div className="checkout-field">
-                  <label htmlFor="account-claim-email">Email address</label>
+                  <label htmlFor="account-login-email">Email address</label>
                   <input
-                    id="account-claim-email"
+                    id="account-login-email"
                     type="email"
-                    value={claimEmail}
-                    onChange={(e) => setClaimEmail(e.target.value)}
+                    value={loginEmail}
+                    disabled={step === 'code'}
+                    onChange={(e) => setLoginEmail(e.target.value)}
                     placeholder="you@example.com"
                   />
                 </div>
-                <div className="checkout-field">
-                  <label htmlFor="account-claim-phone">Phone number</label>
-                  <input
-                    id="account-claim-phone"
-                    type="tel"
-                    value={claimPhone}
-                    onChange={(e) => setClaimPhone(e.target.value)}
-                    placeholder="+998 90 123 45 67"
-                  />
-                </div>
+                {step === 'code' && (
+                  <div className="checkout-field">
+                    <label htmlFor="account-login-code">6-digit code</label>
+                    <input
+                      id="account-login-code"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      value={loginCode}
+                      onChange={(e) => setLoginCode(e.target.value.replace(/\D/g, ''))}
+                      placeholder="123456"
+                    />
+                  </div>
+                )}
               </div>
-              {claimError && <p role="alert" className="checkout-field-error account-claim-error">{claimError}</p>}
+
+              {loginError && <p role="alert" className="checkout-field-error account-login-error">{loginError}</p>}
+
               <div className="checkout-form-actions">
-                <button type="submit" className="checkout-button primary" disabled={claiming}>
-                  {claiming ? 'Searching...' : 'Find orders'} <span>→</span>
+                {step === 'code' && (
+                  <>
+                    <button
+                      type="button"
+                      className="checkout-button secondary"
+                      onClick={() => { setStep('email'); setLoginError(''); setLoginMessage(''); }}
+                    >
+                      Change email
+                    </button>
+                    <button type="button" className="checkout-button secondary" disabled={busy} onClick={() => sendCode()}>
+                      Send again
+                    </button>
+                  </>
+                )}
+                <button type="submit" className="checkout-button primary" disabled={busy}>
+                  {step === 'email' ? (busy ? 'Sending...' : 'Send code') : (busy ? 'Checking...' : 'Sign in')} <span>→</span>
                 </button>
               </div>
             </form>

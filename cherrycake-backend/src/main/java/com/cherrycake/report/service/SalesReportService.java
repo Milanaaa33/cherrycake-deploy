@@ -53,7 +53,11 @@ public class SalesReportService {
             total = total.add(row.total());
             currency = currency == null ? row.currency() : currency.equals(row.currency()) ? currency : "MIXED";
         }
-        return new SalesReportResponse(new Kpi(count, money(subtotal), money(vat), money(discount), money(total)),
+        BigDecimal average = count == 0
+                ? money(BigDecimal.ZERO)
+                : total.divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP);
+        return new SalesReportResponse(
+                new Kpi(count, money(subtotal), money(vat), money(discount), money(total), average),
                 aggregates.stream().map(r -> new Row(r.label(), r.count(), money(r.total()))).toList(), currency);
     }
 

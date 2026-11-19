@@ -51,6 +51,7 @@ public class SalesReportPdfService {
                 add(kpi, "VAT", report.kpi().vatSum().toPlainString());
                 add(kpi, "Discount", report.kpi().discountSum().toPlainString());
                 add(kpi, "Total", report.kpi().totalSum().toPlainString());
+                add(kpi, "Average order value", report.kpi().averageOrderValue().toPlainString());
                 document.add(kpi);
                 // Keep each chart legible for long ranges; every row is included, in chronological order.
                 int chunks = Math.max(1, (report.rows().size() + 11) / 12);

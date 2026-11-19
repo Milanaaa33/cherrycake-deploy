@@ -2,7 +2,10 @@ import { api } from './client';
 
 export type ReportFilters = { from: string; to: string; region?: string; groupBy: 'REGION' | 'MONTH' };
 export type SalesReport = {
-  kpi: { ordersCount: number; subtotalSum: number; vatSum: number; discountSum: number; totalSum: number };
+  kpi: {
+    ordersCount: number; subtotalSum: number; vatSum: number; discountSum: number; totalSum: number;
+    averageOrderValue: number;
+  };
   rows: { label: string; ordersCount: number; total: number }[];
   currencyCode: string | null;
 };

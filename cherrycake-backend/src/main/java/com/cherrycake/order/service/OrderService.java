@@ -152,8 +152,21 @@ public class OrderService {
      */
     @Transactional(readOnly = true)
     public List<OrderResponse> getOrderHistory(String clientId) {
-        String normalizedClientId = normalizeClientId(clientId, true);
-        List<Order> orders = orderRepository.findByClientIdOrderByCreatedAtDescIdDesc(normalizedClientId);
+        return getOrderHistory(clientId, null);
+    }
+
+    /**
+     * History for a signed-in customer ({@code email} not null): all orders placed with that email plus
+     * the orders of this browser. Without an email it is the plain browser history.
+     */
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getOrderHistory(String clientId, String email) {
+        boolean signedIn = email != null && !email.isBlank();
+        String normalizedClientId = normalizeClientId(clientId, !signedIn);
+        List<Order> orders = signedIn
+                ? orderRepository.findByClientIdOrEmailIgnoreCaseOrderByCreatedAtDescIdDesc(
+                        normalizedClientId == null ? "" : normalizedClientId, email.trim())
+                : orderRepository.findByClientIdOrderByCreatedAtDescIdDesc(normalizedClientId);
         if (orders.isEmpty()) {
             return List.of();
         }
