@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
-import useTranslation from "../i18n/useTranslation";
 
 import heroCake from "../assets/hero-cake.png";
 import treatCoffee from "../assets/treat-coffee.png";
@@ -12,8 +11,7 @@ import "./Home.css";
 
 export default function Home() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
-
+  const t = (_key: string, fallback = "") => fallback;
   return (
     <div className="cc-home-container">
       {/* ====================================================================
