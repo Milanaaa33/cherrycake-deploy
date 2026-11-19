@@ -107,7 +107,7 @@ The normal clean-database order is V1 catalog, V2 orders, then the existing V3 c
 The existing `out-of-order: true` setting also allows V2 to run on a database where V3 has already been applied.
 Do not edit an applied migration or run Flyway clean/repair against a shared database.
 
-This scope contains no report, delivery, pickup, booking, slot or authentication endpoints or tables.
+The order migration contains no delivery, pickup, booking, slot or authentication tables.
 
 ## Errors
 
@@ -143,3 +143,53 @@ creation, database constraints, V1-to-V2 upgrades and adding V2 after an existin
 | `DB_USER` | Database user |
 | `DB_PASSWORD` | Database password |
 | `CORS_ALLOWED_ORIGINS` | Allowed frontend origins, comma-separated |
+
+
+## Sales reports and PDF export (CC-50 / CC-51)
+
+```text
+GET /api/reports/sales?from=2026-01-01&to=2026-06-30&region=UZB&groupBy=MONTH
+GET /api/reports/export?format=PDF&from=2026-01-01&to=2026-06-30&region=UZB&groupBy=MONTH
+```
+
+Both endpoints are public. They accept exactly the same reporting filters:
+
+| Parameter | Meaning | Default |
+|---|---|---|
+| `from` | Inclusive `order_date`, ISO `YYYY-MM-DD` | First day five months before `to` |
+| `to` | Inclusive `order_date`, ISO `YYYY-MM-DD` | Today on the server |
+| `region` | Three-letter country code; case-insensitive | All countries when omitted |
+| `groupBy` | `REGION` or `MONTH` | `MONTH` |
+| `format` | PDF endpoint only; `PDF` | `PDF` |
+
+The sales response is `{kpi, rows, currencyCode}`. `kpi` has `ordersCount`, `subtotalSum`,
+`vatSum`, `discountSum`, and `totalSum`; each row has `label`, `ordersCount`, and `total`.
+Region labels are country codes, month labels are `YYYY-MM`, sorted chronologically.
+Only buckets with matching orders are returned. Empty results contain zero KPI amounts and `rows: []`.
+An invalid date range, malformed filters or unsupported grouping/format returns 400 in `ErrorResponse`;
+an unknown country returns 404. Filtering uses the stored order date, not `created_at`.
+
+Amounts are sums of saved order snapshots, never recalculated using current catalog prices or taxes.
+`currencyCode` identifies the stored currency, is `MIXED` when more than one is present, and can be null
+when an all-country report has no sales. An all-country sum combines local amounts; it is **not** a
+converted common-currency revenue measure. The UI defaults to UZB and both UI/PDF warn on `MIXED`.
+No exchange-rate conversion or historical-rate assumptions are introduced.
+
+SQL aggregation reads `orders` joined to `regions`, without joining item rows (which would multiply
+orders). One grouped statement produces the KPI components and chart rows from the same snapshot.
+See [independent reconciliation SQL](docs/sales-report-reconciliation.sql).
+
+The PDF is an `application/pdf` attachment with filters, all KPI fields, an orders bar chart, a revenue
+line chart, and the exact chart rows in a table. It calls the same report service as JSON. Long reports
+split charts into 12-bucket pages and repeat breakdown table headers across pages; no rows are dropped.
+Charts use OpenPDF 2.0.3 and JFreeChart 1.5.6 with headless Java2D. The runtime Docker image includes
+fontconfig and DejaVu fonts so charts also render in a minimal deployment container.
+
+The existing report page now loads the API, uses country and REGION/MONTH filters, displays actual
+KPI/charts, and downloads the server PDF with the active filters. CSV export also uses loaded data.
+Loading, empty and error states are explicit; exports are disabled until the current filters have data,
+and late responses from older filter selections are ignored. Browser print is no longer the PDF path.
+
+Run `mvn clean verify` for backend/SQL/PDF tests and `npm test`, `npm run build`, `npm run lint`
+in `cherrycake-frontend` for frontend verification. PDF regression fixtures are generated under backend
+`target/` for visual inspection. Tests use isolated data; no reporting seed migration is added to production.
