@@ -3,7 +3,7 @@ import { useId } from "react";
 
 type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
   label: string;
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; disabled?: boolean }[];
   error?: string;
 };
 
@@ -33,7 +33,12 @@ export default function Select({
         }}
       >
         {options.map((option) => (
-          <option key={option.value} value={option.value}>
+          <option
+            key={option.value}
+            value={option.value}
+            disabled={option.disabled}
+          >
+            {" "}
             {option.label}
           </option>
         ))}
