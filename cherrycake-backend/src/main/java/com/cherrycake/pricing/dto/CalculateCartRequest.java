@@ -14,7 +14,15 @@ public record CalculateCartRequest(
         String region,
 
         @NotEmpty(message = "cart is empty")
-        List<@NotNull @Valid Item> items) {
+        List<@NotNull @Valid Item> items,
+
+        @Schema(example = "1", nullable = true,
+                description = "Optional, from GET /api/delivery-zones: adds the zone's delivery price to the total")
+        Long deliveryZoneId) {
+
+    public CalculateCartRequest(String region, List<Item> items) {
+        this(region, items, null);
+    }
 
     @Schema(name = "CalculateCartItemRequest")
     public record Item(

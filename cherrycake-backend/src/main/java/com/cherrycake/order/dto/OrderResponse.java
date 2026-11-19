@@ -1,5 +1,6 @@
 package com.cherrycake.order.dto;
 
+import com.cherrycake.fulfillment.entity.FulfillmentType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,7 +26,11 @@ public record OrderResponse(
         BigDecimal deliveryFee,
         BigDecimal total,
         String currencyCode,
-        LocalDateTime createdAt) {
+        LocalDateTime createdAt,
+        @Schema(example = "DELIVERY", nullable = true) FulfillmentType fulfillmentType,
+        @Schema(nullable = true) Long pickupPointId,
+        @Schema(nullable = true) Long deliveryZoneId,
+        @Schema(nullable = true) Long timeSlotId) {
 
     @Schema(name = "OrderCustomerResponse")
     public record Customer(String name, String phone, String email) {

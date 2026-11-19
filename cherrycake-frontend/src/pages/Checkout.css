@@ -25,14 +25,17 @@
 .checkout-field { display:flex; flex-direction:column; gap:8px; min-width:0; }
 .checkout-field label, .checkout-label { color:#4a3e42; font-size:13px; font-weight:700; }
 .checkout-field label span, .checkout-label span { color:#a99da0; font-size:11px; font-weight:500; margin-left:5px; }
-.checkout-field input, .checkout-section textarea { width:100%; min-height:46px; border:1px solid #e5d9d5; border-radius:9px; background:#fffdfc; color:#2b2225; padding:12px 13px; font-size:14px; outline:none; transition:border .15s, box-shadow .15s; }
-.checkout-field input:focus, .checkout-section textarea:focus { border-color:#a64c68; box-shadow:0 0 0 3px rgba(123,30,60,.08); }
+.checkout-field input, .checkout-field select, .checkout-section textarea { font-family:inherit; width:100%; min-height:46px; border:1px solid #e5d9d5; border-radius:9px; background:#fffdfc; color:#2b2225; padding:12px 13px; font-size:14px; outline:none; transition:border .15s, box-shadow .15s; }
+.checkout-field input:focus, .checkout-field select:focus, .checkout-section textarea:focus { border-color:#a64c68; box-shadow:0 0 0 3px rgba(123,30,60,.08); }
 .checkout-field input::placeholder, .checkout-section textarea::placeholder { color:#b5a9ac; }
-.checkout-field input[aria-invalid="true"] { border-color:#c0392b; }
+.checkout-field input[aria-invalid="true"], .checkout-field select[aria-invalid="true"] { border-color:#c0392b; }
 .checkout-field-error { color:#c0392b; font-size:12px; }
 .checkout-choice-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:13px; margin-bottom:23px; }
-.checkout-choice { text-align:left; display:grid; gap:7px; padding:18px; border:1px solid #e7dcd8; border-radius:12px; background:#fff; cursor:pointer; color:#30272a; }
-.checkout-choice.selected, .checkout-payment.selected { border-color:#8c2948; background:#fff8f8; box-shadow:0 0 0 2px rgba(140,41,72,.07); }
+.checkout-choice { font-family:inherit; text-align:left; display:grid; gap:7px; padding:16px 18px; border:1px solid #e7dcd8; border-radius:12px; background:#fff; cursor:pointer; color:#30272a; transition:border-color .15s, background .15s, box-shadow .15s; }
+.checkout-choice:hover { border-color:#a64c68; }
+.checkout-choice:focus-visible, .checkout-slot:focus-visible { outline:3px solid #b9770e; outline-offset:2px; }
+.checkout-choice.is-selected .checkout-choice-title { color:#7b1e3c; }
+.checkout-choice.selected, .checkout-choice.is-selected, .checkout-payment.selected { border-color:#8c2948; background:#fff8f8; box-shadow:0 0 0 2px rgba(140,41,72,.07); }
 .checkout-choice-icon { font-size:23px; color:#8c2948; }
 .checkout-choice-title { font-size:15px; font-weight:800; }
 .checkout-choice-description { color:#8a7f82; font-size:12px; }
@@ -96,3 +99,26 @@
   .checkout-button { flex:1; }
   .checkout-summary { padding:20px; }
 }
+
+/* Delivery / pickup select, same look as the inputs */
+.checkout-field select {
+  min-height:46px; padding:12px 40px 12px 13px; border:1px solid #e5d9d5; border-radius:9px; color:#2b2225; font-size:14px; outline:none; cursor:pointer;
+  appearance:none; -webkit-appearance:none; transition:border .15s, box-shadow .15s;
+  background:#fffdfc url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1.5l5 5 5-5' fill='none' stroke='%238c2948' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 15px center / 12px 8px;
+}
+.checkout-field select:hover { border-color:#d3bcc1; }
+.checkout-field input[type="date"] { cursor:pointer; }
+.checkout-fields .checkout-choice-grid { margin-bottom:0; }
+.checkout-fields .checkout-field > small.checkout-field-error { margin-top:-2px; }
+.checkout-hint { margin:0; color:#8a7f82; font-size:13px; }
+
+/* Time slots */
+.checkout-slot-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(132px,1fr)); gap:10px; }
+.checkout-slot { display:grid; justify-items:start; gap:3px; padding:12px 14px; border:1px solid #e5d9d5; border-radius:10px; background:#fffdfc; color:#30272a; font-family:inherit; text-align:left; cursor:pointer; transition:border-color .15s, background .15s, box-shadow .15s; }
+.checkout-slot strong { font-size:14px; }
+.checkout-slot small { color:#8a7f82; font-size:11px; }
+.checkout-slot:hover:not(:disabled) { border-color:#a64c68; }
+.checkout-slot.is-selected { border-color:#8c2948; background:#fff8f8; box-shadow:0 0 0 2px rgba(140,41,72,.09); }
+.checkout-slot.is-selected strong { color:#7b1e3c; }
+.checkout-slot:disabled { background:#f6f1ee; color:#a69b9e; cursor:not-allowed; }
+.checkout-slot:disabled strong { text-decoration:line-through; }

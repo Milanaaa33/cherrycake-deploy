@@ -33,7 +33,10 @@ class ApiContractTests {
         Set<String> paths = new HashSet<>();
         spec.path("paths").fieldNames().forEachRemaining(paths::add);
         assertThat(paths).containsExactlyInAnyOrder("/api/regions", "/api/categories", "/api/products",
-                "/api/products/{id}", "/api/cart/calculate", "/api/orders", "/api/orders/my", "/api/orders/my/claim", "/api/reports/sales", "/api/reports/export");
+        "/api/products/{id}", "/api/cart/calculate", "/api/orders", "/api/orders/my", "/api/orders/my/claim",
+        "/api/pickup-points", "/api/delivery-zones", "/api/time-slots",
+        "/api/reports/sales", "/api/reports/export");
+
         assertThat(spec.at("/info/version").asText()).isEqualTo("v1");
         assertThat(spec.path("security").isMissingNode() || spec.path("security").isEmpty()).isTrue();
         assertSuccess(spec, "/api/regions", "get", "200", "RegionResponse", true);
