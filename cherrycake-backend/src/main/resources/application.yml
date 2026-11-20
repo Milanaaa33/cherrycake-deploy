@@ -30,7 +30,7 @@ spring:
     out-of-order: true
 
 springdoc:
-  paths-to-match: /api/regions,/api/categories,/api/products,/api/products/*,/api/cart/calculate,/api/orders,/api/orders/my,/api/orders/my/claim,/api/pickup-points,/api/delivery-zones,/api/time-slots,/api/auth/*,/api/reports/**
+  paths-to-match: /api/**
 
 
 app:
