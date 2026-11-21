@@ -1,23 +1,24 @@
-import { Routes, Route } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { Routes, Route } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 
-import { hideToast } from './store';
-import type { RootState } from './store';
+import { hideToast } from "./store";
+import type { RootState } from "./store";
+import Booking from "./pages/Booking";
 
-import Header from './components/layout/Header';
-import Footer from './components/layout/Footer';
-import Toast from './components/ui/Toast';
-import UIKit from './pages/UIKit';
+import Header from "./components/layout/Header";
+import Footer from "./components/layout/Footer";
+import Toast from "./components/ui/Toast";
+import UIKit from "./pages/UIKit";
 
-import Home from './pages/Home';
-import Menu from './pages/Menu';
-import Cart from './pages/Cart';
-import Reports from './pages/Reports';
-import Checkout from './pages/Checkout';
-import OrderSuccess from './pages/OrderSuccess';
-import Account from './pages/Account';
+import Home from "./pages/Home";
+import Menu from "./pages/Menu";
+import Cart from "./pages/Cart";
+import Reports from "./pages/Reports";
+import Checkout from "./pages/Checkout";
+import OrderSuccess from "./pages/OrderSuccess";
+import Account from "./pages/Account";
 
-import './App.css';
+import "./App.css";
 
 export default function App() {
   const toast = useSelector((state: RootState) => state.ui.toast);
@@ -37,6 +38,7 @@ export default function App() {
           <Route path="/order-success" element={<OrderSuccess />} />
           <Route path="/account" element={<Account />} />
           <Route path="/ui-kit" element={<UIKit />} />
+          <Route path="/booking" element={<Booking />} />
         </Routes>
       </main>
 
