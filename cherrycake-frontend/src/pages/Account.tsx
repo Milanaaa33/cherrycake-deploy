@@ -6,7 +6,7 @@ import Badge from '../components/ui/Badge';
 import EmptyState from '../components/ui/EmptyState';
 import ErrorState from '../components/ui/ErrorState';
 import Loader from '../components/ui/Loader';
-import { clearAuth, getAuthEmail, saveAuth } from '../utils/auth';
+import { clearAuth, getAuthEmail, getAuthToken, saveAuth } from '../utils/auth';
 import '../components/ui/ExtraComponents.css';
 import './Checkout.css';
 import './Account.css';
@@ -78,7 +78,7 @@ export default function Account() {
   const [reloadKey, setReloadKey] = useState(0);
 
   // Sign-in by email code: orders then follow the email on any device.
-  const [authEmail, setAuthEmail] = useState<string | null>(getAuthEmail());
+  const [authEmail, setAuthEmail] = useState<string | null>(getAuthToken() ? getAuthEmail() : null);
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [loginOpen, setLoginOpen] = useState(from !== null);
   const [loginEmail, setLoginEmail] = useState('');
@@ -91,6 +91,14 @@ export default function Account() {
     let active = true;
     setOrders(null);
     setError('');
+
+    // Order history is private: never request it without a current session token.
+    if (!getAuthToken()) {
+      setOrders([]);
+      return () => {
+        active = false;
+      };
+    }
 
     api
       .get<HistoryOrder[]>('/orders/my')
@@ -175,11 +183,14 @@ export default function Account() {
   };
 
   const signOut = () => {
-    api.post('/auth/logout').catch(() => undefined).finally(() => {
-      clearAuth();
-      setAuthEmail(null);
-      setReloadKey((key) => key + 1);
-    });
+    // Hide private data immediately; the backend logout request may take time or fail.
+    clearAuth();
+    setAuthEmail(null);
+    setOrders([]);
+    setExpanded(new Set());
+    setError('');
+    setReloadKey((key) => key + 1);
+    api.post('/auth/logout').catch(() => undefined);
   };
 
   // No registration: contact details are taken from the most recent order.
@@ -279,7 +290,7 @@ export default function Account() {
           <p className="checkout-subtitle">
             {focusLogin
               ? 'One quick step before your cart.'
-              : 'Your details and everything you have ordered so far.'}
+              : 'Sign in to view your private order history.'}
           </p>
         </div>
         <Link to="/menu" className="checkout-back-link">← Browse the menu</Link>
@@ -315,17 +326,23 @@ export default function Account() {
         />
       )}
 
-      {!focusLogin && !error && orders === null && <Loader />}
+      {!focusLogin && authEmail && !error && orders === null && <Loader />}
 
-      {!focusLogin && !error && orders !== null && orders.length === 0 && (
+      {!focusLogin && !authEmail && (
+        <div className="account-login-required">
+          <p>Sign in to view your private order history.</p>
+        </div>
+      )}
+
+      {!focusLogin && authEmail && !error && orders !== null && orders.length === 0 && (
         <EmptyState
           title="No orders yet"
-          description="Orders you place will appear here automatically, no registration needed."
+          description="Orders associated with your signed-in email will appear here."
           action={<Link to="/menu" className="account-empty-link">Order something sweet</Link>}
         />
       )}
 
-      {!focusLogin && !error && orders !== null && orders.length > 0 && latest && (
+      {!focusLogin && authEmail && !error && orders !== null && orders.length > 0 && latest && (
         <div className="checkout-layout">
           <section className="account-main">
             <div className="account-list-top">
@@ -427,7 +444,7 @@ export default function Account() {
 
             <div className="checkout-summary-note">
               <span>♡</span>
-              <p>No sign-up needed: your orders are saved in this browser, using the details from your latest order.</p>
+              <p>Your order history is available only while you are signed in.</p>
             </div>
             <Link to="/menu" className="checkout-edit-cart">Order again</Link>
           </aside>

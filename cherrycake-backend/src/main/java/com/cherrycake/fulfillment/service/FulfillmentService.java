@@ -93,8 +93,12 @@ public class FulfillmentService {
         return timeSlotRepository.findAllByOrderByStartTime().stream()
                 .map(slot -> {
                     int remaining = (int) Math.max(0, slot.getCapacity() - booked.getOrDefault(slot.getId(), 0L));
-                    return new TimeSlotResponse(slot.getId(), format(slot.getStartTime()), format(slot.getEndTime()),
-                            slot.getCapacity(), remaining, slot.isAvailable() && remaining > 0);
+                    boolean hasFreeTable = timeSlotRepository.countAvailableTables(slot.getId(), date) > 0;
+                    boolean available = slot.isAvailable() && hasFreeTable;
+                    String start = format(slot.getStartTime());
+                    String end = format(slot.getEndTime());
+                    return new TimeSlotResponse(slot.getId(), start, available, slot.getId(), start, end,
+                            slot.getCapacity(), remaining);
                 })
                 .toList();
     }

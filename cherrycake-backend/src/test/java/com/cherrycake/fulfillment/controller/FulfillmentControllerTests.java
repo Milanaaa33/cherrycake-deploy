@@ -79,9 +79,11 @@ class FulfillmentControllerTests {
     void timeSlotsOfAFreeDayAreAllOpen() throws Exception {
         mvc.perform(get("/api/time-slots").param("date", LocalDate.now().plusDays(60).toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(5)))
-                .andExpect(jsonPath("$[0].startTime").value("10:00"))
-                .andExpect(jsonPath("$[0].endTime").value("12:00"))
+                .andExpect(jsonPath("$", hasSize(11)))
+                .andExpect(jsonPath("$[0].timeSlotId").exists())
+                .andExpect(jsonPath("$[0].time").value("12:00"))
+                .andExpect(jsonPath("$[0].startTime").value("12:00"))
+                .andExpect(jsonPath("$[0].endTime").value("13:00"))
                 .andExpect(jsonPath("$[0].capacity").value(5))
                 .andExpect(jsonPath("$[0].remaining").value(5))
                 .andExpect(jsonPath("$[0].isAvailable").value(true));
@@ -89,10 +91,10 @@ class FulfillmentControllerTests {
 
     @Test
     void closedSlotIsListedAsUnavailable() throws Exception {
-        jdbc.update("UPDATE time_slots SET is_available = FALSE WHERE start_time = '18:00'");
+        jdbc.update("UPDATE time_slots SET is_available = FALSE WHERE start_time = '16:00'");
 
         mvc.perform(get("/api/time-slots").param("date", LocalDate.now().toString()))
-                .andExpect(jsonPath("$[4].startTime").value("18:00"))
+                .andExpect(jsonPath("$[4].startTime").value("16:00"))
                 .andExpect(jsonPath("$[4].isAvailable").value(false));
     }
 

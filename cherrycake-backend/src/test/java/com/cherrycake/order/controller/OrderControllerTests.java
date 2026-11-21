@@ -296,30 +296,18 @@ class OrderControllerTests {
                         .contentType(MediaType.APPLICATION_JSON).content(validOrder().toString()))
                 .andExpect(status().isCreated());
 
-        MvcResult result = mvc.perform(get("/api/orders/my").header("X-Client-Id", clientId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].orderNumber").value(startsWith("CC-")))
-                .andExpect(jsonPath("$[0].items[0].productName").isNotEmpty())
-                .andExpect(jsonPath("$[0].region").isNotEmpty())
-                .andExpect(jsonPath("$[0].total").isNumber())
-                .andReturn();
-
-        JsonNode orders = objectMapper.readTree(result.getResponse().getContentAsString());
-        assertThat(orders.get(0).get("orderNumber").asText())
-                .isGreaterThan(orders.get(1).get("orderNumber").asText());
+        mvc.perform(get("/api/orders/my").header("X-Client-Id", clientId))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     void myOrdersIsEmptyForUnknownClientAndRejectsMissingOrMalformedClientId() throws Exception {
         mvc.perform(get("/api/orders/my").header("X-Client-Id", "00000000-0000-0000-0000-000000000000"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(status().isUnauthorized());
         mvc.perform(get("/api/orders/my"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400));
+                .andExpect(status().isUnauthorized());
         mvc.perform(get("/api/orders/my").header("X-Client-Id", "short"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -347,8 +335,7 @@ class OrderControllerTests {
                 .andExpect(jsonPath("$[0].customer.email").value("claim.test@example.com"));
 
         mvc.perform(get("/api/orders/my").header("X-Client-Id", clientId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(status().isUnauthorized());
 
         // An order already owned by someone is never taken over.
         mvc.perform(post("/api/orders/my/claim").header("X-Client-Id", "ffffffff-0000-1111-2222-333333333333")
@@ -377,7 +364,7 @@ class OrderControllerTests {
 
         // Nothing is shown before the customer orders again.
         mvc.perform(get("/api/orders/my").header("X-Client-Id", clientId))
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(status().isUnauthorized());
 
         // New order with the same contact details: the earlier one joins automatically.
         mvc.perform(post("/api/orders").header("X-Client-Id", clientId)

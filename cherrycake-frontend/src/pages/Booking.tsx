@@ -3,6 +3,8 @@ import type { FormEvent } from "react";
 import axios from "axios";
 
 import { api } from "../api/client";
+import { useSelector } from "react-redux";
+import type { RootState } from "../store";
 import Input from "../components/ui/Input";
 import Select from "../components/ui/Select";
 import Button from "../components/ui/Button";
@@ -41,6 +43,7 @@ function todayLocal(): string {
 }
 
 export default function Booking() {
+  const region = useSelector((state: RootState) => state.region.code);
   const [date, setDate] = useState(todayLocal);
   const [timeSlotId, setTimeSlotId] = useState("");
   const [guestsCount, setGuestsCount] = useState("1");
@@ -168,6 +171,7 @@ export default function Booking() {
           phone: phone.trim(),
           email: email.trim(),
         },
+        region,
       });
 
       setConfirmation(response.data);

@@ -2,11 +2,14 @@ package com.cherrycake.fulfillment.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+/** Time slot contract for both table booking and existing checkout flows. */
 public record TimeSlotResponse(
+        Long timeSlotId,
+        @Schema(example = "18:00") String time,
+        boolean isAvailable,
         Long id,
-        @Schema(example = "10:00") String startTime,
-        @Schema(example = "12:00") String endTime,
-        @Schema(example = "5") int capacity,
-        @Schema(example = "3", description = "Places left on the requested date") int remaining,
-        @Schema(description = "False when the slot is full or closed") boolean isAvailable) {
+        @Schema(example = "18:00") String startTime,
+        @Schema(example = "19:00") String endTime,
+        int capacity,
+        int remaining) {
 }
