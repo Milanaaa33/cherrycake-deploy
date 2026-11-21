@@ -7,11 +7,19 @@ import Input from "../components/ui/Input";
 import Select from "../components/ui/Select";
 import Button from "../components/ui/Button";
 
+// Response of GET /api/time-slots?date=YYYY-MM-DD (the same slots are used for orders).
 type TimeSlot = {
-  timeSlotId: number;
-  time: string;
+  id: number;
+  startTime: string;
+  endTime: string;
+  capacity: number;
+  remaining: number;
   isAvailable: boolean;
 };
+
+function slotLabel(slot: TimeSlot): string {
+  return `${slot.startTime}–${slot.endTime}`;
+}
 
 type BookingResponse = {
   bookingNumber: string;
@@ -99,8 +107,8 @@ export default function Booking() {
       disabled: true,
     },
     ...slots.map((slot) => ({
-      value: String(slot.timeSlotId),
-      label: slot.isAvailable ? slot.time : `${slot.time} (unavailable)`,
+      value: String(slot.id),
+      label: slot.isAvailable ? slotLabel(slot) : `${slotLabel(slot)} (unavailable)`,
       disabled: !slot.isAvailable,
     })),
   ];
@@ -115,9 +123,7 @@ export default function Booking() {
 
     const nextErrors: FormErrors = {};
     const guests = Number(guestsCount);
-    const selectedSlot = slots.find(
-      (slot) => String(slot.timeSlotId) === timeSlotId,
-    );
+    const selectedSlot = slots.find((slot) => String(slot.id) === timeSlotId);
 
     if (!date || date < todayLocal()) {
       nextErrors.date = "Choose today or a future date.";
@@ -173,7 +179,7 @@ export default function Booking() {
 
         setSlots((previous) =>
           previous.map((slot) =>
-            String(slot.timeSlotId) === timeSlotId
+            String(slot.id) === timeSlotId
               ? { ...slot, isAvailable: false }
               : slot,
           ),
@@ -281,7 +287,6 @@ export default function Booking() {
 
         {!slotsLoading &&
           !slotsError &&
-          slots.length > 0 &&
           slots.every((slot) => !slot.isAvailable) && (
             <p role="status">No available time slots for this date.</p>
           )}
