@@ -7,6 +7,7 @@ import type { RootState } from './store';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import Toast from './components/ui/Toast';
+import RequireSignIn from './components/auth/RequireSignIn';
 import UIKit from './pages/UIKit';
 
 import Home from './pages/Home';
@@ -31,9 +32,9 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/menu" element={<Menu />} />
-          <Route path="/cart" element={<Cart />} />
+          <Route path="/cart" element={<RequireSignIn><Cart /></RequireSignIn>} />
           <Route path="/reports" element={<Reports />} />
-          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/checkout" element={<RequireSignIn><Checkout /></RequireSignIn>} />
           <Route path="/order-success" element={<OrderSuccess />} />
           <Route path="/account" element={<Account />} />
           <Route path="/ui-kit" element={<UIKit />} />

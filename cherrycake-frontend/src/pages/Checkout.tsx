@@ -1,8 +1,9 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { api } from '../api/client';
+import { getAuthEmail } from '../utils/auth';
 import { clearCart, isCartItem } from '../store';
 import type { AppDispatch, RootState } from '../store';
 import './Checkout.css';
@@ -90,11 +91,14 @@ export default function Checkout() {
   const items = storedItems.filter(isCartItem);
   const region = useSelector((state: RootState) => state.region.code);
 
+  // The customer signed in with this email (code from the email), so it is filled in and locked.
+  const [signedInEmail] = useState(getAuthEmail);
+
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<CheckoutForm>({
     name: '',
     phone: '',
-    email: '',
+    email: signedInEmail ?? '',
     orderDate: todayString(),
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -379,7 +383,16 @@ export default function Checkout() {
                 <div className="checkout-fields two-columns">
                   <Field label="Full name" value={form.name} error={errors.name} onChange={(v) => update('name', v)} placeholder="Your full name" wide />
                   <Field label="Phone number" value={form.phone} error={errors.phone} onChange={(v) => update('phone', v)} placeholder="+998 90 123 45 67" type="tel" />
-                  <Field label="Email address" value={form.email} error={errors.email} onChange={(v) => update('email', v)} placeholder="you@example.com" type="email" />
+                  <Field
+                    label="Email address"
+                    value={form.email}
+                    error={errors.email}
+                    onChange={(v) => update('email', v)}
+                    placeholder="you@example.com"
+                    type="email"
+                    readOnly={Boolean(signedInEmail)}
+                    hint={signedInEmail ? <>Signed in with this email · <Link to="/account">Change</Link></> : undefined}
+                  />
                 </div>
               </div>
             )}
@@ -620,7 +633,7 @@ export default function Checkout() {
 }
 
 function Field({
-  label, value, error, onChange, placeholder, type = 'text', wide = false, min,
+  label, value, error, onChange, placeholder, type = 'text', wide = false, min, readOnly = false, hint,
 }: {
   label: string;
   value: string;
@@ -630,6 +643,8 @@ function Field({
   type?: string;
   wide?: boolean;
   min?: string;
+  readOnly?: boolean;
+  hint?: ReactNode;
 }) {
   const id = `checkout-${label.toLowerCase().replace(/\s+/g, '-')}`;
 
@@ -643,8 +658,10 @@ function Field({
         min={min}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        readOnly={readOnly}
         aria-invalid={Boolean(error)}
       />
+      {hint && <small className="checkout-field-hint">{hint}</small>}
       {error && <small className="checkout-field-error">{error}</small>}
     </div>
   );

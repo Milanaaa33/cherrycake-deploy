@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 
 import { api } from '../api/client';
 import Badge from '../components/ui/Badge';
@@ -67,6 +67,11 @@ function initials(name: string) {
 }
 
 export default function Account() {
+  // The cart and checkout send customers who are not signed in here and remember where they came from.
+  const location = useLocation();
+  const cameFrom = (location.state as { from?: unknown } | null)?.from;
+  const from = typeof cameFrom === 'string' && cameFrom.startsWith('/') ? cameFrom : null;
+
   const [orders, setOrders] = useState<HistoryOrder[] | null>(null);
   const [error, setError] = useState('');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -75,7 +80,7 @@ export default function Account() {
   // Sign-in by email code: orders then follow the email on any device.
   const [authEmail, setAuthEmail] = useState<string | null>(getAuthEmail());
   const [step, setStep] = useState<'email' | 'code'>('email');
-  const [loginOpen, setLoginOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(from !== null);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginCode, setLoginCode] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -180,16 +185,120 @@ export default function Account() {
   // No registration: contact details are taken from the most recent order.
   const latest = orders && orders.length > 0 ? orders[0] : null;
 
+  // Signed in (right after entering the code): go back to the cart or checkout.
+  if (from && authEmail) {
+    return <Navigate to={from} replace />;
+  }
+
+  // Sent here from the cart: show only the sign-in, the order history is not needed yet.
+  const focusLogin = from !== null && !authEmail;
+
+  // Extracted below so it can be shown on top (focused) or at the bottom of the page.
+  const loginCard = !authEmail && (focusLogin || (!error && orders !== null)) ? (
+<section className={`account-login ${focusLogin ? 'is-focused' : ''}`}>
+          <div className="account-login-top">
+            <div>
+              <h3>{focusLogin ? 'Sign in with your email' : 'Sign in to see your orders on any device'}</h3>
+              <p>No password: we email you a 6-digit code. You will see every order made with that email.</p>
+            </div>
+            <button
+              type="button"
+              className="checkout-button secondary"
+              aria-expanded={loginOpen}
+              onClick={() => setLoginOpen((open) => !open)}
+            >
+              {loginOpen ? 'Close' : 'Sign in with email'}
+            </button>
+          </div>
+
+          {loginOpen && (
+            <form onSubmit={step === 'email' ? sendCode : verifyCode} noValidate>
+              {loginMessage && <p role="status" className="account-login-message">{loginMessage}</p>}
+
+              <div className="checkout-fields two-columns">
+                <div className="checkout-field">
+                  <label htmlFor="account-login-email">Email address</label>
+                  <input
+                    id="account-login-email"
+                    type="email"
+                    value={loginEmail}
+                    disabled={step === 'code'}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    placeholder="you@example.com"
+                  />
+                </div>
+                {step === 'code' && (
+                  <div className="checkout-field">
+                    <label htmlFor="account-login-code">6-digit code</label>
+                    <input
+                      id="account-login-code"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      value={loginCode}
+                      onChange={(e) => setLoginCode(e.target.value.replace(/\D/g, ''))}
+                      placeholder="123456"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {loginError && <p role="alert" className="checkout-field-error account-login-error">{loginError}</p>}
+
+              <div className="checkout-form-actions">
+                {step === 'code' && (
+                  <>
+                    <button
+                      type="button"
+                      className="checkout-button secondary"
+                      onClick={() => { setStep('email'); setLoginError(''); setLoginMessage(''); }}
+                    >
+                      Change email
+                    </button>
+                    <button type="button" className="checkout-button secondary" disabled={busy} onClick={() => sendCode()}>
+                      Send again
+                    </button>
+                  </>
+                )}
+                <button type="submit" className="checkout-button primary" disabled={busy}>
+                  {step === 'email' ? (busy ? 'Sending...' : 'Send code') : (busy ? 'Checking...' : 'Sign in')} <span>→</span>
+                </button>
+              </div>
+            </form>
+          )}
+        </section>
+  ) : null;
+
   return (
     <div className="checkout-page account-page">
       <div className="checkout-heading">
         <div>
-          <p className="checkout-eyebrow">CHERRY CAKE · MY ACCOUNT</p>
-          <h2>My account</h2>
-          <p className="checkout-subtitle">Your details and everything you have ordered so far.</p>
+          <p className="checkout-eyebrow">{focusLogin ? 'CHERRY CAKE · ALMOST THERE' : 'CHERRY CAKE · MY ACCOUNT'}</p>
+          <h2>{focusLogin ? 'Sign in to order' : 'My account'}</h2>
+          <p className="checkout-subtitle">
+            {focusLogin
+              ? 'One quick step before your cart.'
+              : 'Your details and everything you have ordered so far.'}
+          </p>
         </div>
         <Link to="/menu" className="checkout-back-link">← Browse the menu</Link>
       </div>
+
+      {focusLogin && (
+        <div className="account-welcome">
+          <span className="account-welcome-icon" aria-hidden="true">🍒</span>
+          <div>
+            <h3>Sweet things take a moment ♡</h3>
+            <p>
+              Confirm your email with a one-time code first. Then we will take you straight back to your cart,
+              and your orders will wait for you here.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {focusLogin && loginCard}
 
       {authEmail && (
         <div className="account-signed">
@@ -198,7 +307,7 @@ export default function Account() {
         </div>
       )}
 
-      {error && (
+      {!focusLogin && error && (
         <ErrorState
           title="Orders are unavailable"
           message={error}
@@ -206,9 +315,9 @@ export default function Account() {
         />
       )}
 
-      {!error && orders === null && <Loader />}
+      {!focusLogin && !error && orders === null && <Loader />}
 
-      {!error && orders !== null && orders.length === 0 && (
+      {!focusLogin && !error && orders !== null && orders.length === 0 && (
         <EmptyState
           title="No orders yet"
           description="Orders you place will appear here automatically, no registration needed."
@@ -216,7 +325,7 @@ export default function Account() {
         />
       )}
 
-      {!error && orders !== null && orders.length > 0 && latest && (
+      {!focusLogin && !error && orders !== null && orders.length > 0 && latest && (
         <div className="checkout-layout">
           <section className="account-main">
             <div className="account-list-top">
@@ -325,81 +434,7 @@ export default function Account() {
         </div>
       )}
 
-      {!error && orders !== null && !authEmail && (
-        <section className="account-login">
-          <div className="account-login-top">
-            <div>
-              <h3>Sign in to see your orders on any device</h3>
-              <p>No password: we email you a 6-digit code. You will see every order made with that email.</p>
-            </div>
-            <button
-              type="button"
-              className="checkout-button secondary"
-              aria-expanded={loginOpen}
-              onClick={() => setLoginOpen((open) => !open)}
-            >
-              {loginOpen ? 'Close' : 'Sign in with email'}
-            </button>
-          </div>
-
-          {loginOpen && (
-            <form onSubmit={step === 'email' ? sendCode : verifyCode} noValidate>
-              {loginMessage && <p role="status" className="account-login-message">{loginMessage}</p>}
-
-              <div className="checkout-fields two-columns">
-                <div className="checkout-field">
-                  <label htmlFor="account-login-email">Email address</label>
-                  <input
-                    id="account-login-email"
-                    type="email"
-                    value={loginEmail}
-                    disabled={step === 'code'}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="you@example.com"
-                  />
-                </div>
-                {step === 'code' && (
-                  <div className="checkout-field">
-                    <label htmlFor="account-login-code">6-digit code</label>
-                    <input
-                      id="account-login-code"
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      maxLength={6}
-                      value={loginCode}
-                      onChange={(e) => setLoginCode(e.target.value.replace(/\D/g, ''))}
-                      placeholder="123456"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {loginError && <p role="alert" className="checkout-field-error account-login-error">{loginError}</p>}
-
-              <div className="checkout-form-actions">
-                {step === 'code' && (
-                  <>
-                    <button
-                      type="button"
-                      className="checkout-button secondary"
-                      onClick={() => { setStep('email'); setLoginError(''); setLoginMessage(''); }}
-                    >
-                      Change email
-                    </button>
-                    <button type="button" className="checkout-button secondary" disabled={busy} onClick={() => sendCode()}>
-                      Send again
-                    </button>
-                  </>
-                )}
-                <button type="submit" className="checkout-button primary" disabled={busy}>
-                  {step === 'email' ? (busy ? 'Sending...' : 'Send code') : (busy ? 'Checking...' : 'Sign in')} <span>→</span>
-                </button>
-              </div>
-            </form>
-          )}
-        </section>
-      )}
+      {!focusLogin && loginCard}
     </div>
   );
 }

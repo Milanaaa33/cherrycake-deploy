@@ -64,3 +64,11 @@
 .account-login .checkout-field input:disabled { background:#f8f3ef; color:#82777a; }
 .account-login .checkout-form-actions { flex-wrap:wrap; }
 .account-login .checkout-form-actions .checkout-button.primary { margin-left:auto; }
+
+/* Welcome message when the customer is sent here from the cart */
+.account-welcome { display:flex; align-items:center; gap:16px; margin:0 0 22px; padding:20px 24px; border:1px solid #f1d6dc; border-radius:16px; background:linear-gradient(135deg,#fff6f7,#fff0f2); }
+.account-welcome-icon { display:grid; place-items:center; flex-shrink:0; width:48px; height:48px; border-radius:14px; background:#fff; font-size:24px; box-shadow:0 4px 14px rgba(123,30,60,.1); }
+.account-welcome h3 { margin:0 0 4px; color:#7b1e3c; font-size:18px; letter-spacing:-.3px; }
+.account-welcome p { margin:0; color:#6f5d63; font-size:14px; line-height:1.55; }
+.account-login.is-focused { margin-top:0; }
+@media (max-width: 600px) { .account-welcome { padding:16px; } }

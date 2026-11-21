@@ -122,3 +122,9 @@
 .checkout-slot.is-selected strong { color:#7b1e3c; }
 .checkout-slot:disabled { background:#f6f1ee; color:#a69b9e; cursor:not-allowed; }
 .checkout-slot:disabled strong { text-decoration:line-through; }
+
+/* Locked field (email of the signed-in customer): grey, not editable */
+.checkout-field input[readonly] { background:#f3eeec; border-color:#e7dcd8; color:#8a7f82; cursor:not-allowed; }
+.checkout-field input[readonly]:focus { border-color:#e7dcd8; box-shadow:none; }
+.checkout-field-hint { color:#8a7f82; font-size:12px; }
+.checkout-field-hint a { color:#7b1e3c; font-weight:700; }
