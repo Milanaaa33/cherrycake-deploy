@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: cherrycake-backend
+  jackson:
+    deserialization:
+      accept-float-as-int: false
+  profiles:
+    default: dev
+  mail:
+    # Host, port, username and password come from SPRING_MAIL_HOST / SPRING_MAIL_PORT /
+    # SPRING_MAIL_USERNAME / SPRING_MAIL_PASSWORD. Without SPRING_MAIL_HOST no mail is sent
+    # and sign-in codes are written to the log instead.
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          # Fail fast (the frontend waits 10 s): an unreachable mail server gives a clear 503 instead of a hang.
+          connectiontimeout: 8000
+          timeout: 8000
+          writetimeout: 8000
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+    # V3 (catalog seed) can reach master before V2 (orders); this lets V2 still run on databases that already have V3.
+    out-of-order: true
+
+springdoc:
+  paths-to-match: /api/regions,/api/categories,/api/products,/api/products/*,/api/cart/calculate,/api/orders,/api/orders/my,/api/orders/my/claim,/api/pickup-points,/api/delivery-zones,/api/time-slots,/api/auth/*,/api/reports/**
+
+
+app:
+  mail:
+    from: ${MAIL_FROM:}
+    # Optional: send sign-in codes through Brevo's HTTPS API (needed where SMTP ports are blocked, e.g. Render free).
+    brevo-api-key: ${BREVO_API_KEY:}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  security:
+    admin-email: ${ADMIN_EMAIL:}
