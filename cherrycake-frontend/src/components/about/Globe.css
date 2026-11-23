@@ -1,0 +1,19 @@
+/* The globe is a dark "space" panel on purpose, so it carries its own palette (ported from the extended project). */
+.cc-globe {
+  --cherry-panel: #230b1c;
+  --cherry-card: #2d0e24;
+  --cherry-border: rgba(255, 183, 197, 0.16);
+  --raspberry-coulis: #e63960;
+  --raspberry-bright: #ff3864;
+  --sakura-pink: #ffb7c5;
+  --cheesecake-cream: #fff6ed;
+  --crust-gold: #e5b061;
+  --mint-fresh: #38c172;
+  --text-main: #fdf2f5;
+  --text-dim: #c7a3b3;
+  color: var(--text-main);
+}
+
+.cc-globe button {
+  font: inherit;
+}

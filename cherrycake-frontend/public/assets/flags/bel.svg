@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600" viewBox="0 0 900 600">
+  <defs>
+    <pattern id="by-ornament" width="120" height="150" patternUnits="userSpaceOnUse">
+      <rect width="120" height="150" fill="#ffffff"/>
+      <!-- Central diamond -->
+      <polygon points="60,15 105,75 60,135 15,75" fill="#c8102e"/>
+      <polygon points="60,35 90,75 60,115 30,75" fill="#ffffff"/>
+      <polygon points="60,50 78,75 60,100 42,75" fill="#c8102e"/>
+      <!-- Top and bottom connecting diamond tips -->
+      <polygon points="60,0 72,15 60,30 48,15" fill="#c8102e"/>
+      <polygon points="60,120 72,135 60,150 48,135" fill="#c8102e"/>
+      <!-- Side border teeth -->
+      <polygon points="0,35 15,45 0,55" fill="#c8102e"/>
+      <polygon points="0,95 15,105 0,115" fill="#c8102e"/>
+      <polygon points="120,35 105,45 120,55" fill="#c8102e"/>
+      <polygon points="120,95 105,105 120,115" fill="#c8102e"/>
+      <!-- Corner quarter diamonds -->
+      <polygon points="0,0 20,0 0,25" fill="#c8102e"/>
+      <polygon points="120,0 100,0 120,25" fill="#c8102e"/>
+      <polygon points="0,150 20,150 0,125" fill="#c8102e"/>
+      <polygon points="120,150 100,150 120,125" fill="#c8102e"/>
+    </pattern>
+  </defs>
+  <!-- Red top field (2/3) -->
+  <rect x="120" y="0" width="780" height="400" fill="#c8102e"/>
+  <!-- Green bottom field (1/3) -->
+  <rect x="120" y="400" width="780" height="200" fill="#007a3d"/>
+  <!-- White hoist with authentic Belarusian ornament -->
+  <rect x="0" y="0" width="120" height="600" fill="url(#by-ornament)"/>
+</svg>
+
