@@ -18,6 +18,8 @@ export const lv: Dictionary = {
   'header.chooseLanguage': 'Izvēlieties valodu',
   'header.cart': 'Grozs',
   'header.cartAria': 'Grozs ar {count} precēm',
+  'header.themeDark': 'Pārslēgt uz tumšo tēmu',
+  'header.themeLight': 'Pārslēgt uz gaišo tēmu',
 
   // Footer
   'footer.tagline': 'Rokām gatavoti deserti jūsu saldākajiem mirkļiem.',

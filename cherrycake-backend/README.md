@@ -215,3 +215,9 @@ Endpoints: `GET /api/auth/me` returns the email and role of the session; `/api/a
 answers `401` without a session and `403` when the role is too low. Prices in the admin API are in conventional units
 (CU) and shown next to the local price; `DELETE /api/admin/products/{id}` hides a product that was ever ordered
 instead of deleting it, so order history stays intact.
+
+## Order history scope
+
+`GET /api/orders/my` with a session token returns only the orders placed with that email (any browser). Without a token
+it returns the guest history of the browser (`X-Client-Id`). Signing in with another email on the same browser therefore
+never shows the previous account's orders.

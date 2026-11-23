@@ -18,6 +18,8 @@ export const uz: Dictionary = {
   'header.chooseLanguage': 'Tilni tanlang',
   'header.cart': 'Savat',
   'header.cartAria': 'Savat, mahsulotlar: {count}',
+  'header.themeDark': 'Tungi mavzuga o\'tish',
+  'header.themeLight': 'Kunduzgi mavzuga o\'tish',
 
   // Footer
   'footer.tagline': 'Eng shirin lahzalaringiz uchun qo\'lda tayyorlangan desertlar.',

@@ -14,6 +14,9 @@ React 19 + TypeScript + Vite. `npm install`, then `npm run dev` (proxies `/api` 
 - **About us** (`/about`): story, hours, team and an interactive three.js globe of the 17 countries
   (`src/components/about/Globe.tsx`, textures in `public/assets/`, borders in `src/data/countryBoundaries.json`).
   The page is code-split (`React.lazy`), so three.js is only downloaded when it is opened.
+- **Night theme and petals**: the moon/sun button in the header switches `data-theme` on `<html>` (saved as `cc_theme`,
+  first visit follows the system setting); dark token values live in `styles/tokens.css`, page overrides in `styles/dark.css`.
+  Falling petals are `components/common/SakuraBackground.tsx` (canvas, paused in hidden tabs, off with "reduce motion").
 - **Admin panel** (`/admin`, `src/pages/Admin.tsx`): catalog, prices and availability per region, VAT / exchange rates,
   users and roles. The link shows up for signed-in users with the `VIEWER`, `STAFF` or `ADMIN` role (`GET /api/auth/me`);
   `RequireRole` guards the route and the backend checks the role again on every request.

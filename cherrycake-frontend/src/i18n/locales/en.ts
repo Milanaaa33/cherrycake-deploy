@@ -20,6 +20,8 @@ export const en: Dictionary = {
   'header.chooseLanguage': 'Choose language',
   'header.cart': 'Cart',
   'header.cartAria': 'Cart with {count} items',
+  'header.themeDark': 'Switch to dark theme',
+  'header.themeLight': 'Switch to light theme',
 
   // Footer
   'footer.tagline': 'Handmade desserts for your sweetest moments.',

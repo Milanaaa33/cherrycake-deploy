@@ -18,6 +18,8 @@ export const zh: Dictionary = {
   'header.chooseLanguage': '选择语言',
   'header.cart': '购物车',
   'header.cartAria': '购物车，共 {count} 件商品',
+  'header.themeDark': '切换到深色主题',
+  'header.themeLight': '切换到浅色主题',
 
   // Footer
   'footer.tagline': '手工甜点，陪伴你最甜蜜的时刻。',

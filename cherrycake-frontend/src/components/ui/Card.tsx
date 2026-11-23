@@ -13,7 +13,7 @@ export default function Card({ title, children, style, ...props }: CardProps) {
         padding: 24,
         border: "1px solid var(--color-border)",
         borderRadius: "var(--radius-md)",
-        background: "white",
+        background: "var(--color-surface)",
         color: "var(--color-text)",
         textAlign: "left",
         ...style,

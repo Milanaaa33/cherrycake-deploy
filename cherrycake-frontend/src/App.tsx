@@ -21,6 +21,7 @@ import OrderSuccess from './pages/OrderSuccess';
 import Account from './pages/Account';
 import Booking from './pages/Booking';
 import Loader from './components/ui/Loader';
+import SakuraBackground from './components/common/SakuraBackground';
 
 // Loaded on demand: the About page carries three.js and the globe, the admin panel is for staff only.
 const About = lazy(() => import('./pages/About'));
@@ -40,6 +41,7 @@ export default function App() {
 
   return (
     <div className="cc-app">
+      <SakuraBackground />
       <Header />
 
       <main className="cc-content">

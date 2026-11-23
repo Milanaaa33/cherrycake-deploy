@@ -1,0 +1,195 @@
+/* Night theme: pages and components that use fixed light colors instead of tokens. */
+
+[data-theme="dark"] body,
+[data-theme="dark"] .cc-app {
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
+/* Petals canvas sits behind everything; the app content is above it. */
+.cc-sakura {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.85;
+}
+
+.cc-app > *:not(.cc-sakura) {
+  position: relative;
+  z-index: 1;
+}
+
+[data-theme="dark"] .cc-sakura {
+  opacity: 0.55;
+}
+
+/* Header controls */
+
+.cc-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-size: 18px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.cc-theme-toggle:hover,
+.cc-theme-toggle:focus-visible {
+  background: var(--color-surface-soft);
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+[data-theme="dark"] .cc-country-switcher select,
+[data-theme="dark"] .cc-language-switcher select,
+[data-theme="dark"] .cc-cart-badge,
+[data-theme="dark"] .cc-input,
+[data-theme="dark"] .cc-select,
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .cc-cart-count {
+  background: var(--color-primary);
+  color: #1a0614;
+}
+
+/* Hero on the home page of App.css and the About hero */
+
+[data-theme="dark"] .cc-hero,
+[data-theme="dark"] .about-hero {
+  background: linear-gradient(125deg, #2d0e24, #1a0614);
+}
+
+[data-theme="dark"] .about-cta .about-btn-primary {
+  background: #1a0614;
+  border-color: #1a0614;
+  color: var(--color-primary);
+}
+
+/* Account, Checkout, Cart, Booking cards (fixed #fff / #f8f3ef in their CSS) */
+
+[data-theme="dark"] .account-main,
+[data-theme="dark"] .account-login,
+[data-theme="dark"] .account-order,
+[data-theme="dark"] .account-side,
+[data-theme="dark"] .account-welcome,
+[data-theme="dark"] .checkout-main,
+[data-theme="dark"] .checkout-summary,
+[data-theme="dark"] .checkout-choice,
+[data-theme="dark"] .checkout-payment,
+[data-theme="dark"] .checkout-slot,
+[data-theme="dark"] .checkout-success,
+[data-theme="dark"] .checkout-button.secondary,
+[data-theme="dark"] .cart-main,
+[data-theme="dark"] .cart-summary,
+[data-theme="dark"] .cart-item,
+[data-theme="dark"] .booking-main,
+[data-theme="dark"] .booking-card,
+[data-theme="dark"] .booking-slot,
+[data-theme="dark"] .reports-card,
+[data-theme="dark"] .cc-card,
+[data-theme="dark"] .cc-product-card,
+[data-theme="dark"] .cc-modal {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .account-stats > div,
+[data-theme="dark"] .account-login-message,
+[data-theme="dark"] .account-signed,
+[data-theme="dark"] .account-avatar,
+[data-theme="dark"] .account-welcome-icon,
+[data-theme="dark"] .checkout-review,
+[data-theme="dark"] .checkout-section-icon,
+[data-theme="dark"] .checkout-summary-count,
+[data-theme="dark"] .checkout-product-art,
+[data-theme="dark"] .checkout-summary-note,
+[data-theme="dark"] .checkout-step-number,
+[data-theme="dark"] .checkout-slot:disabled,
+[data-theme="dark"] .checkout-field input[readonly],
+[data-theme="dark"] .account-login .checkout-field input:disabled,
+[data-theme="dark"] .admin-readonly,
+[data-theme="dark"] .admin-notice,
+[data-theme="dark"] .cc-badge,
+[data-theme="dark"] .cc-empty-state,
+[data-theme="dark"] .cc-error-state {
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .checkout-choice.selected,
+[data-theme="dark"] .checkout-choice.is-selected,
+[data-theme="dark"] .checkout-payment.selected,
+[data-theme="dark"] .checkout-slot.is-selected {
+  background: var(--color-accent);
+  border-color: var(--color-primary);
+}
+
+[data-theme="dark"] .checkout-field input,
+[data-theme="dark"] .checkout-field select,
+[data-theme="dark"] .checkout-section textarea {
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+/* Badges (ExtraComponents.css uses fixed pastel backgrounds) */
+
+[data-theme="dark"] .cc-badge--success { background: rgba(74, 209, 127, 0.18); color: var(--color-success); }
+[data-theme="dark"] .cc-badge--warning { background: rgba(240, 180, 90, 0.18); color: var(--color-warning); }
+[data-theme="dark"] .cc-badge--error { background: rgba(255, 107, 107, 0.18); color: var(--color-error); }
+[data-theme="dark"] .cc-badge--neutral { background: var(--color-surface-soft); color: var(--color-muted); }
+
+/* Admin tables */
+
+[data-theme="dark"] .admin-table th {
+  color: var(--color-muted);
+}
+
+[data-theme="dark"] .admin-price-input {
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+}
+
+/* Text that was fixed to dark gray in page CSS */
+
+[data-theme="dark"] .account-page,
+[data-theme="dark"] .checkout-page,
+[data-theme="dark"] .cart-page,
+[data-theme="dark"] .booking-page,
+[data-theme="dark"] .reports-page,
+[data-theme="dark"] .menu-page,
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] p,
+[data-theme="dark"] label,
+[data-theme="dark"] td,
+[data-theme="dark"] th,
+[data-theme="dark"] li {
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .cc-muted,
+[data-theme="dark"] .admin-muted,
+[data-theme="dark"] .about-muted,
+[data-theme="dark"] .account-muted,
+[data-theme="dark"] small {
+  color: var(--color-muted);
+}

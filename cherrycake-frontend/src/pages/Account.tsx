@@ -353,6 +353,7 @@ export default function Account() {
           title={t('account.ordersUnavailable', 'Orders are unavailable')}
           message={error}
           onRetry={() => setReloadKey((key) => key + 1)}
+          retryLabel={t('common.retry', 'Try again')}
         />
       )}
 

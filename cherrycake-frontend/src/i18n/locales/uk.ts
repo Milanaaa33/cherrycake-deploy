@@ -18,6 +18,8 @@ export const uk: Dictionary = {
   'header.chooseLanguage': 'Оберіть мову',
   'header.cart': 'Кошик',
   'header.cartAria': 'Кошик, товарів: {count}',
+  'header.themeDark': 'Увімкнути темну тему',
+  'header.themeLight': 'Увімкнути світлу тему',
 
   // Footer
   'footer.tagline': 'Десерти ручної роботи для ваших найсолодших моментів.',

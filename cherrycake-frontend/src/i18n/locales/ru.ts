@@ -18,6 +18,8 @@ export const ru: Dictionary = {
   'header.chooseLanguage': 'Выберите язык',
   'header.cart': 'Корзина',
   'header.cartAria': 'Корзина, товаров: {count}',
+  'header.themeDark': 'Включить тёмную тему',
+  'header.themeLight': 'Включить светлую тему',
 
   // Footer
   'footer.tagline': 'Десерты ручной работы для ваших самых сладких моментов.',

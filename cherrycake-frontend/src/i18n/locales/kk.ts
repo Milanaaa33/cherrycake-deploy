@@ -18,6 +18,8 @@ export const kk: Dictionary = {
   'header.chooseLanguage': 'Тілді таңдаңыз',
   'header.cart': 'Себет',
   'header.cartAria': 'Себет, тауарлар: {count}',
+  'header.themeDark': 'Қараңғы тақырыпқа ауысу',
+  'header.themeLight': 'Ашық тақырыпқа ауысу',
 
   // Footer
   'footer.tagline': 'Ең тәтті сәттеріңіз үшін қолдан жасалған десерттер.',

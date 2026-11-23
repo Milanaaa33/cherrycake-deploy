@@ -156,17 +156,17 @@ public class OrderService {
     }
 
     /**
-     * History for a signed-in customer ({@code email} not null): all orders placed with that email plus
-     * the orders of this browser. Without an email it is the plain browser history.
+     * History for a signed-in customer ({@code email} not null): only the orders placed with that email,
+     * whatever browser they came from. Without an email it is the plain browser (guest) history.
+     * The two are kept apart on purpose: signing in with another email on the same browser must not
+     * show the previous account's orders.
      */
     @Transactional(readOnly = true)
     public List<OrderResponse> getOrderHistory(String clientId, String email) {
         boolean signedIn = email != null && !email.isBlank();
-        String normalizedClientId = normalizeClientId(clientId, !signedIn);
         List<Order> orders = signedIn
-                ? orderRepository.findByClientIdOrEmailIgnoreCaseOrderByCreatedAtDescIdDesc(
-                        normalizedClientId == null ? "" : normalizedClientId, email.trim())
-                : orderRepository.findByClientIdOrderByCreatedAtDescIdDesc(normalizedClientId);
+                ? orderRepository.findByEmailIgnoreCaseOrderByCreatedAtDescIdDesc(email.trim())
+                : orderRepository.findByClientIdOrderByCreatedAtDescIdDesc(normalizeClientId(clientId, true));
         if (orders.isEmpty()) {
             return List.of();
         }

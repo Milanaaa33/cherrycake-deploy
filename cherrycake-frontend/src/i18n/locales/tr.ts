@@ -18,6 +18,8 @@ export const tr: Dictionary = {
   'header.chooseLanguage': 'Dil seçin',
   'header.cart': 'Sepet',
   'header.cartAria': 'Sepette {count} ürün var',
+  'header.themeDark': 'Koyu temaya geç',
+  'header.themeLight': 'Açık temaya geç',
 
   // Footer
   'footer.tagline': 'En tatlı anlarınız için el yapımı tatlılar.',

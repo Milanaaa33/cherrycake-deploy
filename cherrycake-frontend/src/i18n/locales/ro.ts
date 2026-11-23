@@ -18,6 +18,8 @@ export const ro: Dictionary = {
   'header.chooseLanguage': 'Alege limba',
   'header.cart': 'Coș',
   'header.cartAria': 'Coș cu {count} produse',
+  'header.themeDark': 'Treci la tema întunecată',
+  'header.themeLight': 'Treci la tema luminoasă',
 
   // Footer
   'footer.tagline': 'Deserturi făcute manual pentru cele mai dulci momente ale tale.',

@@ -18,6 +18,8 @@ export const ka: Dictionary = {
   'header.chooseLanguage': 'აირჩიეთ ენა',
   'header.cart': 'კალათა',
   'header.cartAria': 'კალათა, {count} პროდუქტი',
+  'header.themeDark': 'მუქ თემაზე გადართვა',
+  'header.themeLight': 'ღია თემაზე გადართვა',
 
   // Footer
   'footer.tagline': 'ხელნაკეთი დესერტები თქვენი ყველაზე ტკბილი წუთებისთვის.',

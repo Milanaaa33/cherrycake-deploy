@@ -8,6 +8,7 @@ import { useAuthRole } from '../../hooks/useAuthRole';
 import CountrySwitcher from './CountrySwitcher';
 import LanguageSwitcher from './LanguageSwitcher';
 import CartBadge from './CartBadge';
+import ThemeToggle from './ThemeToggle';
 
 import './Layout.css';
 
@@ -51,6 +52,8 @@ export default function Header() {
           <span className="cc-active-currency">{currencyCode}</span>
 
           <LanguageSwitcher />
+
+          <ThemeToggle />
 
           <CartBadge />
         </div>

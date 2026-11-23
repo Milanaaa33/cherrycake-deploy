@@ -18,6 +18,8 @@ export const fi: Dictionary = {
   'header.chooseLanguage': 'Valitse kieli',
   'header.cart': 'Ostoskori',
   'header.cartAria': 'Ostoskorissa {count} tuotetta',
+  'header.themeDark': 'Vaihda tummaan teemaan',
+  'header.themeLight': 'Vaihda vaaleaan teemaan',
 
   // Footer
   'footer.tagline': 'Käsintehtyjä jälkiruokia makeimpiin hetkiisi.',

@@ -18,6 +18,8 @@ export const lt: Dictionary = {
   'header.chooseLanguage': 'Pasirinkite kalbą',
   'header.cart': 'Krepšelis',
   'header.cartAria': 'Krepšelis, prekių: {count}',
+  'header.themeDark': 'Įjungti tamsią temą',
+  'header.themeLight': 'Įjungti šviesią temą',
 
   // Footer
   'footer.tagline': 'Rankų darbo desertai jūsų saldžiausioms akimirkoms.',

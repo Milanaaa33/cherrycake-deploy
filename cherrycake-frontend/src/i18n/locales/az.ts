@@ -18,6 +18,8 @@ export const az: Dictionary = {
   'header.chooseLanguage': 'Dil seçin',
   'header.cart': 'Səbət',
   'header.cartAria': 'Səbətdə {count} məhsul var',
+  'header.themeDark': 'Qaranlıq mövzuya keç',
+  'header.themeLight': 'İşıqlı mövzuya keç',
 
   // Footer
   'footer.tagline': 'Ən şirin anlarınız üçün əl işi desertlər.',

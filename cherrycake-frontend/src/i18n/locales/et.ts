@@ -18,6 +18,8 @@ export const et: Dictionary = {
   'header.chooseLanguage': 'Vali keel',
   'header.cart': 'Ostukorv',
   'header.cartAria': 'Ostukorv, {count} toodet',
+  'header.themeDark': 'Lülita tume teema sisse',
+  'header.themeLight': 'Lülita hele teema sisse',
 
   // Footer
   'footer.tagline': 'Käsitsi valmistatud magustoidud sinu magusaimateks hetkedeks.',

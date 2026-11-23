@@ -18,6 +18,8 @@ export const hy: Dictionary = {
   'header.chooseLanguage': 'Ընտրեք լեզուն',
   'header.cart': 'Զամբյուղ',
   'header.cartAria': 'Զամբյուղում {count} ապրանք կա',
+  'header.themeDark': 'Անցնել մուգ թեմայի',
+  'header.themeLight': 'Անցնել բաց թեմայի',
 
   // Footer
   'footer.tagline': 'Ձեռքով պատրաստված աղանդերներ ձեր ամենաքաղցր պահերի համար։',

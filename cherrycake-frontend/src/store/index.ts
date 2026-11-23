@@ -290,11 +290,42 @@ const languageSlice = createSlice({
   },
 });
 
+// Day / night theme. Saved in localStorage ('cc_theme'); a new visitor follows the system setting.
+export type Theme = 'light' | 'dark';
+const THEME_KEY = 'cc_theme';
+
+function readInitialTheme(): Theme {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === 'light' || saved === 'dark') return saved;
+  } catch {
+    // Storage is blocked.
+  }
+  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyTheme(theme: Theme) {
+  if (typeof document !== 'undefined') {
+    document.documentElement.setAttribute('data-theme', theme);
+  }
+  try {
+    localStorage.setItem(THEME_KEY, theme);
+  } catch {
+    // Nothing to do.
+  }
+}
+
+const initialTheme = readInitialTheme();
+if (typeof document !== 'undefined') {
+  document.documentElement.setAttribute('data-theme', initialTheme);
+}
+
 // Keep existing UI functionality.
 const uiSlice = createSlice({
   name: 'ui',
   initialState: {
     toast: '',
+    theme: initialTheme,
   },
   reducers: {
     showToast: (state, action: PayloadAction<string>) => {
@@ -303,6 +334,16 @@ const uiSlice = createSlice({
 
     hideToast: (state) => {
       state.toast = "";
+    },
+
+    toggleTheme: (state) => {
+      state.theme = state.theme === 'dark' ? 'light' : 'dark';
+      applyTheme(state.theme);
+    },
+
+    setTheme: (state, action: PayloadAction<Theme>) => {
+      state.theme = action.payload;
+      applyTheme(state.theme);
     },
   },
 });
@@ -323,6 +364,8 @@ export const {
 export const {
   showToast,
   hideToast,
+  toggleTheme,
+  setTheme,
 } = uiSlice.actions;
 
 export const {

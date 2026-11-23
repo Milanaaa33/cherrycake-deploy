@@ -18,6 +18,8 @@ export const sv: Dictionary = {
   'header.chooseLanguage': 'Välj språk',
   'header.cart': 'Varukorg',
   'header.cartAria': 'Varukorg med {count} varor',
+  'header.themeDark': 'Byt till mörkt tema',
+  'header.themeLight': 'Byt till ljust tema',
 
   // Footer
   'footer.tagline': 'Handgjorda desserter för dina sötaste stunder.',
