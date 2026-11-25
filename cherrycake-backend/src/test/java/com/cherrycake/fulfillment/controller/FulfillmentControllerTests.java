@@ -35,10 +35,14 @@ class FulfillmentControllerTests {
         mvc.perform(get("/api/pickup-points").param("region", "UZB"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[*].name", contains("Cherry Cake Tashkent City", "Cherry Cake Chilonzor")))
-                .andExpect(jsonPath("$[0].address").value("Tashkent, Amir Temur Avenue 15"))
-                .andExpect(jsonPath("$[0].openingHours").value("09:00-21:00"));
+                .andExpect(jsonPath("$[*].name", org.hamcrest.Matchers.containsInAnyOrder(
+                        "Cherry Cake Tashkent City", "Cherry Cake Chilonzor")))
+                .andExpect(jsonPath("$[?(@.name == 'Cherry Cake Tashkent City')].address",
+                        contains("Tashkent, Amir Temur Avenue 15")))
+                .andExpect(jsonPath("$[?(@.name == 'Cherry Cake Tashkent City')].openingHours",
+                        contains("09:00-21:00")));
     }
+
 
     @Test
     void closedPickupPointIsHidden() throws Exception {

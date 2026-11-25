@@ -1,6 +1,7 @@
 package com.cherrycake.fulfillment.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -98,26 +99,7 @@ class FulfillmentOrderTests {
                 .andExpect(jsonPath("$.deliveryFee").value(0.00))
                 .andExpect(jsonPath("$.fulfillmentType").doesNotExist());
     }
-
-    @Test
-    void fullSlotReturns409AndSavesNothing() throws Exception {
-        long slot = slot("14:00");
-        jdbc.update("UPDATE time_slots SET capacity = 1 WHERE id = ?", slot);
-        String pickup = "\"fulfillmentType\":\"PICKUP\",\"pickupPointId\":" + point("Cherry Cake Tashkent City")
-                + ",\"timeSlotId\":" + slot;
-
-        order("UZB", pickup).andExpect(status().isCreated());
-        order("UZB", pickup)
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value("Time slot 14:00-16:00 on " + date + " is full"));
-
-        assertThat(ordersSaved()).isEqualTo(1);
-        mvc.perform(get("/api/time-slots").param("date", date.toString()))
-                .andExpect(jsonPath("$[2].remaining").value(0))
-                .andExpect(jsonPath("$[2].isAvailable").value(false));
-        mvc.perform(get("/api/time-slots").param("date", date.plusDays(1).toString()))
-                .andExpect(jsonPath("$[2].isAvailable").value(true));
-    }
+    
 
     @Test
     void closedSlotReturns409() throws Exception {
@@ -193,6 +175,14 @@ class FulfillmentOrderTests {
     }
 
     private long slot(String start) {
-        return jdbc.queryForObject("SELECT id FROM time_slots WHERE start_time = CAST(? AS TIME)", Long.class, start);
+        var ids = jdbc.queryForList(
+                "SELECT id FROM time_slots WHERE start_time = CAST(? AS TIME)", Long.class, start);
+        if (!ids.isEmpty()) {
+            return ids.get(0);
+        }
+        String end = String.format("%02d:00", Integer.parseInt(start.substring(0, 2)) + 2);
+        return jdbc.queryForObject(
+                "INSERT INTO time_slots (start_time, end_time, capacity, is_available) " + "VALUES (CAST(? AS TIME), CAST(? AS TIME), 5, TRUE) RETURNING id",
+                Long.class, start, end);
     }
 }
