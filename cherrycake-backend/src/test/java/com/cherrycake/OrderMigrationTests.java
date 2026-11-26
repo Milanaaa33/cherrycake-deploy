@@ -39,14 +39,18 @@ class OrderMigrationTests {
     }
 
     @Test
-    void rejectsNegativeSubtotalOrZeroQuantity() {
+    void rejectsNegativeSubtotal() {
         long regionId = jdbc.queryForObject("SELECT id FROM regions WHERE code = 'UZB'", Long.class);
         assertThatThrownBy(() -> jdbc.update(
                 "INSERT INTO orders (order_number, order_date, region_id, customer_name, phone, email, "
                         + "subtotal, vat_amount, total) VALUES ('CC-2026-999002', CURRENT_DATE, ?, 'Ali', '+99890', 'a@b.c', -1, 0, 0)",
                 regionId))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
 
+    @Test
+    void rejectsZeroQuantity() {
+        long regionId = jdbc.queryForObject("SELECT id FROM regions WHERE code = 'UZB'", Long.class);
         insertOrder("CC-2026-999003", regionId);
         long orderId = jdbc.queryForObject("SELECT id FROM orders WHERE order_number = 'CC-2026-999003'", Long.class);
         long productId = jdbc.queryForObject("SELECT MIN(id) FROM products", Long.class);
