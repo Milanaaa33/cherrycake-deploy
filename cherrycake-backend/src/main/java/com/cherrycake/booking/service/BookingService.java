@@ -28,12 +28,21 @@ public class BookingService {
             throw new BadRequestException("Booking date must not be in the past");
         }
 
-        // Lock the slot row so simultaneous requests cannot reserve the same final table.
-        List<Long> slotIds = jdbc.query(
-                "SELECT id FROM time_slots WHERE id = ? AND is_available = TRUE FOR UPDATE",
-                (rs, row) -> rs.getLong(1), request.timeSlotId());
-        if (slotIds.isEmpty()) {
+        // Lock the slot row so simultaneous requests cannot reserve the same final table or place.
+        List<Integer> capacities = jdbc.query(
+                "SELECT capacity FROM time_slots WHERE id = ? AND is_available = TRUE FOR UPDATE",
+                (rs, row) -> rs.getInt(1), request.timeSlotId());
+        if (capacities.isEmpty()) {
             throw new NotFoundException("Time slot not found");
+        }
+
+        // The slot's capacity is shared with checkout orders (same rule as GET /api/time-slots "remaining").
+        Long taken = jdbc.queryForObject(
+                "SELECT (SELECT COUNT(*) FROM orders WHERE time_slot_id = ? AND order_date = ?) + "
+                        + "(SELECT COUNT(*) FROM bookings WHERE time_slot_id = ? AND booking_date = ?)",
+                Long.class, request.timeSlotId(), request.date(), request.timeSlotId(), request.date());
+        if (taken != null && taken >= capacities.get(0)) {
+            throw new ConflictException("Time slot is full for this date");
         }
 
         String sql = "SELECT dt.id, dt.table_number, pp.id AS pickup_point_id, ts.start_time, ts.end_time "
