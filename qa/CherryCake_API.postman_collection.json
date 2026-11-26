@@ -1,0 +1,2688 @@
+{
+  "info": {
+    "_postman_id": "a89c3140-59f2-4b36-93d4-f7b5e4c278a1",
+    "name": "CherryCake API Test Suite (QAJ)",
+    "description": "Complete API test suite for CherryCake covering OpenAPI contracts, catalog, CC-16 pricing across regions & MULTI modifiers, guest checkout, Stage 4 bonus fulfillment/table bookings, Auth/Admin RBAC checks, and CC-56 sales reports + PDF export.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Dynamically set futureDate = today + 3 days (YYYY-MM-DD) and report window dates",
+          "const now = new Date();",
+          "const future = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);",
+          "const yyyy = future.getUTCFullYear();",
+          "const mm = String(future.getUTCMonth() + 1).padStart(2, \"0\");",
+          "const dd = String(future.getUTCDate()).padStart(2, \"0\");",
+          "pm.collectionVariables.set(\"futureDate\", `${yyyy}-${mm}-${dd}`);",
+          "",
+          "const todayStr = now.toISOString().slice(0, 10);",
+          "const monthStartStr = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, \"0\")}-01`;",
+          "const sixMonthsAgo = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1));",
+          "const sixMonthsStartStr = sixMonthsAgo.toISOString().slice(0, 10);",
+          "pm.collectionVariables.set(\"reportToDate\", todayStr);",
+          "pm.collectionVariables.set(\"reportMonthStart\", monthStartStr);",
+          "pm.collectionVariables.set(\"reportSixMonthsStart\", sixMonthsStartStr);",
+          "if (!pm.collectionVariables.get(\"clientId\")) {",
+          "    pm.collectionVariables.set(\"clientId\", \"3f2b8c1e-6a4d-4e7b-9c1a-2d5f7a9b0c3e\");",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "region",
+      "value": "UZB",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "clientId",
+      "value": "3f2b8c1e-6a4d-4e7b-9c1a-2d5f7a9b0c3e",
+      "type": "string"
+    },
+    {
+      "key": "futureDate",
+      "value": "2026-12-31",
+      "type": "string"
+    },
+    {
+      "key": "reportToDate",
+      "value": "2026-11-30",
+      "type": "string"
+    },
+    {
+      "key": "reportMonthStart",
+      "value": "2026-11-01",
+      "type": "string"
+    },
+    {
+      "key": "reportSixMonthsStart",
+      "value": "2026-06-01",
+      "type": "string"
+    },
+    {
+      "key": "categoryId_Cakes",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "productId_CherryCake",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "productId_Napoleon",
+      "value": "4",
+      "type": "string"
+    },
+    {
+      "key": "productId_Tiramisu",
+      "value": "7",
+      "type": "string"
+    },
+    {
+      "key": "modId_SizeMedium",
+      "value": "2",
+      "type": "string"
+    },
+    {
+      "key": "modId_FreshCherries",
+      "value": "4",
+      "type": "string"
+    },
+    {
+      "key": "modId_ChocolateDrip",
+      "value": "5",
+      "type": "string"
+    },
+    {
+      "key": "pickupPointId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "deliveryZoneId_Center",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "deliveryZoneId_Suburbs",
+      "value": "2",
+      "type": "string"
+    },
+    {
+      "key": "timeSlotId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - System & OpenAPI Contract",
+      "item": [
+        {
+          "name": "OpenAPI v3 Docs (All Modules Exposed)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"OpenAPI spec exposes Catalog, Cart, Orders, Fulfillment, Auth, Reports & Admin\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.openapi).to.exist;",
+                  "    const requiredPaths = [",
+                  "        \"/api/regions\",",
+                  "        \"/api/categories\",",
+                  "        \"/api/products\",",
+                  "        \"/api/products/{id}\",",
+                  "        \"/api/cart/calculate\",",
+                  "        \"/api/orders\",",
+                  "        \"/api/orders/my\",",
+                  "        \"/api/pickup-points\",",
+                  "        \"/api/delivery-zones\",",
+                  "        \"/api/time-slots\",",
+                  "        \"/api/auth/request-code\",",
+                  "        \"/api/auth/verify-code\",",
+                  "        \"/api/reports/sales\",",
+                  "        \"/api/reports/export\"",
+                  "    ];",
+                  "    requiredPaths.forEach(p => pm.expect(json.paths[p], `Missing OpenAPI path ${p}`).to.exist);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v3/api-docs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v3",
+                "api-docs"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Categories",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Returns Cakes, Desserts, and Drinks\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.be.an(\"array\").that.has.length.at.least(3);",
+                  "    const cakes = json.find(c => c.name === \"Cakes\");",
+                  "    pm.expect(cakes).to.exist;",
+                  "    pm.collectionVariables.set(\"categoryId_Cakes\", String(cakes.id));",
+                  "    const names = json.map(c => c.name);",
+                  "    pm.expect(names).to.include.members([\"Cakes\", \"Desserts\", \"Drinks\"]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "categories"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Regions (17 Countries)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Returns all 17 configured regions\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.be.an(\"array\").that.has.lengthOf(17);",
+                  "    const codes = json.map(r => r.code);",
+                  "    const expected = [\"UZB\", \"KAZ\", \"GEO\", \"UKR\", \"CHN\", \"ARM\", \"AZE\", \"TUR\", \"MDA\", \"ROU\", \"EST\", \"LVA\", \"LTU\", \"FIN\", \"SWE\", \"BLR\", \"RUS\"];",
+                  "    pm.expect(codes).to.include.members(expected);",
+                  "});",
+                  "pm.test(\"Exchange rates are not leaked in public API\", function () {",
+                  "    const json = pm.response.json();",
+                  "    json.forEach(r => {",
+                  "        pm.expect(r).to.have.property(\"code\");",
+                  "        pm.expect(r).to.have.property(\"name\");",
+                  "        pm.expect(r).to.have.property(\"currencyCode\");",
+                  "        pm.expect(r).to.have.property(\"currencySymbol\");",
+                  "        pm.expect(r).to.have.property(\"vatRate\");",
+                  "        pm.expect(r).to.not.have.property(\"exchangeRate\");",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/regions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "regions"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Catalog & Modifiers",
+      "item": [
+        {
+          "name": "Get Products ({{region}} - Discover IDs)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Discovers Product IDs and stores in variables\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.be.an(\"array\").that.has.length.at.least(12);",
+                  "    const cherryCake = json.find(p => p.name === \"Cherry Cake\");",
+                  "    const tiramisu = json.find(p => p.name === \"Tiramisu\");",
+                  "    const napoleon = json.find(p => p.name === \"Napoleon Cake\");",
+                  "    pm.expect(cherryCake).to.exist;",
+                  "    pm.expect(tiramisu).to.exist;",
+                  "    pm.expect(napoleon).to.exist;",
+                  "    pm.collectionVariables.set(\"productId_CherryCake\", String(cherryCake.id));",
+                  "    pm.collectionVariables.set(\"productId_Tiramisu\", String(tiramisu.id));",
+                  "    pm.collectionVariables.set(\"productId_Napoleon\", String(napoleon.id));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products?region={{region}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "region",
+                  "value": "{{region}}",
+                  "description": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter Products by Category (Cakes)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Returns only products in selected category\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.be.an(\"array\").that.has.length.at.least(5);",
+                  "    const names = json.map(p => p.name);",
+                  "    pm.expect(names).to.include(\"Cherry Cake\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products?region={{region}}&categoryId={{categoryId_Cakes}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "region",
+                  "value": "{{region}}",
+                  "description": ""
+                },
+                {
+                  "key": "categoryId",
+                  "value": "{{categoryId_Cakes}}",
+                  "description": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Product Detail with Modifiers (GEO)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Discovers Size and MULTI Extras modifier IDs\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.modifierGroups).to.be.an(\"array\").that.has.length.at.least(2);",
+                  "    const sizeGroup = json.modifierGroups.find(g => g.name === \"Size\");",
+                  "    const extrasGroup = json.modifierGroups.find(g => g.name === \"Extras\");",
+                  "    const medium = sizeGroup.modifiers.find(m => m.name.includes(\"Medium\"));",
+                  "    const freshCherries = extrasGroup.modifiers.find(m => m.name.includes(\"Fresh cherries\"));",
+                  "    const chocoDrip = extrasGroup.modifiers.find(m => m.name.includes(\"Chocolate drip\"));",
+                  "    pm.expect(medium).to.exist;",
+                  "    pm.expect(freshCherries).to.exist;",
+                  "    pm.expect(chocoDrip).to.exist;",
+                  "    pm.collectionVariables.set(\"modId_SizeMedium\", String(medium.id));",
+                  "    pm.collectionVariables.set(\"modId_FreshCherries\", String(freshCherries.id));",
+                  "    pm.collectionVariables.set(\"modId_ChocolateDrip\", String(chocoDrip.id));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId_CherryCake}}?region=GEO",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId_CherryCake}}"
+              ],
+              "query": [
+                {
+                  "key": "region",
+                  "value": "GEO",
+                  "description": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Products (Turkey - TRY Currency)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Converts Cherry Cake price to Turkish Lira (1020.00)\", function () {",
+                  "    const json = pm.response.json();",
+                  "    const cherryCake = json.find(p => p.name === \"Cherry Cake\");",
+                  "    pm.expect(cherryCake.price).to.eql(1020.00);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products?region=TUR",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "region",
+                  "value": "TUR",
+                  "description": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Catalog Error: Missing Region",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Catalog Error: Unknown Region",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404 Not Found\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Error message mentions region XYZ\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.message).to.include(\"XYZ\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products?region=XYZ",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "region",
+                  "value": "XYZ",
+                  "description": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Catalog Error: Unknown Product ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404 Not Found\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/999999?region=UZB",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "999999"
+              ],
+              "query": [
+                {
+                  "key": "region",
+                  "value": "UZB",
+                  "description": ""
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Cart Calculations (CC-16 & CC-33)",
+      "item": [
+        {
+          "name": "CALC-01: UZB - Modifiers & 3% Discount",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Validates UZB calculations (UZS, 15% VAT, 3% discount)\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.currencyCode).to.eql(\"UZS\");",
+                  "    pm.expect(json.subtotal).to.eql(480000.00);",
+                  "    pm.expect(json.vatRate).to.eql(0.1500);",
+                  "    pm.expect(json.vatAmount).to.eql(72000.00);",
+                  "    pm.expect(json.amountInclVat).to.eql(552000.00);",
+                  "    pm.expect(json.discountRate).to.eql(0.0300);",
+                  "    pm.expect(json.discountAmount).to.eql(16560.00);",
+                  "    pm.expect(json.deliveryFee).to.eql(0.00);",
+                  "    pm.expect(json.total).to.eql(535440.00);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/calculate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "calculate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"UZB\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId_CherryCake}}\",\n      \"quantity\": 1,\n      \"modifierIds\": [\n        \"{{modId_SizeMedium}}\"\n      ]\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "CALC-02: GEO - Composite MULTI Modifiers (Size + 2 Extras)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Validates GEO composite MULTI modifiers & HALF_UP rounding\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.currencyCode).to.eql(\"GEL\");",
+                  "    pm.expect(json.items[0].unitPrice).to.eql(85.80);",
+                  "    pm.expect(json.items[0].modifiersPrice).to.eql(35.10);",
+                  "    pm.expect(json.items[0].lineTotal).to.eql(120.90);",
+                  "    pm.expect(json.subtotal).to.eql(120.90);",
+                  "    pm.expect(json.vatAmount).to.eql(14.51);",
+                  "    pm.expect(json.amountInclVat).to.eql(135.41);",
+                  "    pm.expect(json.discountRate).to.eql(0.0300);",
+                  "    pm.expect(json.discountAmount).to.eql(4.06);",
+                  "    pm.expect(json.total).to.eql(131.35);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/calculate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "calculate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"GEO\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId_CherryCake}}\",\n      \"quantity\": 1,\n      \"modifierIds\": [\n        \"{{modId_SizeMedium}}\",\n        \"{{modId_FreshCherries}}\",\n        \"{{modId_ChocolateDrip}}\"\n      ]\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "CALC-03: Country Switch Same Cart (UZB -> UZS)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"UZB Tiramisu x2 = 207000.00 UZS (below 300000 threshold)\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.currencyCode).to.eql(\"UZS\");",
+                  "    pm.expect(json.subtotal).to.eql(180000.00);",
+                  "    pm.expect(json.vatAmount).to.eql(27000.00);",
+                  "    pm.expect(json.amountInclVat).to.eql(207000.00);",
+                  "    pm.expect(json.discountRate).to.eql(0.0000);",
+                  "    pm.expect(json.total).to.eql(207000.00);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/calculate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "calculate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"UZB\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId_Tiramisu}}\",\n      \"quantity\": 2,\n      \"modifierIds\": []\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "CALC-04: Country Switch Same Cart (KAZ -> KZT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"KAZ Tiramisu x2 = 9072.00 KZT (20% VAT)\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.currencyCode).to.eql(\"KZT\");",
+                  "    pm.expect(json.subtotal).to.eql(7560.00);",
+                  "    pm.expect(json.vatAmount).to.eql(1512.00);",
+                  "    pm.expect(json.total).to.eql(9072.00);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/calculate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "calculate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"KAZ\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId_Tiramisu}}\",\n      \"quantity\": 2,\n      \"modifierIds\": []\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "CALC-05: Country Switch Same Cart (UKR -> UAH)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"UKR Tiramisu x2 = 615.60 UAH (8% VAT)\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.currencyCode).to.eql(\"UAH\");",
+                  "    pm.expect(json.subtotal).to.eql(570.00);",
+                  "    pm.expect(json.vatAmount).to.eql(45.60);",
+                  "    pm.expect(json.total).to.eql(615.60);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/calculate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "calculate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"UKR\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId_Tiramisu}}\",\n      \"quantity\": 2,\n      \"modifierIds\": []\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "CALC-06: Country Switch Same Cart (CHN -> CNY)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"CHN Tiramisu x2 = 142.50 CNY (18% VAT)\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.currencyCode).to.eql(\"CNY\");",
+                  "    pm.expect(json.subtotal).to.eql(120.76);",
+                  "    pm.expect(json.vatAmount).to.eql(21.74);",
+                  "    pm.expect(json.total).to.eql(142.50);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/calculate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "calculate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"CHN\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId_Tiramisu}}\",\n      \"quantity\": 2,\n      \"modifierIds\": []\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "CALC-07: Turkey Extended Region (TRY, 18% VAT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Validates Turkish Lira pricing & discount\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.currencyCode).to.eql(\"TRY\");",
+                  "    pm.expect(json.subtotal).to.eql(1360.00);",
+                  "    pm.expect(json.vatAmount).to.eql(244.80);",
+                  "    pm.expect(json.discountRate).to.eql(0.0300);",
+                  "    pm.expect(json.discountAmount).to.eql(48.14);",
+                  "    pm.expect(json.total).to.eql(1556.66);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/calculate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "calculate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"TUR\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId_CherryCake}}\",\n      \"quantity\": 1,\n      \"modifierIds\": [\n        \"{{modId_SizeMedium}}\"\n      ]\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "CALC-08: Error - Zero Quantity (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Error field indicates items[0].quantity\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.errors[0].field).to.eql(\"items[0].quantity\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/calculate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "calculate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"UZB\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId_Tiramisu}}\",\n      \"quantity\": 0,\n      \"modifierIds\": []\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "CALC-09: Error - Negative Quantity (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/calculate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "calculate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"UZB\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId_Tiramisu}}\",\n      \"quantity\": -1,\n      \"modifierIds\": []\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "CALC-10: Error - Empty Cart (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Reports cart is empty\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.errors[0].message).to.include(\"cart is empty\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/calculate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "calculate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"UZB\",\n  \"items\": []\n}"
+            }
+          }
+        },
+        {
+          "name": "CALC-11: Error - Missing Region (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Reports missing region\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.errors[0].field).to.eql(\"region\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/calculate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "calculate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"productId\": \"{{productId_Tiramisu}}\",\n      \"quantity\": 1,\n      \"modifierIds\": []\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "CALC-12: Error - Unknown Region XYZ (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404 Not Found\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Message mentions Region XYZ not found\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.message).to.include(\"Region XYZ not found\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/calculate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "calculate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"XYZ\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId_Tiramisu}}\",\n      \"quantity\": 1,\n      \"modifierIds\": []\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "CALC-13: Error - Out of Stock Product Napoleon in GEO (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 409 Conflict\", function () { pm.response.to.have.status(409); });",
+                  "pm.test(\"Message mentions out of stock\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.message).to.include(\"out of stock\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/calculate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "calculate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"GEO\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId_Napoleon}}\",\n      \"quantity\": 1,\n      \"modifierIds\": []\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "CALC-14: Error - Duplicate Modifier (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Message mentions duplicate modifier\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.message).to.include(\"duplicate\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/calculate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "calculate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"UZB\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId_CherryCake}}\",\n      \"quantity\": 1,\n      \"modifierIds\": [\n        \"{{modId_SizeMedium}}\",\n        \"{{modId_SizeMedium}}\"\n      ]\n    }\n  ]\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Fulfillment Read Endpoints & Delivery Fee Calc (CC-74 Bonus)",
+      "item": [
+        {
+          "name": "Get Pickup Points (UZB)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Returns open pickup points and stores pickupPointId\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.be.an(\"array\").that.has.length.at.least(1);",
+                  "    pm.expect(json[0]).to.have.all.keys(\"id\", \"name\", \"address\", \"openingHours\");",
+                  "    pm.collectionVariables.set(\"pickupPointId\", String(json[0].id));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pickup-points?region=UZB",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pickup-points"
+              ],
+              "query": [
+                {
+                  "key": "region",
+                  "value": "UZB",
+                  "description": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Delivery Zones (UZB)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Returns zones sorted cheapest first and stores IDs\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.be.an(\"array\").that.has.length.at.least(2);",
+                  "    const center = json.find(z => z.name === \"Center\");",
+                  "    const suburbs = json.find(z => z.name === \"Suburbs\");",
+                  "    pm.expect(center).to.exist;",
+                  "    pm.expect(suburbs).to.exist;",
+                  "    pm.expect(center.deliveryFee).to.eql(15000.00);",
+                  "    pm.expect(suburbs.deliveryFee).to.eql(25000.00);",
+                  "    pm.collectionVariables.set(\"deliveryZoneId_Center\", String(center.id));",
+                  "    pm.collectionVariables.set(\"deliveryZoneId_Suburbs\", String(suburbs.id));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/delivery-zones?region=UZB",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "delivery-zones"
+              ],
+              "query": [
+                {
+                  "key": "region",
+                  "value": "UZB",
+                  "description": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Calculate Cart with Delivery Zone Fee (Discount + Delivery)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Adds deliveryFee (15000) after 3% discount\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.subtotal).to.eql(480000.00);",
+                  "    pm.expect(json.discountAmount).to.eql(16560.00);",
+                  "    pm.expect(json.deliveryFee).to.eql(15000.00);",
+                  "    pm.expect(json.total).to.eql(550440.00);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/calculate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "calculate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"UZB\",\n  \"deliveryZoneId\": \"{{deliveryZoneId_Center}}\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId_CherryCake}}\",\n      \"quantity\": 1,\n      \"modifierIds\": [\n        \"{{modId_SizeMedium}}\"\n      ]\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Calculate Cart: Delivery Does Not Shift Discount Threshold",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"207000 + 25000 = 232000 with 0% discount\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.amountInclVat).to.eql(207000.00);",
+                  "    pm.expect(json.discountRate).to.eql(0.0000);",
+                  "    pm.expect(json.deliveryFee).to.eql(25000.00);",
+                  "    pm.expect(json.total).to.eql(232000.00);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/calculate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cart",
+                "calculate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"UZB\",\n  \"deliveryZoneId\": \"{{deliveryZoneId_Suburbs}}\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId_Tiramisu}}\",\n      \"quantity\": 2,\n      \"modifierIds\": []\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Time Slots ({{futureDate}})",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Returns slots and saves an available timeSlotId\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.be.an(\"array\").that.has.length.at.least(1);",
+                  "    const openSlot = json.find(s => s.isAvailable === true);",
+                  "    pm.expect(openSlot).to.exist;",
+                  "    pm.collectionVariables.set(\"timeSlotId\", String(openSlot.id));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/time-slots?date={{futureDate}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "time-slots"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "{{futureDate}}",
+                  "description": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Time Slots Error: Past Date (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/time-slots?date=2020-01-01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "time-slots"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2020-01-01",
+                  "description": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delivery Zones Error: Unknown Region (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404 Not Found\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/delivery-zones?region=XYZ",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "delivery-zones"
+              ],
+              "query": [
+                {
+                  "key": "region",
+                  "value": "XYZ",
+                  "description": ""
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Auth & RBAC Security Smoke",
+      "item": [
+        {
+          "name": "Auth Me: Unauthenticated Returns 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Auth Request Code: Invalid Email Returns 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/request-code",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "request-code"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"not-an-email\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Reports Sales: Unauthenticated Returns 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/sales",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "sales"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reports PDF Export: Unauthenticated Returns 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/export",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "export"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin Categories: Unauthenticated Returns 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "categories"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin Regions: Unauthenticated Returns 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/regions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "regions"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Orders API (CC-47 & CC-74 Write Flows - Local/Test DB)",
+      "item": [
+        {
+          "name": "Create Guest Order (GEO + X-Client-Id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"Generates orderNumber CC-YYYY-* with GEL total 254.22\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.orderNumber).to.match(/^CC-\\d{4}-\\d+$/);",
+                  "    pm.expect(json.region).to.eql(\"GEO\");",
+                  "    pm.expect(json.currencyCode).to.eql(\"GEL\");",
+                  "    pm.expect(json.total).to.eql(254.22);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Client-Id",
+                "value": "{{clientId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"GEO\",\n  \"customer\": {\n    \"name\": \"Nino Beridze\",\n    \"phone\": \"+995599112233\",\n    \"email\": \"nino@example.com\"\n  },\n  \"orderDate\": \"{{futureDate}}\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId_CherryCake}}\",\n      \"quantity\": 2,\n      \"modifierIds\": [\n        \"{{modId_SizeMedium}}\",\n        \"{{modId_FreshCherries}}\"\n      ]\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Order with DELIVERY Fulfillment & Time Slot (UZB)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"Persists DELIVERY fulfillment and adds 15000.00 fee\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.fulfillmentType).to.eql(\"DELIVERY\");",
+                  "    pm.expect(json.deliveryFee).to.eql(15000.00);",
+                  "    pm.expect(json.total).to.eql(550440.00);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Client-Id",
+                "value": "{{clientId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"UZB\",\n  \"customer\": {\n    \"name\": \"Malika Karimova\",\n    \"phone\": \"+998901234567\",\n    \"email\": \"malika@example.com\"\n  },\n  \"orderDate\": \"{{futureDate}}\",\n  \"fulfillmentType\": \"DELIVERY\",\n  \"deliveryZoneId\": \"{{deliveryZoneId_Center}}\",\n  \"timeSlotId\": \"{{timeSlotId}}\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId_CherryCake}}\",\n      \"quantity\": 1,\n      \"modifierIds\": [\n        \"{{modId_SizeMedium}}\"\n      ]\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Order with PICKUP Fulfillment & Time Slot (UZB)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"Persists PICKUP fulfillment with 0.00 deliveryFee\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.fulfillmentType).to.eql(\"PICKUP\");",
+                  "    pm.expect(json.deliveryFee).to.eql(0.00);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Client-Id",
+                "value": "{{clientId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"UZB\",\n  \"customer\": {\n    \"name\": \"Azizbek Tursunov\",\n    \"phone\": \"+998907654321\",\n    \"email\": \"azizbek@example.com\"\n  },\n  \"orderDate\": \"{{futureDate}}\",\n  \"fulfillmentType\": \"PICKUP\",\n  \"pickupPointId\": \"{{pickupPointId}}\",\n  \"timeSlotId\": \"{{timeSlotId}}\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId_Tiramisu}}\",\n      \"quantity\": 1,\n      \"modifierIds\": []\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Orders (Guest X-Client-Id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Returns array of orders newest first\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Client-Id",
+                "value": "{{clientId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/my",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "my"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Order Error: Missing Customer Name (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"GEO\",\n  \"customer\": {\n    \"name\": \"\",\n    \"phone\": \"+995599112233\",\n    \"email\": \"nino@example.com\"\n  },\n  \"orderDate\": \"{{futureDate}}\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId_CherryCake}}\",\n      \"quantity\": 1,\n      \"modifierIds\": [\n        \"{{modId_SizeMedium}}\"\n      ]\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Order Error: Past Order Date (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"GEO\",\n  \"customer\": {\n    \"name\": \"Nino Beridze\",\n    \"phone\": \"+995599112233\",\n    \"email\": \"nino@example.com\"\n  },\n  \"orderDate\": \"2020-01-01\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId_CherryCake}}\",\n      \"quantity\": 1,\n      \"modifierIds\": [\n        \"{{modId_SizeMedium}}\"\n      ]\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Order Error: PICKUP Missing pickupPointId (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"region\": \"UZB\",\n  \"customer\": {\n    \"name\": \"Nino Beridze\",\n    \"phone\": \"+998901112233\",\n    \"email\": \"nino@example.com\"\n  },\n  \"orderDate\": \"{{futureDate}}\",\n  \"fulfillmentType\": \"PICKUP\",\n  \"timeSlotId\": \"{{timeSlotId}}\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId_Tiramisu}}\",\n      \"quantity\": 1,\n      \"modifierIds\": []\n    }\n  ]\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - Table Bookings (CC-74 Bonus Write Flows - Local/Test DB)",
+      "item": [
+        {
+          "name": "Create Table Booking (201 Created)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"Returns bookingNumber, tableNumber, date, time, guestsCount\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.bookingNumber).to.be.a(\"string\").and.not.be.empty;",
+                  "    pm.expect(json.tableNumber).to.be.a(\"number\");",
+                  "    pm.expect(json.guestsCount).to.eql(4);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"{{futureDate}}\",\n  \"timeSlotId\": \"{{timeSlotId}}\",\n  \"guestsCount\": 4,\n  \"customer\": {\n    \"name\": \"Leyla Mammadova\",\n    \"phone\": \"+995555123456\",\n    \"email\": \"leyla@example.com\"\n  },\n  \"region\": \"GEO\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Booking Error: Past Date (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2020-01-01\",\n  \"timeSlotId\": \"{{timeSlotId}}\",\n  \"guestsCount\": 2,\n  \"customer\": {\n    \"name\": \"Test Guest\",\n    \"phone\": \"+995555123456\",\n    \"email\": \"test@example.com\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Booking Error: Guests Count Exceeds Max 12 (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"{{futureDate}}\",\n  \"timeSlotId\": \"{{timeSlotId}}\",\n  \"guestsCount\": 13,\n  \"customer\": {\n    \"name\": \"Test Guest\",\n    \"phone\": \"+995555123456\",\n    \"email\": \"test@example.com\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Booking Error: Guests Count Zero (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"{{futureDate}}\",\n  \"timeSlotId\": \"{{timeSlotId}}\",\n  \"guestsCount\": 0,\n  \"customer\": {\n    \"name\": \"Test Guest\",\n    \"phone\": \"+995555123456\",\n    \"email\": \"test@example.com\"\n  }\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 - Sales Reports & PDF Export (CC-56 Authenticated STAFF/ADMIN)",
+      "item": [
+        {
+          "name": "Filter Set 1: All Countries, 6 Months, Group By REGION",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const hasToken = Boolean(pm.collectionVariables.get(\"authToken\") || pm.environment.get(\"authToken\"));",
+                  "if (!hasToken) {",
+                  "    pm.test(\"Requires STAFF/ADMIN Bearer authToken (returns 401 when unset)\", function () {",
+                  "        pm.response.to.have.status(401);",
+                  "    });",
+                  "} else {",
+                  "    pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "    pm.test(\"KPI and row sums match snapshot structure\", function () {",
+                  "        const json = pm.response.json();",
+                  "        pm.expect(json).to.have.property(\"kpi\");",
+                  "        pm.expect(json).to.have.property(\"rows\");",
+                  "        const rowOrdersSum = json.rows.reduce((acc, r) => acc + r.ordersCount, 0);",
+                  "        pm.expect(rowOrdersSum).to.eql(json.kpi.ordersCount);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/sales?from={{reportSixMonthsStart}}&to={{reportToDate}}&groupBy=REGION",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "sales"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "{{reportSixMonthsStart}}",
+                  "description": ""
+                },
+                {
+                  "key": "to",
+                  "value": "{{reportToDate}}",
+                  "description": ""
+                },
+                {
+                  "key": "groupBy",
+                  "value": "REGION",
+                  "description": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter Set 2: Single Country (UZB), 6 Months, Group By MONTH",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const hasToken = Boolean(pm.collectionVariables.get(\"authToken\") || pm.environment.get(\"authToken\"));",
+                  "if (!hasToken) {",
+                  "    pm.test(\"Requires STAFF/ADMIN Bearer authToken (401 when unset)\", function () { pm.response.to.have.status(401); });",
+                  "} else {",
+                  "    pm.test(\"Status code is 200 & UZS currency\", function () {",
+                  "        pm.response.to.have.status(200);",
+                  "        const json = pm.response.json();",
+                  "        pm.expect(json.currencyCode).to.eql(\"UZS\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/sales?from={{reportSixMonthsStart}}&to={{reportToDate}}&region=UZB&groupBy=MONTH",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "sales"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "{{reportSixMonthsStart}}",
+                  "description": ""
+                },
+                {
+                  "key": "to",
+                  "value": "{{reportToDate}}",
+                  "description": ""
+                },
+                {
+                  "key": "region",
+                  "value": "UZB",
+                  "description": ""
+                },
+                {
+                  "key": "groupBy",
+                  "value": "MONTH",
+                  "description": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter Set 3: Single Month, All Countries, Group By REGION",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const hasToken = Boolean(pm.collectionVariables.get(\"authToken\") || pm.environment.get(\"authToken\"));",
+                  "if (!hasToken) {",
+                  "    pm.test(\"Requires STAFF/ADMIN Bearer authToken (401 when unset)\", function () { pm.response.to.have.status(401); });",
+                  "} else {",
+                  "    pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/sales?from={{reportMonthStart}}&to={{reportToDate}}&groupBy=REGION",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "sales"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "{{reportMonthStart}}",
+                  "description": ""
+                },
+                {
+                  "key": "to",
+                  "value": "{{reportToDate}}",
+                  "description": ""
+                },
+                {
+                  "key": "groupBy",
+                  "value": "REGION",
+                  "description": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export Sales PDF (Matching Filter Set 1)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const hasToken = Boolean(pm.collectionVariables.get(\"authToken\") || pm.environment.get(\"authToken\"));",
+                  "if (!hasToken) {",
+                  "    pm.test(\"Requires STAFF/ADMIN Bearer authToken (401 when unset)\", function () { pm.response.to.have.status(401); });",
+                  "} else {",
+                  "    pm.test(\"Status code is 200 & Content-Type is application/pdf\", function () {",
+                  "        pm.response.to.have.status(200);",
+                  "        pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/pdf\");",
+                  "        pm.expect(pm.response.text()).to.match(/^%PDF-/);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/export?format=PDF&from={{reportSixMonthsStart}}&to={{reportToDate}}&groupBy=REGION",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "export"
+              ],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "PDF",
+                  "description": ""
+                },
+                {
+                  "key": "from",
+                  "value": "{{reportSixMonthsStart}}",
+                  "description": ""
+                },
+                {
+                  "key": "to",
+                  "value": "{{reportToDate}}",
+                  "description": ""
+                },
+                {
+                  "key": "groupBy",
+                  "value": "REGION",
+                  "description": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reports Error: Inverted Date Range (400 when STAFF, 401 when unauth)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const hasToken = Boolean(pm.collectionVariables.get(\"authToken\") || pm.environment.get(\"authToken\"));",
+                  "pm.test(\"Returns expected status (400 when authToken set, else 401)\", function () {",
+                  "    pm.response.to.have.status(hasToken ? 400 : 401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/sales?from=2026-12-31&to=2026-01-01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "sales"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-12-31",
+                  "description": ""
+                },
+                {
+                  "key": "to",
+                  "value": "2026-01-01",
+                  "description": ""
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
