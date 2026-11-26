@@ -1035,9 +1035,9 @@ Verify rounding behavior when the discount calculation produces a third decimal 
 
 **Test Result:** PASS / FAIL
 
-**Passed Test Cases:** ___ / 25
+**Passed Test Cases:** 25/ 25
 
-**Failed Test Cases:** ___ / 25
+**Failed Test Cases:** 0 / 25
 
 **Bugs Found:** ___
 
