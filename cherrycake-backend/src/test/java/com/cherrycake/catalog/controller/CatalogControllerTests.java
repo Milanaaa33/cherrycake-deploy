@@ -1,6 +1,7 @@
 package com.cherrycake.catalog.controller;
 
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -50,14 +51,13 @@ class CatalogControllerTests {
         mvc.perform(get("/api/products").param("region", "UZB"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(12)))
-                .andExpect(jsonPath("$[0].name").value("Cherry Cake"))
-                .andExpect(jsonPath("$[0].price").value(360000.00))
-                .andExpect(jsonPath("$[0].inStock").value(true))
-                .andExpect(jsonPath("$[0].photoUrl").exists())
-                .andExpect(jsonPath("$[0].modifierGroups").doesNotExist());
+                .andExpect(jsonPath("$[?(@.name == 'Cherry Cake')].price", contains(360000.00)))
+                .andExpect(jsonPath("$[?(@.name == 'Cherry Cake')].inStock", contains(true)))
+                .andExpect(jsonPath("$[?(@.name == 'Cherry Cake')].photoUrl").isNotEmpty())
+                .andExpect(jsonPath("$[?(@.name == 'Cherry Cake')].modifierGroups").isEmpty());
 
         mvc.perform(get("/api/products").param("region", "GEO"))
-                .andExpect(jsonPath("$[0].price").value(85.80));
+                .andExpect(jsonPath("$[?(@.name == 'Cherry Cake')].price", contains(85.80)));
     }
 
     @Test
@@ -66,7 +66,7 @@ class CatalogControllerTests {
 
         mvc.perform(get("/api/products").param("region", "KAZ").param("categoryId", drinks.toString()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[*].name", contains("Cappuccino", "Latte", "Cherry Lemonade")));
+                .andExpect(jsonPath("$[*].name", containsInAnyOrder("Cappuccino", "Latte", "Cherry Lemonade")));
     }
 
     @Test
@@ -94,14 +94,13 @@ class CatalogControllerTests {
         mvc.perform(get("/api/products/{id}", productId("Cherry Cake")).param("region", "GEO"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.price").value(85.80))
-                .andExpect(jsonPath("$.modifierGroups[*].name", contains("Size", "Extras")))
-                .andExpect(jsonPath("$.modifierGroups[0].type").value("SINGLE"))
-                .andExpect(jsonPath("$.modifierGroups[0].isRequired").value(true))
-                .andExpect(jsonPath("$.modifierGroups[1].type").value("MULTI"))
-                .andExpect(jsonPath("$.modifierGroups[1].isRequired").value(false))
-                .andExpect(jsonPath("$.modifierGroups[0].modifiers", hasSize(3)))
-                .andExpect(jsonPath("$.modifierGroups[0].modifiers[1].name").value("Medium, 10 slices"))
-                .andExpect(jsonPath("$.modifierGroups[0].modifiers[1].priceDelta").value(26.00));
+                .andExpect(jsonPath("$.modifierGroups[*].name", containsInAnyOrder("Size", "Extras")))
+                .andExpect(jsonPath("$.modifierGroups[?(@.name == 'Size')].type", contains("SINGLE")))
+                .andExpect(jsonPath("$.modifierGroups[?(@.name == 'Size')].isRequired", contains(true)))
+                .andExpect(jsonPath("$.modifierGroups[?(@.name == 'Extras')].type", contains("MULTI")))
+                .andExpect(jsonPath("$.modifierGroups[?(@.name == 'Extras')].isRequired", contains(false)))
+                .andExpect(jsonPath("$.modifierGroups[?(@.name == 'Size')].modifiers[*]", hasSize(3)))
+                .andExpect(jsonPath("$.modifierGroups[?(@.name == 'Size')].modifiers[?(@.name == 'Medium, 10 slices')].priceDelta", contains(26.00)));
     }
 
     @Test

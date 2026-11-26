@@ -61,7 +61,14 @@ export default function App() {
             }
           />
           <Route path="/cart" element={<RequireSignIn><Cart /></RequireSignIn>} />
-          <Route path="/reports" element={<Reports />} />
+          <Route
+            path="/reports"
+            element={
+              <RequireRole minimum="STAFF">
+                <Reports />
+              </RequireRole>
+            }
+          />
           <Route path="/checkout" element={<RequireSignIn><Checkout /></RequireSignIn>} />
           <Route path="/order-success" element={<OrderSuccess />} />
           <Route path="/account" element={<Account />} />

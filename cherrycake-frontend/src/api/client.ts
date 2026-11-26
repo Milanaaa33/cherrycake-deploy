@@ -17,8 +17,8 @@ export const api = axios.create({
   timeout: 10000,
 });
 
-// Endpoints that read the session token: orders, the signed-in user, sign-out and the admin panel.
-const AUTH_PREFIXES = ["/orders", "/auth/me", "/auth/logout", "/admin"];
+// Endpoints that read the session token: orders, the signed-in user, sign-out, the admin panel and reports.
+const AUTH_PREFIXES = ["/orders", "/auth/me", "/auth/logout", "/admin", "/reports"];
 
 // Orders (placing an order and "My orders") are tied to this browser by an anonymous client id.
 // When the customer is signed in (email code), the session token is sent as well.

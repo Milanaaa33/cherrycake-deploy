@@ -15,7 +15,7 @@ import './Layout.css';
 export default function Header() {
   const { t } = useTranslation();
   const currencyCode = useSelector((state: RootState) => state.region.currencyCode);
-  const { canSeeAdmin } = useAuthRole();
+  const { canSeeAdmin, canEditPrices: canSeeReports } = useAuthRole();
 
   return (
     <header className="cc-header">
@@ -37,7 +37,7 @@ export default function Header() {
 
           <NavLink to="/account">{t('nav.account', 'Orders / Account')}</NavLink>
 
-          <NavLink to="/reports">{t('nav.reports', 'Reports')}</NavLink>
+          {canSeeReports && <NavLink to="/reports">{t('nav.reports', 'Reports')}</NavLink>}
 
           {canSeeAdmin && (
             <NavLink to="/admin" className="cc-nav-admin" data-testid="nav-admin">

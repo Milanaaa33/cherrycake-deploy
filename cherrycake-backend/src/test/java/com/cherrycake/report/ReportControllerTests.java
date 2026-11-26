@@ -16,6 +16,10 @@ import com.lowagie.text.pdf.PdfName;
 import com.lowagie.text.pdf.PdfReader;
 import com.lowagie.text.pdf.parser.PdfTextExtractor;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.time.LocalDateTime;
+import java.util.HexFormat;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -43,8 +47,19 @@ class ReportControllerTests {
     @Autowired private ObjectMapper mapper;
     @Autowired private SalesReportPdfService pdf;
 
+    /** Reports need the STAFF role: a ready-made session token (its SHA-256 hash is what the backend stores). */
+    private static final String STAFF_TOKEN = "report-tests-staff-token";
+    private static final String STAFF_AUTH = "Bearer " + STAFF_TOKEN;
+
     @BeforeEach
-    void data() {
+    void data() throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        String tokenHash = HexFormat.of().formatHex(digest.digest(STAFF_TOKEN.getBytes(StandardCharsets.UTF_8)));
+        jdbc.update("DELETE FROM auth_sessions WHERE token_hash = ?", tokenHash);
+        jdbc.update("INSERT INTO auth_sessions (token_hash, email, expires_at) VALUES (?, ?, ?)",
+                tokenHash, "staff@reports.test", LocalDateTime.now().plusDays(1));
+        jdbc.update("DELETE FROM user_roles WHERE email = ?", "staff@reports.test");
+        jdbc.update("INSERT INTO user_roles (email, role) VALUES (?, 'STAFF')", "staff@reports.test");
         jdbc.update("DELETE FROM order_items");
         jdbc.update("DELETE FROM orders");
         order("a", "UZB", "2026-01-01", "80.00", "12.00", "1.00", "100.10", "UZS");
@@ -85,14 +100,14 @@ class ReportControllerTests {
         assertThat(report.at("/kpi/averageOrderValue").decimalValue()).isEqualByComparingTo("150.15");
         assertThat(report.at("/rows/0/label").asText()).isEqualTo("2026-01");
         assertThat(report.path("currencyCode").asText()).isEqualTo("UZS");
-        mvc.perform(get("/api/reports/sales?from=2026-01-31&to=2026-01-31&region=UZB"))
+        mvc.perform(get("/api/reports/sales?from=2026-01-31&to=2026-01-31&region=UZB").header("Authorization", STAFF_AUTH))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.kpi.ordersCount").value(1))
                 .andExpect(jsonPath("$.kpi.totalSum").value(200.20));
     }
 
     @Test
     void monthBucketsKeepDifferentYearsSeparateAndChronological() throws Exception {
-        mvc.perform(get("/api/reports/sales?from=2026-01-01&to=2027-01-01&region=UZB&groupBy=MONTH"))
+        mvc.perform(get("/api/reports/sales?from=2026-01-01&to=2027-01-01&region=UZB&groupBy=MONTH").header("Authorization", STAFF_AUTH))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.rows.length()").value(3))
                 .andExpect(jsonPath("$.rows[0].label").value("2026-01"))
                 .andExpect(jsonPath("$.rows[1].label").value("2026-02"))
@@ -101,7 +116,7 @@ class ReportControllerTests {
 
     @Test
     void emptyReportReturnsZeroMoneyAndNoRows() throws Exception {
-        mvc.perform(get("/api/reports/sales?from=2024-01-01&to=2024-01-31&region=UZB"))
+        mvc.perform(get("/api/reports/sales?from=2024-01-01&to=2024-01-31&region=UZB").header("Authorization", STAFF_AUTH))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.kpi.ordersCount").value(0))
                 .andExpect(jsonPath("$.kpi.subtotalSum").value(0))
                 .andExpect(jsonPath("$.kpi.vatSum").value(0))
@@ -116,7 +131,7 @@ class ReportControllerTests {
             "region=UZ", "region=", "region=UZB%27%20OR%201=1", "to=2026-02-30"})
     void invalidFiltersReturnCommon400ForJsonAndPdf(String filters) throws Exception {
         for (String endpoint : new String[]{"sales", "export"}) {
-            mvc.perform(get("/api/reports/" + endpoint + "?" + filters))
+            mvc.perform(get("/api/reports/" + endpoint + "?" + filters).header("Authorization", STAFF_AUTH))
                     .andExpect(status().isBadRequest()).andExpect(jsonPath("$.status").value(400))
                     .andExpect(jsonPath("$.errors").isArray()).andExpect(jsonPath("$.timestamp").isNotEmpty());
         }
@@ -125,17 +140,17 @@ class ReportControllerTests {
     @Test
     void unknownRegionIs404AndUnsupportedFormatIs400() throws Exception {
         for (String endpoint : new String[]{"sales", "export"}) {
-            mvc.perform(get("/api/reports/" + endpoint + "?region=XYZ"))
+            mvc.perform(get("/api/reports/" + endpoint + "?region=XYZ").header("Authorization", STAFF_AUTH))
                     .andExpect(status().isNotFound()).andExpect(jsonPath("$.status").value(404));
         }
-        mvc.perform(get("/api/reports/export?format=CSV"))
+        mvc.perform(get("/api/reports/export?format=CSV").header("Authorization", STAFF_AUTH))
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.status").value(400));
     }
 
     @Test
     void pdfContainsSameFiltersKpiRowsAndTwoEmbeddedCharts() throws Exception {
         JsonNode report = report("&groupBy=REGION");
-        byte[] bytes = mvc.perform(get("/api/reports/export?format=PDF&from=2026-01-01&to=2026-01-31&groupBy=REGION"))
+        byte[] bytes = mvc.perform(get("/api/reports/export?format=PDF&from=2026-01-01&to=2026-01-31&groupBy=REGION").header("Authorization", STAFF_AUTH))
                 .andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_PDF))
                 .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("attachment;")))
                 .andReturn().getResponse().getContentAsByteArray();
@@ -177,7 +192,7 @@ class ReportControllerTests {
             for (var row : rows) { assertThat(text(reader)).contains(row.label(), row.total().toPlainString()); }
         }
         Files.write(Path.of("target/sales-report-long.pdf"), bytes);
-        byte[] empty = mvc.perform(get("/api/reports/export?from=2024-01-01&to=2024-01-31"))
+        byte[] empty = mvc.perform(get("/api/reports/export?from=2024-01-01&to=2024-01-31").header("Authorization", STAFF_AUTH))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray();
         try (PdfReader reader = new PdfReader(empty)) {
             assertThat(text(reader)).contains("No orders match", "0.00");
@@ -185,7 +200,7 @@ class ReportControllerTests {
     }
 
     private JsonNode report(String filters) throws Exception {
-        return mapper.readTree(mvc.perform(get("/api/reports/sales?from=2026-01-01&to=2026-01-31" + filters))
+        return mapper.readTree(mvc.perform(get("/api/reports/sales?from=2026-01-01&to=2026-01-31" + filters).header("Authorization", STAFF_AUTH))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
     }
 
@@ -204,5 +219,17 @@ class ReportControllerTests {
                 + "'test@example.com', ?, ?, ?, ?, ?, TIMESTAMP '2020-01-01 00:00:00')",
                 number, date, region, new BigDecimal(subtotal), new BigDecimal(vat), new BigDecimal(discount),
                 new BigDecimal(total), currency);
+    }
+
+    @Test
+    void reportsRequireStaffOrAdminRole() throws Exception {
+        mvc.perform(get("/api/reports/sales")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/reports/export")).andExpect(status().isUnauthorized());
+
+        jdbc.update("UPDATE user_roles SET role = 'VIEWER' WHERE email = ?", "staff@reports.test");
+        mvc.perform(get("/api/reports/sales").header("Authorization", STAFF_AUTH)).andExpect(status().isForbidden());
+
+        jdbc.update("UPDATE user_roles SET role = 'ADMIN' WHERE email = ?", "staff@reports.test");
+        mvc.perform(get("/api/reports/sales").header("Authorization", STAFF_AUTH)).andExpect(status().isOk());
     }
 }
