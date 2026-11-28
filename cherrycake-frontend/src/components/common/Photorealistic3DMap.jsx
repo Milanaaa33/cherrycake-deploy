@@ -1,35 +1,37 @@
-import { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 import { useDispatch, useSelector } from 'react-redux';
-import type { RootState } from '../../store';
-import { setLanguageFromRegion, setRegion } from '../../store';
+import { setRegion } from '../../store';
 import countryBoundaries from '../../data/countryBoundaries.json';
-import { getFlagSrc } from '../../i18n/languages';
-import { useTranslation } from '../../i18n/useTranslation';
-import './Globe.css';
+import useTranslation from '../../i18n/useTranslation';
 
-export type Hub = {
-  code: string;
-  country: string;
-  flag: string;
-  city: string;
-  title: string;
-  address: string;
-  currency: string;
-  specialty: string;
-  lat: number;
-  lng: number;
-  color: string;
-  hours: string;
+const FLAG_MAP = {
+  uzb: 'uzb', uz: 'uzb',
+  kaz: 'kaz', kz: 'kaz',
+  geo: 'geo', ge: 'geo',
+  ukr: 'ukr', ua: 'ukr',
+  chn: 'chn', cn: 'chn',
+  swe: 'swe', se: 'swe',
+  fin: 'fin', fi: 'fin',
+  ltu: 'ltu', lt: 'ltu',
+  lva: 'lva', lv: 'lva',
+  est: 'est', ee: 'est',
+  blr: 'blr', by: 'blr',
+  mda: 'mda', md: 'mda',
+  rou: 'rou', ro: 'rou',
+  tur: 'tur', tr: 'tur',
+  aze: 'aze', az: 'aze',
+  arm: 'arm', am: 'arm',
+  rus: 'rus', ru: 'rus'
 };
 
-type Ring = number[][];
-type Projected = { x: number; y: number; visible: boolean };
-type PresetKey = 'central-asia' | 'caucasus' | 'anatolia' | 'nordics' | 'china' | 'global';
+function getFlagSrc(code) {
+  const c = (code || '').toLowerCase().trim();
+  const file = FLAG_MAP[c] || c;
+  return `/assets/flags/${file}.svg`;
+}
 
-const BOUNDARIES: Record<string, unknown> = countryBoundaries;
-
-export const HUBS: Hub[] = [
+const HUBS = [
   {
     code: 'UZB',
     country: 'Uzbekistan',
@@ -270,7 +272,7 @@ export const HUBS: Hub[] = [
   }
 ];
 
-const CORRIDOR_CONNECTIONS: [string, string][] = [
+const CORRIDOR_CONNECTIONS = [
   ['UZB', 'KAZ'],
   ['UZB', 'GEO'],
   ['GEO', 'AZE'],
@@ -289,19 +291,25 @@ const CORRIDOR_CONNECTIONS: [string, string][] = [
   ['UZB', 'CHN']
 ];
 
-export default function Globe() {
+export function Photorealistic3DMap() {
   const dispatch = useDispatch();
   const { t } = useTranslation();
-  const currentRegion = useSelector((state: RootState) => state.region.code || 'UZB');
-  const mountRef = useRef<HTMLDivElement>(null);
+  const currentRegion = useSelector((state) => state.region?.code || 'UZB');
+  const mountRef = useRef(null);
 
-  const [selectedHub, setSelectedHub] = useState<Hub>(HUBS[0]);
-  const [hoveredHub, setHoveredHub] = useState<Hub | null>(null);
-  const [activePreset, setActivePreset] = useState<PresetKey>('central-asia');
+  const [manualHub, setManualHub] = useState(null);
+  const selectedHub =
+    manualHub && manualHub.forRegion === currentRegion
+      ? manualHub.hub
+      : HUBS.find((h) => h.code === currentRegion) || HUBS[0];
+  const setSelectedHub = (hub) => setManualHub({ forRegion: currentRegion, hub });
+  const [hoveredHub, setHoveredHub] = useState(null);
+  const [activePreset, setActivePreset] = useState('central-asia');
   const [isAutoRotating, setIsAutoRotating] = useState(true);
-  const [projectedPositions, setProjectedPositions] = useState<Record<string, Projected>>({});
+  const [projectedPositions, setProjectedPositions] = useState({});
 
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const cameraRef = useRef(null);
+  const sizeRef = useRef({ width: 900, height: 560 });
   const controlsRef = useRef({
     targetLat: 42,
     targetLng: 65,
@@ -317,7 +325,7 @@ export default function Globe() {
 
   const R = 80;
 
-  const latLngToVector3 = (lat: number, lng: number, r: number) => {
+  const latLngToVector3 = (lat, lng, r) => {
     const phi = (90 - lat) * (Math.PI / 180);
     const theta = (lng + 180) * (Math.PI / 180);
     const x = -(r * Math.sin(phi) * Math.cos(theta));
@@ -327,24 +335,21 @@ export default function Globe() {
   };
 
   useEffect(() => {
-    const match = HUBS.find((h) => h.code === currentRegion);
-    if (match) setSelectedHub(match);
-  }, [currentRegion]);
-
-  useEffect(() => {
     const container = mountRef.current;
     if (!container) return;
 
-    let width = container.clientWidth || 900;
-    let height = container.clientHeight || 560;
+    sizeRef.current = {
+      width: container.clientWidth || 900,
+      height: container.clientHeight || 560
+    };
 
     // 1. Scene, Camera, High-Fidelity ACESFilmic Renderer
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(38, sizeRef.current.width / sizeRef.current.height, 0.1, 1000);
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    renderer.setSize(width, height);
+    renderer.setSize(sizeRef.current.width, sizeRef.current.height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.2;
@@ -396,9 +401,7 @@ export default function Globe() {
 
     // Helper to recursively subdivide flat polygon triangles along the sphere's curvature
     // so the solid country fill follows R*1.003 perfectly and never cuts inside the Earth
-    const subdivideSpherical = (
-      v0: THREE.Vector3, v1: THREE.Vector3, v2: THREE.Vector3, radius: number, maxEdgeSq = 16, depth = 0,
-    ): THREE.Vector3[] => {
+    const subdivideSpherical = (v0, v1, v2, radius, maxEdgeSq = 16, depth = 0) => {
       if (depth >= 3) return [v0, v1, v2];
       const d01 = v0.distanceToSquared(v1);
       const d12 = v1.distanceToSquared(v2);
@@ -417,7 +420,7 @@ export default function Globe() {
       return [v0, v1, v2];
     };
 
-    const drawCountryBoundary = (coordsArray: unknown, colorHex: string) => {
+    const drawCountryBoundary = (coordsArray, colorHex) => {
       const lineMat = new THREE.LineBasicMaterial({
         color: colorHex,
         linewidth: 2.5,
@@ -440,11 +443,11 @@ export default function Globe() {
       const fillRadius = R * 1.003;
       const lineRadius = R * 1.005;
 
-      const processRing = (ring: Ring) => {
+      const processRing = (ring) => {
         if (!ring || ring.length < 3) return;
 
         // 1. Boundary Contour Outline Line
-        const points: THREE.Vector3[] = [];
+        const points = [];
         for (const [lng, lat] of ring) {
           points.push(latLngToVector3(lat, lng, lineRadius));
         }
@@ -487,15 +490,15 @@ export default function Globe() {
 
       if (Array.isArray(coordsArray)) {
         if (Array.isArray(coordsArray[0][0][0])) {
-          (coordsArray as Ring[][]).forEach((poly) => poly.forEach((ring) => processRing(ring)));
+          coordsArray.forEach((poly) => poly.forEach((ring) => processRing(ring)));
         } else if (Array.isArray(coordsArray[0][0])) {
-          (coordsArray as Ring[]).forEach((ring) => processRing(ring));
+          coordsArray.forEach((ring) => processRing(ring));
         }
       }
     };
 
     HUBS.forEach((hub) => {
-      const rawCoords = BOUNDARIES[hub.code];
+      const rawCoords = countryBoundaries[hub.code];
       if (rawCoords) {
         drawCountryBoundary(rawCoords, hub.color);
       }
@@ -505,7 +508,7 @@ export default function Globe() {
     scene.add(countryLinesGroup);
 
     // 6. Hub Beacons, Rings & Vertical Light Rays
-    const hubObjects: { hub: Hub; pos: THREE.Vector3; ringMesh: THREE.Mesh }[] = [];
+    const hubObjects = [];
     const beaconGroup = new THREE.Group();
 
     HUBS.forEach((hub) => {
@@ -553,7 +556,7 @@ export default function Globe() {
     // 7. 3D Supply Logistics Corridor Arcs & Traveling Photons
     const arcCurves = [];
     const arcLinesGroup = new THREE.Group();
-    const photons: { mesh: THREE.Mesh; curve: THREE.QuadraticBezierCurve3; offset: number; speed: number }[] = [];
+    const photons = [];
 
     CORRIDOR_CONNECTIONS.forEach(([fromCode, toCode], index) => {
       const fromHub = HUBS.find((h) => h.code === fromCode);
@@ -598,7 +601,7 @@ export default function Globe() {
     // 8. Google 3D Maps style Mouse & Touch Orbit Controls
     const state = controlsRef.current;
 
-    const onMouseDown = (e: MouseEvent) => {
+    const onMouseDown = (e) => {
       state.isDragging = true;
       state.autoRotate = false;
       setIsAutoRotating(false);
@@ -606,7 +609,7 @@ export default function Globe() {
       state.lastMouseY = e.clientY;
     };
 
-    const onMouseMove = (e: MouseEvent) => {
+    const onMouseMove = (e) => {
       if (!state.isDragging) return;
       const deltaX = e.clientX - state.lastMouseX;
       const deltaY = e.clientY - state.lastMouseY;
@@ -623,13 +626,13 @@ export default function Globe() {
       state.isDragging = false;
     };
 
-    const onWheel = (e: WheelEvent) => {
+    const onWheel = (e) => {
       e.preventDefault();
       state.targetDistance += e.deltaY * 0.12;
       state.targetDistance = Math.max(125, Math.min(320, state.targetDistance));
     };
 
-    const onTouchStart = (e: TouchEvent) => {
+    const onTouchStart = (e) => {
       if (e.touches.length === 1) {
         state.isDragging = true;
         state.autoRotate = false;
@@ -639,7 +642,7 @@ export default function Globe() {
       }
     };
 
-    const onTouchMove = (e: TouchEvent) => {
+    const onTouchMove = (e) => {
       if (!state.isDragging || e.touches.length !== 1) return;
       const deltaX = e.touches[0].clientX - state.lastMouseX;
       const deltaY = e.touches[0].clientY - state.lastMouseY;
@@ -667,16 +670,18 @@ export default function Globe() {
 
     const handleResize = () => {
       if (!container) return;
-      width = container.clientWidth;
-      height = container.clientHeight;
-      camera.aspect = width / height;
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      sizeRef.current.width = w;
+      sizeRef.current.height = h;
+      camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      renderer.setSize(width, height);
+      renderer.setSize(w, h);
     };
     window.addEventListener('resize', handleResize);
 
     // 9. Animation Loop
-    let animId = 0;
+    let animId;
     const clock = new THREE.Clock();
 
     const animate = () => {
@@ -708,10 +713,10 @@ export default function Globe() {
       });
 
       // Project positions for 2D HTML badges (only for top visible hubs)
-      const newProjected: Record<string, Projected> = {};
+      const newProjected = {};
       const toCam = camera.position.clone().normalize();
-      const hw = width / 2;
-      const hh = height / 2;
+      const hw = sizeRef.current.width / 2;
+      const hh = sizeRef.current.height / 2;
 
       hubObjects.forEach(({ hub, pos }) => {
         const normal = pos.clone().normalize();
@@ -751,7 +756,7 @@ export default function Globe() {
     };
   }, []);
 
-  const jumpToHub = (hub: Hub) => {
+  const jumpToHub = (hub) => {
     setSelectedHub(hub);
     const state = controlsRef.current;
     state.autoRotate = false;
@@ -761,7 +766,7 @@ export default function Globe() {
     state.targetDistance = 160;
   };
 
-  const setPreset = (presetKey: PresetKey) => {
+  const setPreset = (presetKey) => {
     setActivePreset(presetKey);
     const state = controlsRef.current;
     state.autoRotate = false;
@@ -771,27 +776,27 @@ export default function Globe() {
       state.targetLat = 42.0;
       state.targetLng = 72.0;
       state.targetDistance = 180;
-      setSelectedHub(HUBS.find((h) => h.code === 'UZB') ?? HUBS[0]);
+      setSelectedHub(HUBS.find((h) => h.code === 'UZB'));
     } else if (presetKey === 'caucasus') {
       state.targetLat = 41.5;
       state.targetLng = 46.0;
       state.targetDistance = 170;
-      setSelectedHub(HUBS.find((h) => h.code === 'GEO') ?? HUBS[0]);
+      setSelectedHub(HUBS.find((h) => h.code === 'GEO'));
     } else if (presetKey === 'anatolia') {
       state.targetLat = 42.0;
       state.targetLng = 31.0;
       state.targetDistance = 180;
-      setSelectedHub(HUBS.find((h) => h.code === 'TUR') ?? HUBS[0]);
+      setSelectedHub(HUBS.find((h) => h.code === 'TUR'));
     } else if (presetKey === 'nordics') {
       state.targetLat = 58.0;
       state.targetLng = 22.0;
       state.targetDistance = 185;
-      setSelectedHub(HUBS.find((h) => h.code === 'SWE') ?? HUBS[0]);
+      setSelectedHub(HUBS.find((h) => h.code === 'SWE'));
     } else if (presetKey === 'china') {
       state.targetLat = 38.0;
       state.targetLng = 114.0;
       state.targetDistance = 180;
-      setSelectedHub(HUBS.find((h) => h.code === 'CHN') ?? HUBS[0]);
+      setSelectedHub(HUBS.find((h) => h.code === 'CHN'));
     } else if (presetKey === 'global') {
       state.targetLat = 45.0;
       state.targetLng = 55.0;
@@ -805,16 +810,14 @@ export default function Globe() {
     controlsRef.current.autoRotate = next;
   };
 
-  const handleSelectRegion = (hub: Hub) => {
+  const handleSelectRegion = (hub) => {
     dispatch(setRegion(hub.code));
-    dispatch(setLanguageFromRegion(hub.code));
     setSelectedHub(hub);
   };
 
   return (
     <section
       id="global-footprint"
-      className="cc-globe"
       style={{
         background: 'linear-gradient(180deg, #180512 0%, #200818 50%, #150310 100%)',
         border: '2px solid var(--cherry-border)',
@@ -858,7 +861,7 @@ export default function Globe() {
               fontSize: '0.78rem',
               textTransform: 'uppercase',
               letterSpacing: '0.18em',
-              color: 'var(--sakura-pink)',
+              color: '#ffb7c5',
               fontWeight: 700,
               display: 'inline-flex',
               alignItems: 'center',
@@ -872,13 +875,13 @@ export default function Globe() {
             style={{
               fontFamily: "'Playfair Display', serif",
               fontSize: '2rem',
-              color: 'var(--cheesecake-cream)',
+              color: '#fff6ed',
               margin: '6px 0 0 0'
             }}
           >
             {t('about.mapTitle', 'Our International Pâtisserie Footprint')}
           </h2>
-          <p style={{ color: 'var(--text-dim)', fontSize: '0.92rem', margin: '4px 0 0 0', maxWidth: '640px' }}>
+          <p style={{ color: '#d8becb', fontSize: '0.92rem', margin: '4px 0 0 0', maxWidth: '640px' }}>
             {t('about.mapSubtitle', 'Explore our artisanal bakeries, cold-chain distribution corridors, and single-origin ingredient sourcing spanning 17 countries.')}
           </p>
         </div>
@@ -898,10 +901,11 @@ export default function Globe() {
         >
           <button
             type="button"
+            className="cc-map-pill"
             onClick={() => setPreset('central-asia')}
             style={{
               background: activePreset === 'central-asia' ? 'var(--raspberry-coulis)' : 'transparent',
-              color: activePreset === 'central-asia' ? '#fff' : 'var(--text-dim)',
+              color: activePreset === 'central-asia' ? '#fff' : '#e8d5df',
               border: 'none',
               borderRadius: '9999px',
               padding: '6px 12px',
@@ -918,10 +922,11 @@ export default function Globe() {
           </button>
           <button
             type="button"
+            className="cc-map-pill"
             onClick={() => setPreset('caucasus')}
             style={{
               background: activePreset === 'caucasus' ? 'var(--raspberry-coulis)' : 'transparent',
-              color: activePreset === 'caucasus' ? '#fff' : 'var(--text-dim)',
+              color: activePreset === 'caucasus' ? '#fff' : '#e8d5df',
               border: 'none',
               borderRadius: '9999px',
               padding: '6px 12px',
@@ -938,10 +943,11 @@ export default function Globe() {
           </button>
           <button
             type="button"
+            className="cc-map-pill"
             onClick={() => setPreset('anatolia')}
             style={{
               background: activePreset === 'anatolia' ? 'var(--raspberry-coulis)' : 'transparent',
-              color: activePreset === 'anatolia' ? '#fff' : 'var(--text-dim)',
+              color: activePreset === 'anatolia' ? '#fff' : '#e8d5df',
               border: 'none',
               borderRadius: '9999px',
               padding: '6px 12px',
@@ -958,10 +964,11 @@ export default function Globe() {
           </button>
           <button
             type="button"
+            className="cc-map-pill"
             onClick={() => setPreset('nordics')}
             style={{
               background: activePreset === 'nordics' ? 'var(--raspberry-coulis)' : 'transparent',
-              color: activePreset === 'nordics' ? '#fff' : 'var(--text-dim)',
+              color: activePreset === 'nordics' ? '#fff' : '#e8d5df',
               border: 'none',
               borderRadius: '9999px',
               padding: '6px 12px',
@@ -978,10 +985,11 @@ export default function Globe() {
           </button>
           <button
             type="button"
+            className="cc-map-pill"
             onClick={() => setPreset('china')}
             style={{
               background: activePreset === 'china' ? 'var(--raspberry-coulis)' : 'transparent',
-              color: activePreset === 'china' ? '#fff' : 'var(--text-dim)',
+              color: activePreset === 'china' ? '#fff' : '#e8d5df',
               border: 'none',
               borderRadius: '9999px',
               padding: '6px 12px',
@@ -998,10 +1006,11 @@ export default function Globe() {
           </button>
           <button
             type="button"
+            className="cc-map-pill"
             onClick={() => setPreset('global')}
             style={{
               background: activePreset === 'global' ? 'var(--raspberry-coulis)' : 'transparent',
-              color: activePreset === 'global' ? '#fff' : 'var(--text-dim)',
+              color: activePreset === 'global' ? '#fff' : '#e8d5df',
               border: 'none',
               borderRadius: '9999px',
               padding: '6px 12px',
@@ -1018,7 +1027,7 @@ export default function Globe() {
             title={isAutoRotating ? 'Pause rotation' : 'Resume rotation'}
             style={{
               background: 'rgba(255, 255, 255, 0.1)',
-              color: isAutoRotating ? 'var(--sakura-pink)' : 'var(--text-dim)',
+              color: isAutoRotating ? '#ffb7c5' : '#d8becb',
               border: 'none',
               borderRadius: '50%',
               width: '28px',
@@ -1136,7 +1145,7 @@ export default function Globe() {
                     <div style={{ color: hub.color, fontSize: '0.72rem', fontWeight: 700 }}>
                       {hub.title}
                     </div>
-                    <div style={{ color: 'var(--text-dim)', fontSize: '0.68rem', marginTop: '2px' }}>
+                    <div style={{ color: '#d8becb', fontSize: '0.68rem', marginTop: '2px' }}>
                       🕒 {hub.hours} &bull; 💳 {hub.currency}
                     </div>
                   </div>
@@ -1291,14 +1300,14 @@ export default function Globe() {
             borderRadius: '9999px',
             padding: '5px 14px',
             fontSize: '0.74rem',
-            color: 'var(--text-dim)',
+            color: '#e8d5df',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
             pointerEvents: 'none'
           }}
         >
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--sakura-pink)' }} />
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ffb7c5' }} />
           <span>{t('about.mapInteractionHint', '360° Drag to rotate · Scroll to zoom · Click pins to inspect')}</span>
         </div>
 
@@ -1314,7 +1323,7 @@ export default function Globe() {
             borderRadius: '9999px',
             padding: '5px 14px',
             fontSize: '0.74rem',
-            color: 'var(--crust-gold)',
+            color: '#f5cf8e',
             fontWeight: 700,
             display: 'flex',
             alignItems: 'center',
@@ -1329,6 +1338,8 @@ export default function Globe() {
       {/* Selected Hub Details Panel */}
       {selectedHub && (
         <div
+          key={selectedHub.code}
+          className="cc-hub-panel-enter"
           style={{
             marginTop: '20px',
             background: 'var(--cherry-card)',
@@ -1382,9 +1393,9 @@ export default function Globe() {
                     fontWeight: 700,
                     padding: '2px 8px',
                     borderRadius: '999px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                    color: selectedHub.color,
-                    border: `1px solid ${selectedHub.color}`
+                    backgroundColor: 'var(--color-surface-soft)',
+                    color: 'var(--text-main)',
+                    border: `1.5px solid ${selectedHub.color}`
                   }}
                 >
                   {selectedHub.title}
@@ -1406,8 +1417,8 @@ export default function Globe() {
               style={{
                 padding: '9px 20px',
                 borderRadius: '9999px',
-                backgroundColor: currentRegion === selectedHub.code ? 'var(--mint-fresh)' : 'var(--raspberry-coulis)',
-                color: currentRegion === selectedHub.code ? '#000' : '#fff',
+                backgroundColor: currentRegion === selectedHub.code ? '#1f8a42' : 'var(--raspberry-coulis)',
+                color: '#ffffff',
                 border: 'none',
                 fontWeight: 700,
                 fontSize: '0.85rem',
@@ -1431,20 +1442,21 @@ export default function Globe() {
           alignItems: 'center'
         }}
       >
-        <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)', fontWeight: 600, marginRight: '4px' }}>
+        <span style={{ fontSize: '0.78rem', color: '#d8becb', fontWeight: 600, marginRight: '4px' }}>
           {t('about.exploreHub', 'Explore Hub:')}
         </span>
         {HUBS.map((hub) => (
           <button
             key={hub.code}
             type="button"
+            className="cc-map-pill"
             onClick={() => jumpToHub(hub)}
             style={{
               padding: '5px 12px',
               borderRadius: '9999px',
-              border: selectedHub?.code === hub.code ? `1.5px solid ${hub.color}` : '1px solid var(--cherry-border)',
+              border: selectedHub?.code === hub.code ? `1.5px solid ${hub.color}` : '1px solid rgba(255, 183, 197, 0.22)',
               background: selectedHub?.code === hub.code ? 'rgba(230, 57, 96, 0.25)' : 'rgba(255, 255, 255, 0.04)',
-              color: selectedHub?.code === hub.code ? '#fff' : 'var(--text-dim)',
+              color: selectedHub?.code === hub.code ? '#fff' : '#e8d5df',
               fontSize: '0.76rem',
               fontWeight: 600,
               cursor: 'pointer',
@@ -1473,3 +1485,4 @@ export default function Globe() {
   );
 }
 
+export default Photorealistic3DMap;

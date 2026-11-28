@@ -36,6 +36,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ErrorResponse> handleApiException(ApiException ex, HttpServletRequest request) {
+        if (ex instanceof TooManyRequestsException tooMany && tooMany.getRetryAfterSeconds() != null) {
+            return ResponseEntity.status(ex.getStatus())
+                    .header(HttpHeaders.RETRY_AFTER, String.valueOf(tooMany.getRetryAfterSeconds()))
+                    .body(ErrorResponse.of(ex.getStatus().value(), ex.getMessage(), List.of(), request.getRequestURI()));
+        }
         return build(ex.getStatus(), ex.getMessage(), List.of(), request.getRequestURI());
     }
 

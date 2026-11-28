@@ -30,6 +30,8 @@ export default function Select({
           border: `1px solid ${error ? "var(--color-error)" : "var(--color-border)"}`,
           borderRadius: "var(--radius-md)",
           fontSize: 16,
+          background: "var(--input-bg)",
+          color: "var(--color-text)",
         }}
       >
         {options.map((option) => (

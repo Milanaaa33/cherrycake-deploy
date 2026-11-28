@@ -1095,20 +1095,3 @@
 [data-theme="dark"] .cc-promo-subtitle {
   color: #d1b8c4 !important;
 }
-
-/* 320px: the floating cards beside the hero cake must not push the page wider than the screen. */
-@media (max-width: 400px) {
-  .cc-home-hero {
-    overflow: hidden;
-  }
-
-  .cc-hero-pedestal-glow {
-    width: 220px;
-    height: 220px;
-  }
-
-  .cc-floating-card-left,
-  .cc-floating-card-right {
-    transform: scale(0.75);
-  }
-}

@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 
 import { api } from '../api/client';
@@ -7,6 +7,7 @@ import EmptyState from '../components/ui/EmptyState';
 import ErrorState from '../components/ui/ErrorState';
 import Loader from '../components/ui/Loader';
 import { clearAuth, getAuthEmail, getAuthToken, isRole, saveAuth, type Role } from '../utils/auth';
+import { translateProductName } from '../i18n/catalog';
 import { useTranslation } from '../i18n/useTranslation';
 import '../components/ui/ExtraComponents.css';
 import './Checkout.css';
@@ -67,6 +68,24 @@ function initials(name: string) {
     .join('');
 }
 
+const CODE_TTL_SECONDS = 5 * 60;
+
+function formatCountdown(totalSeconds: number) {
+  const safe = Math.max(0, totalSeconds);
+  const minutes = String(Math.floor(safe / 60)).padStart(2, '0');
+  const seconds = String(safe % 60).padStart(2, '0');
+  return `${minutes}:${seconds}`;
+}
+
+function readEmailCodeLink(search: string) {
+  const params = new URLSearchParams(search);
+  const email = (params.get('email') || '').trim();
+  const code = (params.get('code') || '').replace(/\D/g, '').slice(0, 6);
+  const stepParam = params.get('step');
+  const shouldOpenCodeStep = stepParam === 'code' || code.length === 6;
+  return { shouldOpenCodeStep, email, code };
+}
+
 export default function Account() {
   const { t } = useTranslation();
   // The cart and checkout send customers who are not signed in here and remember where they came from.
@@ -81,13 +100,56 @@ export default function Account() {
 
   // Sign-in by email code: orders then follow the email on any device.
   const [authEmail, setAuthEmail] = useState<string | null>(getAuthToken() ? getAuthEmail() : null);
-  const [step, setStep] = useState<'email' | 'code'>('email');
-  const [loginOpen, setLoginOpen] = useState(from !== null);
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginCode, setLoginCode] = useState('');
+  const [initialLink] = useState(() => readEmailCodeLink(location.search));
+  const startInCodeStep = !authEmail && initialLink.shouldOpenCodeStep;
+  const [step, setStep] = useState<'email' | 'code'>(startInCodeStep ? 'code' : 'email');
+  const [loginOpen, setLoginOpen] = useState(from !== null || startInCodeStep);
+  const [loginEmail, setLoginEmail] = useState(startInCodeStep ? initialLink.email : '');
+  const [loginCode, setLoginCode] = useState(startInCodeStep ? initialLink.code : '');
   const [loginError, setLoginError] = useState('');
   const [loginMessage, setLoginMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [codeExpiresIn, setCodeExpiresIn] = useState<number | null>(
+    startInCodeStep ? CODE_TTL_SECONDS : null,
+  );
+  const codeInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!location.search) return;
+    const link = readEmailCodeLink(location.search);
+    if (!link.shouldOpenCodeStep) return;
+
+    window.history.replaceState(null, '', location.pathname);
+    if (authEmail) return;
+
+    setLoginOpen(true);
+    setStep('code');
+    if (link.email) setLoginEmail(link.email);
+    if (link.code) setLoginCode(link.code);
+    setCodeExpiresIn((prev) => prev ?? CODE_TTL_SECONDS);
+
+    const frame = window.requestAnimationFrame(() => {
+      codeInputRef.current?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [location.search, location.pathname, authEmail]);
+
+  useEffect(() => {
+    if (cooldownSeconds <= 0) return;
+    const timer = window.setInterval(() => {
+      setCooldownSeconds((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [cooldownSeconds]);
+
+  useEffect(() => {
+    if (step !== 'code' || codeExpiresIn === null || codeExpiresIn <= 0) return;
+    const timer = window.setInterval(() => {
+      setCodeExpiresIn((prev) => (prev === null || prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [step, codeExpiresIn]);
 
   useEffect(() => {
     let active = true;
@@ -138,8 +200,27 @@ export default function Account() {
   const errorMessage = (err: { response?: { data?: { message?: string } } }, fallback: string) =>
     err.response?.data?.message ?? fallback;
 
+  const parseRetryAfterSeconds = (err: {
+    response?: { status?: number; headers?: Record<string, unknown>; data?: { message?: string } };
+  }) => {
+    const rawHeader = err.response?.headers?.['retry-after'];
+    const parsedHeader = rawHeader !== undefined ? Number(String(rawHeader).trim()) : NaN;
+    if (Number.isFinite(parsedHeader) && parsedHeader > 0) {
+      return Math.ceil(parsedHeader);
+    }
+    const msgMatch = err.response?.data?.message?.match(/\d+/);
+    if (msgMatch) {
+      const fromMessage = Number(msgMatch[0]);
+      if (Number.isFinite(fromMessage) && fromMessage > 0) {
+        return fromMessage;
+      }
+    }
+    return 60;
+  };
+
   const sendCode = (event?: FormEvent) => {
     event?.preventDefault();
+    if (busy || cooldownSeconds > 0) return;
     const email = loginEmail.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setLoginError(t('account.errorEmail', 'Please enter a valid email address.'));
@@ -150,22 +231,36 @@ export default function Account() {
     setLoginMessage('');
     setBusy(true);
     api
-      .post('/auth/request-code', { email })
+      .post('/auth/request-code', { email }, { timeout: 30000, silent: true })
       .then(() => {
         setStep('code');
         setLoginCode('');
+        setCooldownSeconds(60);
+        setCodeExpiresIn(CODE_TTL_SECONDS);
         setLoginMessage(
-          t('account.codeSent', 'We sent a 6-digit code to {email}. It is valid for 10 minutes.', { email }),
+          t('account.codeSent', 'We sent a 6-digit code to {email}. It is valid for 5 minutes.', { email }),
         );
       })
-      .catch((err) =>
-        setLoginError(errorMessage(err, t('account.sendCodeError', 'Unable to send the code. Please try again.'))),
-      )
+      .catch((err: {
+        response?: { status?: number; headers?: Record<string, unknown>; data?: { message?: string } };
+      }) => {
+        if (err.response?.status === 429) {
+          const wait = parseRetryAfterSeconds(err);
+          setCooldownSeconds(Math.max(1, wait));
+          setLoginError('');
+          return;
+        }
+        setLoginError(errorMessage(err, t('account.sendCodeError', 'Unable to send the code. Please try again.')));
+      })
       .finally(() => setBusy(false));
   };
 
   const verifyCode = (event: FormEvent) => {
     event.preventDefault();
+    if (codeExpiresIn === 0) {
+      setLoginError(t('account.codeExpired', 'This code has expired. Please request a new code.'));
+      return;
+    }
     const code = loginCode.trim();
     if (!/^[0-9]{6}$/.test(code)) {
       setLoginError(t('account.errorCode', 'Enter the 6-digit code from the email.'));
@@ -184,6 +279,7 @@ export default function Account() {
         setLoginEmail('');
         setLoginCode('');
         setLoginMessage('');
+        setCodeExpiresIn(null);
         setReloadKey((key) => key + 1);
       })
       .catch((err) =>
@@ -210,6 +306,8 @@ export default function Account() {
   if (from && authEmail) {
     return <Navigate to={from} replace />;
   }
+
+  const isCodeExpired = step === 'code' && codeExpiresIn === 0;
 
   // Sent here from the cart: show only the sign-in, the order history is not needed yet.
   const focusLogin = from !== null && !authEmail;
@@ -243,7 +341,22 @@ export default function Account() {
 
           {loginOpen && (
             <form onSubmit={step === 'email' ? sendCode : verifyCode} noValidate>
-              {loginMessage && <p role="status" className="account-login-message">{loginMessage}</p>}
+              {step === 'code' && (isCodeExpired || loginMessage || codeExpiresIn !== null) && (
+                <p role="status" className="account-login-message">
+                  <span>
+                    {isCodeExpired
+                      ? t('account.codeExpired', 'This code has expired. Please request a new code.')
+                      : (loginMessage || t('account.codeSent', 'We sent a 6-digit code to {email}. It is valid for 5 minutes.', { email: loginEmail.trim() }))}
+                  </span>
+                  {codeExpiresIn !== null && (
+                    <span className={`account-code-timer${codeExpiresIn <= 60 ? ' is-urgent' : ''}`}>
+                      {isCodeExpired
+                        ? '00:00'
+                        : t('account.codeExpiresIn', 'Expires in {time}', { time: formatCountdown(codeExpiresIn) })}
+                    </span>
+                  )}
+                </p>
+              )}
 
               <div className="checkout-fields two-columns">
                 <div className="checkout-field">
@@ -261,12 +374,14 @@ export default function Account() {
                   <div className="checkout-field">
                     <label htmlFor="account-login-code">{t('account.codeLabel', '6-digit code')}</label>
                     <input
+                      ref={codeInputRef}
                       id="account-login-code"
                       type="text"
                       inputMode="numeric"
                       autoComplete="one-time-code"
                       maxLength={6}
                       value={loginCode}
+                      disabled={isCodeExpired}
                       onChange={(e) => setLoginCode(e.target.value.replace(/\D/g, ''))}
                       placeholder="123456"
                     />
@@ -275,25 +390,56 @@ export default function Account() {
               </div>
 
               {loginError && <p role="alert" className="checkout-field-error account-login-error">{loginError}</p>}
+              {cooldownSeconds > 0 && step === 'email' && (
+                <p role="status" className="account-login-message">
+                  {t('account.waitSeconds', 'Please wait {seconds}s before requesting another code.', { seconds: cooldownSeconds })}
+                </p>
+              )}
 
               <div className="checkout-form-actions">
+                {step === 'email' && cooldownSeconds > 0 && (
+                  <button
+                    type="button"
+                    className="checkout-button secondary"
+                    onClick={() => {
+                      setStep('code');
+                      setLoginError('');
+                      setCodeExpiresIn(Math.max(1, CODE_TTL_SECONDS - Math.max(0, 60 - cooldownSeconds)));
+                    }}
+                  >
+                    {t('account.alreadyHaveCode', 'I have a code')}
+                  </button>
+                )}
                 {step === 'code' && (
                   <>
                     <button
                       type="button"
                       className="checkout-button secondary"
-                      onClick={() => { setStep('email'); setLoginError(''); setLoginMessage(''); }}
+                      onClick={() => { setStep('email'); setLoginError(''); setLoginMessage(''); setCooldownSeconds(0); setCodeExpiresIn(null); }}
                     >
                       {t('account.changeEmail', 'Change email')}
                     </button>
-                    <button type="button" className="checkout-button secondary" disabled={busy} onClick={() => sendCode()}>
-                      {t('account.sendAgain', 'Send again')}
+                    <button
+                      type="button"
+                      className="checkout-button secondary"
+                      disabled={busy || cooldownSeconds > 0}
+                      onClick={() => sendCode()}
+                    >
+                      {cooldownSeconds > 0
+                        ? t('account.sendAgainWait', 'Send again ({seconds}s)', { seconds: cooldownSeconds })
+                        : t('account.sendAgain', 'Send again')}
                     </button>
                   </>
                 )}
-                <button type="submit" className="checkout-button primary" disabled={busy}>
+                <button
+                  type="submit"
+                  className="checkout-button primary"
+                  disabled={busy || (step === 'email' && cooldownSeconds > 0) || isCodeExpired}
+                >
                   {step === 'email'
-                    ? (busy ? t('account.sending', 'Sending...') : t('account.sendCode', 'Send code'))
+                    ? (cooldownSeconds > 0
+                        ? t('account.sendCodeWait', 'Send code ({seconds}s)', { seconds: cooldownSeconds })
+                        : (busy ? t('account.sending', 'Sending...') : t('account.sendCode', 'Send code')))
                     : (busy ? t('account.checking', 'Checking...') : t('account.signIn', 'Sign in'))}{' '}
                   <span>→</span>
                 </button>
@@ -311,18 +457,30 @@ export default function Account() {
               ? t('account.eyebrowAlmostThere', 'CHERRY CAKE · ALMOST THERE')
               : t('account.eyebrowMyAccount', 'CHERRY CAKE · MY ACCOUNT')}</p>
           <h2>{focusLogin ? t('account.signInToOrder', 'Sign in to order') : t('account.title', 'My account')}</h2>
-          <p className="checkout-subtitle">
-            {focusLogin
-              ? t('account.oneQuickStep', 'One quick step before your cart.')
-              : t('account.signInToView', 'Sign in to view your private order history.')}
-          </p>
+          {(focusLogin || authEmail) && (
+            <p className="checkout-subtitle">
+              {focusLogin
+                ? t('account.oneQuickStep', 'One quick step before your cart.')
+                : t('account.ordersOverview', 'Review your order history and delivery details.')}
+            </p>
+          )}
         </div>
         <Link to="/menu" className="checkout-back-link">{t('account.browseMenu', '← Browse the menu')}</Link>
       </div>
 
       {focusLogin && (
         <div className="account-welcome">
-          <span className="account-welcome-icon" aria-hidden="true">🍒</span>
+          <span className="account-welcome-icon" aria-hidden="true">
+            <img
+              src="/TransparentSakuraFlower.png?v=3"
+              alt=""
+              className="account-welcome-logo"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/android-chrome-192x192.png';
+              }}
+            />
+          </span>
           <div>
             <h3>{t('account.welcomeTitle', 'Sweet things take a moment ♡')}</h3>
             <p>
@@ -357,13 +515,7 @@ export default function Account() {
         />
       )}
 
-      {!focusLogin && authEmail && !error && orders === null && <Loader />}
-
-      {!focusLogin && !authEmail && (
-        <div className="account-login-required">
-          <p>{t('account.signInToView', 'Sign in to view your private order history.')}</p>
-        </div>
-      )}
+      {!focusLogin && authEmail && !error && orders === null && <Loader label={t('common.loading', 'Loading…')} />}
 
       {!focusLogin && authEmail && !error && orders !== null && orders.length === 0 && (
         <EmptyState
@@ -417,7 +569,9 @@ export default function Account() {
                     </div>
 
                     <p className="account-order-preview">
-                      {order.items.map((item) => `${item.productName} × ${item.quantity}`).join(', ')}
+                      {order.items
+                        .map((item) => `${translateProductName(t, item.productName)} × ${item.quantity}`)
+                        .join(', ')}
                     </p>
 
                     <button
@@ -435,7 +589,7 @@ export default function Account() {
                         {order.items.map((item, index) => (
                           <div className="checkout-summary-product" key={`${item.productId}-${index}`}>
                             <div className="checkout-product-info">
-                              <strong>{item.productName}</strong>
+                              <strong>{translateProductName(t, item.productName)}</strong>
                               <span>
                                 {t('account.itemLine', '× {quantity} · {price} each', {
                                   quantity: item.quantity,
@@ -489,11 +643,13 @@ export default function Account() {
               </div>
             </div>
 
-            <div className="checkout-summary-note">
-              <span>♡</span>
-              <p>{t('account.historyNote', 'Your order history is available only while you are signed in.')}</p>
+            <div className="checkout-summary-footer">
+              <div className="checkout-summary-note">
+                <span>♡</span>
+                <p>{t('account.historyNote', 'Your order history is available only while you are signed in.')}</p>
+              </div>
+              <Link to="/menu" className="checkout-edit-cart">{t('account.orderAgain', 'Order again')}</Link>
             </div>
-            <Link to="/menu" className="checkout-edit-cart">{t('account.orderAgain', 'Order again')}</Link>
           </aside>
         </div>
       )}

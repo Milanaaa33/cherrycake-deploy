@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import axios from 'axios';
 
 import { api } from '../api/client';
 import Button from '../components/ui/Button';
@@ -10,9 +11,15 @@ import Checkbox from '../components/ui/Checkbox';
 import Modal from '../components/ui/Modal';
 import Radio from '../components/ui/Radio';
 import { getProductImage } from '../constants/productImages';
+import {
+  translateModifierGroupName,
+  translateModifierName,
+  translateProductDescription,
+  translateProductName,
+} from '../i18n/catalog';
 import { useTranslation } from '../i18n/useTranslation';
 import type { TranslateFn } from '../i18n/useTranslation';
-import { addToCart } from '../store';
+import { addToCart, showToast } from '../store';
 import type { AppDispatch, RootState } from '../store';
 
 type Category = {
@@ -63,7 +70,19 @@ function loadErrorText(t: TranslateFn, error: LoadError): string {
   }
 }
 
-// Одинаковая рамка 4:3 для всех фото; картинка целиком помещается внутрь, ничего не обрезается
+function translateCategoryName(t: TranslateFn, name: string): string {
+  switch (name.trim().toLowerCase()) {
+    case 'cakes':
+      return t('catalog.cat.cakes', name);
+    case 'desserts':
+      return t('catalog.cat.desserts', name);
+    case 'drinks':
+      return t('catalog.cat.drinks', name);
+    default:
+      return name;
+  }
+}
+
 const imageBoxStyle: CSSProperties = {
   width: '100%',
   aspectRatio: '4 / 3',
@@ -73,7 +92,8 @@ const imageBoxStyle: CSSProperties = {
   background: 'var(--color-surface-soft)',
   borderRadius: 'var(--radius-md)',
   overflow: 'hidden',
-  marginBottom: 12,
+  marginBottom: 14,
+  border: '1px solid var(--cherry-border)',
 };
 
 const imageStyle: CSSProperties = {
@@ -81,7 +101,7 @@ const imageStyle: CSSProperties = {
   maxHeight: '100%',
   width: '100%',
   height: '100%',
-  objectFit: 'contain',
+  objectFit: 'cover',
 };
 
 function ProductModal({
@@ -100,53 +120,58 @@ function ProductModal({
     quantity: number;
     modifierIds: number[];
     photoUrl: string | null;
+    unitPrice: number;
+    imageUrl: string;
   }) => void;
   onClose: () => void;
 }) {
-  const currency = useSelector(
-    (state: RootState) => state.region.currencyCode
-  );
-  const symbol = useSelector(
-    (state: RootState) => state.region.currencySymbol
-  );
+  const currency = useSelector((state: RootState) => state.region.currencyCode);
+  const symbol = useSelector((state: RootState) => state.region.currencySymbol);
   const { t } = useTranslation();
 
   const [quantity, setQuantity] = useState(1);
-  const [details, setDetails] = useState<ProductDetails | null>(null);
   const [selectedModifiers, setSelectedModifiers] = useState<Record<number, number[]>>({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<LoadError>('');
+  const [retryKey, setRetryKey] = useState(0);
+  const requestKey = product && open ? `${product.id}:${currentRegion}:${retryKey}` : '';
+  const [detailsResult, setDetailsResult] = useState<{
+    key: string;
+    data: ProductDetails | null;
+    error: LoadError;
+  } | null>(null);
 
   useEffect(() => {
     if (!product || !open) return;
 
-    let active = true;
-    setLoading(true);
-    setError('');
-    setDetails(null);
-    setQuantity(1);
-    setSelectedModifiers({});
+    const controller = new AbortController();
 
     api
       .get<ProductDetails>(`/products/${product.id}`, {
         params: { region: currentRegion },
+        signal: controller.signal,
+        silent: true,
       })
       .then(({ data }) => {
-        if (active) setDetails(data);
+        if (!controller.signal.aborted) {
+          setDetailsResult({ key: requestKey, data, error: '' });
+        }
       })
-      .catch(() => {
-        if (active) setError('options');
-      })
-      .finally(() => {
-        if (active) setLoading(false);
+      .catch((err) => {
+        if (!controller.signal.aborted && !axios.isCancel(err)) {
+          setDetailsResult({ key: requestKey, data: null, error: 'options' });
+        }
       });
 
     return () => {
-      active = false;
+      controller.abort();
     };
-  }, [currentRegion, open, product]);
+  }, [currentRegion, open, product, requestKey]);
 
   if (!product) return null;
+
+  const activeResult = detailsResult?.key === requestKey ? detailsResult : null;
+  const details = activeResult?.data ?? null;
+  const loading = Boolean(requestKey) && activeResult === null;
+  const error = activeResult?.error ?? '';
 
   const productDetails = details ?? product;
   const requiredGroupsComplete =
@@ -159,7 +184,9 @@ function ProductModal({
       const currentSelection = current[group.id] ?? [];
       const nextSelection =
         group.type === 'SINGLE'
-          ? [modifierId]
+          ? checked
+            ? [modifierId]
+            : currentSelection.filter((id) => id !== modifierId)
           : checked
             ? [...currentSelection, modifierId]
             : currentSelection.filter((id) => id !== modifierId);
@@ -168,17 +195,28 @@ function ProductModal({
     });
   }
 
+  const productImage = getProductImage(productDetails.name);
+  const displayTitle = translateProductName(t, product.name);
+  const displayDetailName = translateProductName(t, productDetails.name);
+  const displayDescription = translateProductDescription(
+    t,
+    productDetails.name,
+    productDetails.description,
+  );
+
   return (
-    <Modal open={open} title={product.name} onClose={onClose}>
-      <div style={{ display: 'grid', gap: 20 }}>
+    <Modal open={open} title={displayTitle} onClose={onClose} closeLabel={t('common.close', 'Close')}>
+      <div style={{ display: 'grid', gap: 18 }}>
         <div style={imageBoxStyle}>
           <img
-            src={getProductImage(productDetails.name)}
-            alt={productDetails.name}
+            src={productImage}
+            alt={displayDetailName}
             style={imageStyle}
           />
         </div>
-        <p>{productDetails.description}</p>
+        <p style={{ margin: 0, color: 'var(--text-dim)', lineHeight: 1.6 }}>
+          {displayDescription}
+        </p>
 
         <div style={{ display: 'grid', gap: 10 }}>
           <strong>{t('menu.quantity', 'Quantity')}</strong>
@@ -191,7 +229,9 @@ function ProductModal({
             >
               -
             </Button>
-            <span aria-live="polite">{quantity}</span>
+            <span aria-live="polite" style={{ minWidth: 24, textAlign: 'center', fontWeight: 700 }}>
+              {quantity}
+            </span>
             <Button
               type="button"
               variant="secondary"
@@ -203,28 +243,64 @@ function ProductModal({
           </div>
         </div>
 
-        {loading && <p>{t('menu.loadingOptions', 'Loading product options...')}</p>}
-        {error && <p role="alert">{loadErrorText(t, error)}</p>}
+        {loading && (
+          <p style={{ margin: 0, color: 'var(--text-dim)', fontSize: '0.92rem' }}>
+            {t('menu.loadingOptions', 'Loading product options...')}
+          </p>
+        )}
+        {error && (
+          <div
+            role="alert"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+              flexWrap: 'wrap',
+              padding: '12px 14px',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--color-surface-soft)',
+              border: '1px solid var(--cherry-border)',
+              color: 'var(--raspberry-coulis)',
+              fontSize: '0.92rem',
+              fontWeight: 500,
+            }}
+          >
+            <span>{loadErrorText(t, error)}</span>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setRetryKey((value) => value + 1)}
+            >
+              {t('common.retry', 'Try again')}
+            </Button>
+          </div>
+        )}
         {details?.modifierGroups.map((group) => (
           <fieldset key={group.id} style={{ display: 'grid', gap: 8, border: 0, padding: 0 }}>
-            <legend style={{ fontWeight: 700 }}>
+            <legend style={{ fontWeight: 700, marginBottom: 4 }}>
               {group.isRequired
-                ? t('menu.groupRequired', '{name} (Required)', { name: group.name })
-                : t('menu.groupOptional', '{name} (Optional)', { name: group.name })}
+                ? t('menu.groupRequired', '{name} (Required)', {
+                    name: translateModifierGroupName(t, group.name),
+                  })
+                : t('menu.groupOptional', '{name} (Optional)', {
+                    name: translateModifierGroupName(t, group.name),
+                  })}
             </legend>
             {group.modifiers.map((modifier) => {
               const checked = selectedModifiers[group.id]?.includes(modifier.id) ?? false;
+              const translatedModifierName = translateModifierName(t, modifier.name);
               const label =
                 modifier.priceDelta > 0
                   ? t('menu.modifierWithPrice', '{name} (+{symbol} {price} {currency})', {
-                      name: modifier.name,
+                      name: translatedModifierName,
                       symbol,
                       price: modifier.priceDelta.toLocaleString('en-US', {
                         maximumFractionDigits: 2,
                       }),
                       currency,
                     })
-                  : modifier.name;
+                  : translatedModifierName;
 
               return group.type === 'SINGLE' ? (
                 <Radio
@@ -234,6 +310,28 @@ function ProductModal({
                   label={label}
                   checked={checked}
                   onChange={() => updateModifierSelection(group, modifier.id, true)}
+                  onClick={
+                    !group.isRequired
+                      ? () => {
+                          if (checked) {
+                            updateModifierSelection(group, modifier.id, false);
+                          }
+                        }
+                      : undefined
+                  }
+                  onKeyDown={
+                    !group.isRequired
+                      ? (event) => {
+                          if (
+                            checked &&
+                            (event.key === ' ' || event.key === 'Backspace' || event.key === 'Delete')
+                          ) {
+                            event.preventDefault();
+                            updateModifierSelection(group, modifier.id, false);
+                          }
+                        }
+                      : undefined
+                  }
                 />
               ) : (
                 <Checkbox
@@ -258,7 +356,9 @@ function ProductModal({
               name: productDetails.name,
               quantity,
               modifierIds: Object.values(selectedModifiers).flat(),
-              photoUrl: getProductImage(productDetails.name),
+              photoUrl: productImage,
+              unitPrice: productDetails.price,
+              imageUrl: productImage,
             });
             onClose();
           }}
@@ -279,58 +379,71 @@ export default function Menu() {
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryParam = searchParams.get('category');
   const selectedCategoryId = categoryParam ? Number(categoryParam) : undefined;
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [loadingCategories, setLoadingCategories] = useState(true);
-  const [loadingProducts, setLoadingProducts] = useState(true);
-  const [error, setError] = useState<LoadError>('');
+  const [categoriesResult, setCategoriesResult] = useState<{
+    loaded: boolean;
+    data: Category[];
+    error: LoadError;
+  }>({ loaded: false, data: [], error: '' });
+  const productsKey = `${currentRegion}:${selectedCategoryId ?? 'all'}`;
+  const [productsResult, setProductsResult] = useState<{
+    key: string;
+    data: Product[];
+    error: LoadError;
+  } | null>(null);
 
   useEffect(() => {
-    let active = true;
-    setLoadingCategories(true);
+    const controller = new AbortController();
 
-    api.get<Category[]>('/categories')
+    api
+      .get<Category[]>('/categories', { signal: controller.signal })
       .then(({ data }) => {
-        if (active) setCategories(data);
+        if (!controller.signal.aborted) {
+          setCategoriesResult({ loaded: true, data, error: '' });
+        }
       })
-      .catch(() => {
-        if (active) setError('categories');
-      })
-      .finally(() => {
-        if (active) setLoadingCategories(false);
+      .catch((err) => {
+        if (!controller.signal.aborted && !axios.isCancel(err)) {
+          setCategoriesResult({ loaded: true, data: [], error: 'categories' });
+        }
       });
 
     return () => {
-      active = false;
+      controller.abort();
     };
   }, []);
 
   useEffect(() => {
-    let active = true;
+    const controller = new AbortController();
     const params: { region: string; categoryId?: number } = { region: currentRegion };
     if (selectedCategoryId !== undefined && Number.isInteger(selectedCategoryId)) {
       params.categoryId = selectedCategoryId;
     }
 
-    setLoadingProducts(true);
-    setError('');
-
-    api.get<Product[]>('/products', { params })
+    api
+      .get<Product[]>('/products', { params, signal: controller.signal })
       .then(({ data }) => {
-        if (active) setProducts(data);
+        if (!controller.signal.aborted) {
+          setProductsResult({ key: productsKey, data, error: '' });
+        }
       })
-      .catch(() => {
-        if (active) setError('products');
-      })
-      .finally(() => {
-        if (active) setLoadingProducts(false);
+      .catch((err) => {
+        if (!controller.signal.aborted && !axios.isCancel(err)) {
+          setProductsResult({ key: productsKey, data: [], error: 'products' });
+        }
       });
 
     return () => {
-      active = false;
+      controller.abort();
     };
-  }, [currentRegion, selectedCategoryId]);
+  }, [currentRegion, selectedCategoryId, productsKey]);
+
+  const activeProductsResult = productsResult?.key === productsKey ? productsResult : null;
+  const categories = categoriesResult.data;
+  const products = activeProductsResult?.data ?? [];
+  const loadingCategories = !categoriesResult.loaded;
+  const loadingProducts = activeProductsResult === null;
+  const error = categoriesResult.error || activeProductsResult?.error || '';
 
   function selectCategory(categoryId?: number) {
     if (categoryId === undefined) {
@@ -342,49 +455,98 @@ export default function Menu() {
   }
 
   return (
-    <section style={{ display: 'grid', gap: 24 }}>
+    <section className="menu-page" style={{ display: 'grid', gap: 28, padding: '8px 0 32px' }}>
       <div>
-        <p className="cc-eyebrow">{t('menu.eyebrow', 'Our selection')}</p>
-        <h2>{t('menu.title', 'Menu')}</h2>
+        <p
+          className="cc-eyebrow"
+          style={{
+            color: 'var(--sakura-pink)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.18em',
+            fontSize: '0.8rem',
+            fontWeight: 700,
+            margin: '0 0 6px 0',
+          }}
+        >
+          {t('menu.eyebrow', 'Our selection')}
+        </p>
+        <h2
+          style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: 'clamp(2rem, 4vw, 2.6rem)',
+            color: 'var(--cheesecake-cream)',
+            margin: 0,
+          }}
+        >
+          {t('menu.title', 'Artisan Menu')}
+        </h2>
       </div>
 
-      <div role="tablist" aria-label={t('menu.categoriesAria', 'Product categories')} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      <div
+        role="tablist"
+        aria-label={t('menu.categoriesAria', 'Product categories')}
+        style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}
+      >
         <button
           type="button"
           role="tab"
           aria-selected={selectedCategoryId === undefined}
+          className="cc-menu-tab"
           onClick={() => selectCategory()}
           style={{
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-md)',
-            padding: '10px 16px',
+            border:
+              selectedCategoryId === undefined
+                ? '1.5px solid var(--raspberry-bright)'
+                : '1.5px solid var(--cherry-border)',
+            borderRadius: '9999px',
+            padding: '10px 20px',
             cursor: 'pointer',
-            color: selectedCategoryId === undefined ? 'white' : 'var(--color-text)',
-            background: selectedCategoryId === undefined ? 'var(--color-primary)' : 'var(--color-surface)',
+            fontWeight: 700,
+            fontSize: '0.9rem',
+            color: selectedCategoryId === undefined ? '#ffffff' : 'var(--text-main)',
+            background:
+              selectedCategoryId === undefined
+                ? 'linear-gradient(135deg, var(--raspberry-coulis), var(--raspberry-bright))'
+                : 'var(--cherry-card)',
+            boxShadow:
+              selectedCategoryId === undefined ? '0 4px 16px rgba(230, 57, 96, 0.35)' : 'none',
+            transition: 'all 0.2s ease',
           }}
         >
           {t('menu.allCategories', 'All')}
         </button>
-        {categories.map((category) => (
-          <button
-            key={category.id}
-            id={`tab-${category.id}`}
-            type="button"
-            role="tab"
-            aria-selected={selectedCategoryId === category.id}
-            onClick={() => selectCategory(category.id)}
-            style={{
-              border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-md)',
-              padding: '10px 16px',
-              cursor: 'pointer',
-              color: selectedCategoryId === category.id ? 'white' : 'var(--color-text)',
-              background: selectedCategoryId === category.id ? 'var(--color-primary)' : 'var(--color-surface)',
-            }}
-          >
-            {category.name}
-          </button>
-        ))}
+        {categories.map((category) => {
+          const active = selectedCategoryId === category.id;
+          return (
+            <button
+              key={category.id}
+              id={`tab-${category.id}`}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              className="cc-menu-tab"
+              onClick={() => selectCategory(category.id)}
+              style={{
+                border: active
+                  ? '1.5px solid var(--raspberry-bright)'
+                  : '1.5px solid var(--cherry-border)',
+                borderRadius: '9999px',
+                padding: '10px 20px',
+                cursor: 'pointer',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                color: active ? '#ffffff' : 'var(--text-main)',
+                background: active
+                  ? 'linear-gradient(135deg, var(--raspberry-coulis), var(--raspberry-bright))'
+                  : 'var(--cherry-card)',
+                boxShadow: active ? '0 4px 16px rgba(230, 57, 96, 0.35)' : 'none',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              {translateCategoryName(t, category.name)}
+            </button>
+          );
+        })}
       </div>
 
       <div
@@ -393,8 +555,8 @@ export default function Menu() {
         aria-labelledby={selectedCategoryId ? `tab-${selectedCategoryId}` : undefined}
         style={{
           display: 'grid',
-          gap: 16,
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gap: 20,
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
         }}
       >
         {loadingCategories || loadingProducts ? (
@@ -403,42 +565,100 @@ export default function Menu() {
           <p role="alert">{loadErrorText(t, error)}</p>
         ) : products.length === 0 ? (
           <p>{t('menu.noProducts', 'No products are available for this selection.')}</p>
-        ) : products.map((product) => (
-          <Card key={product.id} title={product.name} onClick={() => setSelectedProduct(product)} style={{ cursor: 'pointer' }}>
-            <div style={imageBoxStyle}>
-              <img
-                src={getProductImage(product.name)}
-                alt={product.name}
-                style={imageStyle}
-              />
-            </div>
-            <p>{product.description}</p>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-              <strong style={{ whiteSpace: 'nowrap' }}>
-                {symbol} {product.price.toLocaleString('en-US', {
-                  maximumFractionDigits: 2,
-                })} {currency}
-              </strong>
-              {product.inStock && <span style={{ whiteSpace: 'nowrap' }}>{t('menu.inStock', 'In Stock')}</span>}
-              <Button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setSelectedProduct(product);
-                }}
+        ) : (
+          products.map((product, index) => {
+            const displayProductName = translateProductName(t, product.name);
+            const displayProductDesc = translateProductDescription(
+              t,
+              product.name,
+              product.description,
+            );
+
+            return (
+              <Card
+                key={product.id}
+                title={displayProductName}
+                className="cc-menu-card"
+                onClick={() => setSelectedProduct(product)}
+                style={{
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  borderRadius: '20px',
+                  '--stagger-index': Math.min(index, 8),
+                } as CSSProperties & Record<string, string | number>}
               >
-                {t('menu.addToCart', 'Add to Cart')}
-              </Button>
-            </div>
-          </Card>
-        ))}
+                <div>
+                  <div style={imageBoxStyle}>
+                    <img
+                      src={getProductImage(product.name)}
+                      alt={displayProductName}
+                      className="cc-menu-card-img"
+                      style={imageStyle}
+                    />
+                  </div>
+                  <p style={{ color: 'var(--text-dim)', fontSize: '0.92rem', lineHeight: 1.55, margin: '0 0 16px 0' }}>
+                    {displayProductDesc}
+                  </p>
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: 12,
+                    flexWrap: 'wrap',
+                    paddingTop: 12,
+                    borderTop: '1px solid var(--cherry-border)',
+                  }}
+                >
+                  <div style={{ display: 'grid', gap: 2 }}>
+                    <strong style={{ whiteSpace: 'nowrap', color: 'var(--crust-gold)', fontSize: '1.05rem' }}>
+                      {symbol}{' '}
+                      {product.price.toLocaleString('en-US', {
+                        maximumFractionDigits: 2,
+                      })}{' '}
+                      {currency}
+                    </strong>
+                    {product.inStock && (
+                      <span style={{ whiteSpace: 'nowrap', fontSize: '0.78rem', color: 'var(--mint-fresh)', fontWeight: 700 }}>
+                        {t('menu.inStock', 'In Stock')}
+                      </span>
+                    )}
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setSelectedProduct(product);
+                    }}
+                  >
+                    {t('menu.addToCart', 'Add to Cart')}
+                  </Button>
+                </div>
+              </Card>
+            );
+          })
+        )}
       </div>
 
       <ProductModal
+        key={selectedProduct ? `${selectedProduct.id}-${currentRegion}` : 'closed'}
         product={selectedProduct}
         open={selectedProduct !== null}
         currentRegion={currentRegion}
-        onAdd={(item) => dispatch(addToCart(item))}
+        onAdd={(item) => {
+          dispatch(addToCart(item));
+          dispatch(
+            showToast({
+              type: 'success',
+              message: t('menu.addedToBag', '{name} added to your bag!', {
+                name: translateProductName(t, item.name),
+              }),
+            }),
+          );
+        }}
         onClose={() => setSelectedProduct(null)}
       />
     </section>

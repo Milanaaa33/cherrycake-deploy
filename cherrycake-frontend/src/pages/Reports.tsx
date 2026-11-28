@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { api } from '../api/client';
 import { downloadSalesCsv, downloadSalesPdf, getSalesReport } from '../api/reports';
 import type { ReportFilters, SalesReport } from '../api/reports';
+import type { RootState } from '../store';
 import {
   BarElement,
   CategoryScale,
@@ -40,6 +42,8 @@ function localDate(date: Date) {
 
 export default function Reports() {
   const { t } = useTranslation();
+  const theme = useSelector((state: RootState) => state.ui.theme);
+  const isLight = theme === 'light';
   const [region, setRegion] = useState('UZB');
   const [grouping, setGrouping] = useState<ReportFilters['groupBy']>('MONTH');
   const [startDate, setStartDate] = useState(() => {
@@ -108,7 +112,7 @@ export default function Reports() {
   const orders = report?.rows.map(row => row.ordersCount) ?? [];
   const revenue = report?.rows.map(row => row.total) ?? [];
   const currency = report?.currencyCode;
-  const money = (value: number) => `${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${currency && currency !== 'MIXED' ? ` ${currency}` : ''}`;
+  const money = (value: number) => `${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${currency && currency !== 'MIXED' ? ` ${currency}` : ''}`;
   const regionOptions = [
     { value: '', label: t('reports.allRegions', 'All regions') },
     ...regions.map(r => ({ value: r.code, label: `${r.name} (${r.code})` })),
@@ -121,7 +125,9 @@ export default function Reports() {
       {
         label: t('reports.chartOrders', 'Orders'),
         data: orders,
-        backgroundColor: '#c94c6d',
+        backgroundColor: 'rgba(230, 57, 96, 0.78)',
+        borderColor: '#e63960',
+        borderWidth: 1,
         borderRadius: 6,
       },
     ],
@@ -135,20 +141,37 @@ export default function Reports() {
           ? t('reports.chartRevenueCurrency', 'Revenue ({currency})', { currency })
           : t('reports.chartRevenue', 'Revenue'),
         data: revenue,
-        borderColor: '#7c3f58',
-        backgroundColor: 'rgba(201, 76, 109, 0.16)',
+        borderColor: isLight ? '#c82348' : '#ffb7c5',
+        backgroundColor: isLight ? 'rgba(200, 35, 72, 0.14)' : 'rgba(230, 57, 96, 0.2)',
         fill: true,
         tension: 0.35,
       },
     ],
   };
 
+  const tickColor = isLight ? '#642b3e' : '#c7a3b3';
+  const gridColor = isLight ? 'rgba(120, 24, 48, 0.12)' : 'rgba(255, 183, 197, 0.12)';
+  const legendColor = isLight ? '#2d0e1e' : '#fdf2f5';
+
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    scales: { y: { beginAtZero: true } },
+    scales: {
+      x: {
+        ticks: { color: tickColor },
+        grid: { color: gridColor },
+      },
+      y: {
+        beginAtZero: true,
+        ticks: { color: tickColor },
+        grid: { color: gridColor },
+      },
+    },
     plugins: {
-      legend: { position: 'bottom' as const },
+      legend: {
+        position: 'bottom' as const,
+        labels: { color: legendColor },
+      },
     },
   };
 

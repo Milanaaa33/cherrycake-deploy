@@ -66,10 +66,17 @@ export default function Modal({ open, title, children, onClose, closeLabel = "Cl
 
   return (
     <div
+      className="cc-modal-backdrop"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
       style={{
         position: "fixed",
         inset: 0,
+        padding: 16,
         background: "rgba(0, 0, 0, 0.6)",
+        backdropFilter: "blur(6px)",
+        WebkitBackdropFilter: "blur(6px)",
         display: "grid",
         placeItems: "center",
         zIndex: 1000,
@@ -77,27 +84,55 @@ export default function Modal({ open, title, children, onClose, closeLabel = "Cl
     >
       <div
         ref={dialogRef}
+        className="cc-modal-panel"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         style={{
           background: "var(--color-surface)",
           color: "var(--color-text)",
-          padding: 32,
+          padding: 28,
           borderRadius: "var(--radius-xl)",
-          width: "min(90%, 460px)",
+          border: "1.5px solid var(--cherry-border)",
+          width: "min(92vw, 480px)",
+          maxHeight: "90vh",
+          overflowY: "auto",
           boxShadow: "0 24px 80px rgba(35, 10, 20, 0.25)",
         }}
       >
-        <h2 id={titleId} style={{ color: "var(--color-text)" }}>
-          {title}
-        </h2>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            marginBottom: 16,
+          }}
+        >
+          <h2
+            id={titleId}
+            style={{
+              margin: 0,
+              color: "var(--color-text)",
+              fontSize: "1.45rem",
+              lineHeight: 1.25,
+            }}
+          >
+            {title}
+          </h2>
+          <button
+            type="button"
+            className="modal-close-round-btn"
+            onClick={onClose}
+            aria-label={closeLabel}
+            title={closeLabel}
+            style={{ flexShrink: 0 }}
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
 
         {children}
-
-        <button onClick={onClose} style={{ marginTop: 16 }}>
-          {closeLabel}
-        </button>
       </div>
     </div>
   );

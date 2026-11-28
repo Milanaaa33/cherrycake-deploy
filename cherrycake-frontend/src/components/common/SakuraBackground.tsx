@@ -11,37 +11,33 @@ interface Petal {
   opacity: number;
 }
 
-/**
- * Falling cherry-blossom petals behind the page (ported from the extended project).
- * Pure canvas, no library; pauses when the tab is hidden and respects "reduce motion".
- */
-export default function SakuraBackground() {
+export function SakuraBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let animationId = 0;
-    let w = (canvas.width = window.innerWidth);
-    let h = (canvas.height = window.innerHeight);
+    let animationId: number;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
     const handleResize = () => {
-      w = canvas.width = window.innerWidth;
-      h = canvas.height = window.innerHeight;
+      if (!canvas) return;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     };
     window.addEventListener('resize', handleResize);
 
-    const petalCount = w < 600 ? 14 : 28;
+    const petalCount = 28;
     const petals: Petal[] = [];
     for (let i = 0; i < petalCount; i++) {
       petals.push({
-        x: Math.random() * w,
-        y: Math.random() * h,
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
         size: Math.random() * 14 + 16,
         speedX: Math.random() * 1.2 - 0.3,
         speedY: Math.random() * 1.0 + 0.6,
@@ -54,19 +50,27 @@ export default function SakuraBackground() {
     const sakuraImg = new Image();
     sakuraImg.src = '/TransparentSakuraFlower.png';
 
-    const drawPetal = (p: Petal) => {
+    const drawPetal = (
+      x: number,
+      y: number,
+      size: number,
+      rotation: number,
+      opacity: number
+    ) => {
       if (!sakuraImg.complete || sakuraImg.naturalWidth === 0) return;
       ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate((p.rotation * Math.PI) / 180);
-      ctx.globalAlpha = p.opacity;
-      ctx.drawImage(sakuraImg, -p.size / 2, -p.size / 2, p.size, p.size);
+      ctx.translate(x, y);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.globalAlpha = opacity;
+      ctx.drawImage(sakuraImg, -size / 2, -size / 2, size, size);
       ctx.restore();
     };
 
     const animate = () => {
+      const w = canvas.width;
+      const h = canvas.height;
       ctx.clearRect(0, 0, w, h);
-      for (const p of petals) {
+      petals.forEach((p) => {
         p.x += p.speedX;
         p.y += p.speedY;
         p.rotation += p.rotationSpeed;
@@ -76,25 +80,34 @@ export default function SakuraBackground() {
         }
         if (p.x > w + 20) p.x = -20;
         if (p.x < -20) p.x = w + 20;
-        drawPetal(p);
-      }
+        drawPetal(p.x, p.y, p.size, p.rotation, p.opacity);
+      });
       animationId = requestAnimationFrame(animate);
     };
-
-    const handleVisibility = () => {
-      cancelAnimationFrame(animationId);
-      if (!document.hidden) animationId = requestAnimationFrame(animate);
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
 
     animate();
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      document.removeEventListener('visibilitychange', handleVisibility);
       cancelAnimationFrame(animationId);
     };
   }, []);
 
-  return <canvas ref={canvasRef} aria-hidden="true" className="cc-sakura" />;
+  return (
+    <canvas
+      ref={canvasRef}
+      aria-hidden="true"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100vw',
+        height: '100vh',
+        pointerEvents: 'none',
+        zIndex: 0,
+        opacity: 0.85,
+      }}
+    />
+  );
 }
+
+export default SakuraBackground;

@@ -17,7 +17,8 @@
   opacity: 0.85;
 }
 
-.cc-app > *:not(.cc-sakura) {
+.cc-app > main,
+.cc-app > footer {
   position: relative;
   z-index: 1;
 }
@@ -192,4 +193,12 @@
 [data-theme="dark"] .account-muted,
 [data-theme="dark"] small {
   color: var(--color-muted);
+}
+
+[data-theme="dark"] .account-code-timer {
+  color: var(--sakura-pink);
+}
+
+[data-theme="dark"] .account-code-timer.is-urgent {
+  color: var(--color-error);
 }

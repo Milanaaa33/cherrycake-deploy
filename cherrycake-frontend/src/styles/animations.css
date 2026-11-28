@@ -1,0 +1,441 @@
+/* ==========================================================================
+   Cherry Cake — Comfort-First Animation System
+   Uses GPU-composited properties (transform, opacity), silky easing,
+   progressive scroll reveals, and respects prefers-reduced-motion.
+   ========================================================================== */
+
+:root {
+  --ease-silk: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* --------------------------------------------------------------------------
+   KEYFRAMES
+   -------------------------------------------------------------------------- */
+@keyframes ccPageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ccModalBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ccModalPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ccDropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ccCardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ccHeroItemIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ccHeroStageIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes ccSoftPulse {
+  from {
+    opacity: 0.72;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes ccAmbientDrift {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(-10px, 8px) scale(1.06);
+  }
+}
+
+@keyframes ccSuccessPop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ccAudioBarEnter {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ccThemeIconPop {
+  from {
+    transform: rotate(-35deg) scale(0.8);
+  }
+  to {
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+@keyframes ccHubSwap {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   1. ROUTE TRANSITIONS & PROGRESSIVE SCROLL REVEALS
+   -------------------------------------------------------------------------- */
+.cc-page-transition {
+  animation: ccPageEnter 320ms var(--ease-silk) both;
+}
+
+html[data-reveal-ready="true"] .cc-reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 520ms var(--ease-silk), transform 520ms var(--ease-silk);
+}
+
+html[data-reveal-ready="true"] .cc-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* --------------------------------------------------------------------------
+   2. HOME HERO CHOREOGRAPHY & MICRO-INTERACTIONS
+   -------------------------------------------------------------------------- */
+.cc-hero-tag {
+  animation: ccHeroItemIn 500ms var(--ease-silk) 0ms both;
+}
+
+.cc-hero-headline {
+  animation: ccHeroItemIn 500ms var(--ease-silk) 65ms both;
+}
+
+.cc-hero-subtitle {
+  animation: ccHeroItemIn 500ms var(--ease-silk) 125ms both;
+}
+
+.cc-hero-actions {
+  animation: ccHeroItemIn 500ms var(--ease-silk) 185ms both;
+}
+
+.cc-hero-perks {
+  animation: ccHeroItemIn 500ms var(--ease-silk) 245ms both;
+}
+
+.cc-hero-visual-stage {
+  animation: ccHeroStageIn 560ms var(--ease-silk) 110ms both;
+}
+
+.cc-hero-pedestal-glow {
+  animation: ccSoftPulse 5s ease-in-out infinite alternate;
+}
+
+.cc-home-promo-banner::before {
+  animation: ccAmbientDrift 8s ease-in-out infinite alternate;
+}
+
+.cc-hero-perk-icon-wrap,
+.cc-pillar-icon-box {
+  transition: transform 0.25s var(--ease-spring), background 0.25s ease;
+}
+
+.cc-hero-perk-item:hover .cc-hero-perk-icon-wrap,
+.cc-pillar-item:hover .cc-pillar-icon-box {
+  transform: translateY(-2px) scale(1.08);
+}
+
+.cc-treat-pill-tag {
+  transition: transform 0.25s var(--ease-silk), box-shadow 0.25s ease;
+}
+
+.cc-treat-card:hover .cc-treat-pill-tag {
+  transform: translateY(-2px);
+}
+
+.cc-promo-btn:active,
+.cc-hero-secondary-btn:active,
+.cc-hero-primary-btn:active {
+  transform: scale(0.98);
+}
+
+/* --------------------------------------------------------------------------
+   3. HEADER, DROPDOWNS & FOOTER
+   -------------------------------------------------------------------------- */
+.navbar-brand-icon {
+  transition: transform 0.25s var(--ease-spring), box-shadow 0.25s ease;
+}
+
+.navbar-brand:hover .navbar-brand-icon {
+  transform: scale(1.08);
+  box-shadow: 0 0 22px rgba(230, 57, 96, 0.55);
+}
+
+.theme-toggle-icon-anim {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: ccThemeIconPop 280ms var(--ease-spring);
+}
+
+.region-dropdown-menu,
+.lang-dropdown-menu {
+  transform-origin: top right;
+  animation: ccDropdownIn 180ms var(--ease-silk) both;
+}
+
+.region-option:hover,
+.lang-option:hover {
+  transform: translateX(3px);
+}
+
+.f-badge {
+  transition: transform 0.2s var(--ease-silk), border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.f-badge:hover {
+  transform: translateY(-2px);
+}
+
+/* --------------------------------------------------------------------------
+   4. MODALS, DRAWER & AUDIO BAR
+   -------------------------------------------------------------------------- */
+.cc-modal-backdrop,
+.cc-modal.open {
+  animation: ccModalBackdropIn 200ms ease-out both;
+}
+
+.cc-modal-panel,
+.cc-modal.open .modal-dialog {
+  animation: ccModalPanelIn 260ms var(--ease-silk) both;
+}
+
+.drawer-close-btn {
+  transition: transform 0.22s var(--ease-silk), color 0.2s ease;
+}
+
+.drawer-close-btn:hover {
+  transform: rotate(90deg) scale(1.08);
+  color: var(--raspberry-coulis) !important;
+}
+
+.audio-bar {
+  animation: ccAudioBarEnter 420ms var(--ease-silk) 150ms both;
+}
+
+.audio-bar:hover {
+  transform: translateY(-2px);
+}
+
+@media (max-width: 600px) {
+  .audio-bar {
+    animation: ccPageEnter 420ms var(--ease-silk) 150ms both;
+  }
+
+  .audio-bar:hover {
+    transform: translateX(50%) translateY(-2px);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   5. MENU & CARDS
+   -------------------------------------------------------------------------- */
+.cc-card {
+  transition: transform 0.25s var(--ease-silk), box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.cc-menu-card {
+  animation: ccCardEnter 340ms var(--ease-silk) calc(var(--stagger-index, 0) * 45ms) both;
+}
+
+.cc-menu-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--cherry-border-glow) !important;
+  box-shadow: 0 14px 34px rgba(230, 57, 96, 0.22) !important;
+}
+
+.cc-menu-card-img {
+  transition: transform 0.38s var(--ease-silk);
+}
+
+.cc-menu-card:hover .cc-menu-card-img {
+  transform: scale(1.06);
+}
+
+.cc-menu-tab {
+  transition: transform 0.18s var(--ease-silk), box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease !important;
+}
+
+.cc-menu-tab:hover {
+  transform: translateY(-2px);
+}
+
+.cc-menu-tab:active {
+  transform: scale(0.97);
+}
+
+/* --------------------------------------------------------------------------
+   6. CHECKOUT, BOOKING, ACCOUNT, ADMIN & 3D MAP
+   -------------------------------------------------------------------------- */
+.checkout-choice,
+.checkout-payment,
+.checkout-slot,
+.account-order {
+  transition: transform 0.2s var(--ease-silk), border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.checkout-choice:hover:not(:disabled),
+.checkout-payment:hover:not(:disabled),
+.checkout-slot:hover:not(:disabled),
+.account-order:hover {
+  transform: translateY(-2px);
+}
+
+.checkout-choice:active:not(:disabled),
+.checkout-payment:active:not(:disabled),
+.checkout-slot:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.checkout-success {
+  animation: ccCardEnter 360ms var(--ease-silk) both;
+}
+
+.checkout-success-icon {
+  animation: ccSuccessPop 460ms var(--ease-spring) 120ms both;
+}
+
+.account-order-details {
+  animation: ccPageEnter 240ms var(--ease-silk) both;
+}
+
+.account-avatar {
+  transition: transform 0.25s var(--ease-spring), box-shadow 0.25s ease;
+}
+
+.account-avatar:hover {
+  transform: scale(1.06);
+}
+
+.admin-tab,
+.admin-link,
+.admin-table tbody tr {
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s var(--ease-silk);
+}
+
+.admin-table tbody tr:hover {
+  background: rgba(230, 57, 96, 0.04);
+}
+
+.cc-hub-panel-enter {
+  animation: ccHubSwap 240ms var(--ease-silk) both;
+}
+
+.cc-map-pill {
+  transition: transform 0.18s var(--ease-silk), background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.cc-map-pill:hover {
+  transform: translateY(-1.5px);
+}
+
+.cc-map-pill:active {
+  transform: scale(0.97);
+}
+
+/* --------------------------------------------------------------------------
+   7. ACCESSIBILITY: REDUCED MOTION
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html[data-reveal-ready="true"] .cc-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

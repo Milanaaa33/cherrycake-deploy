@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../store';
 import { setLanguage } from '../store';
 import { LANGUAGES, type SupportedLanguage } from './languages';
-import { getUIText, type TranslationParams } from './translations';
+import { getEasterEggTexts, getUIText, type TranslationParams } from './translations';
 
 export type TranslateFn = (key: string, fallback?: string, params?: TranslationParams) => string;
 
@@ -22,13 +22,15 @@ export function useTranslation() {
   );
 
   const changeLanguage = useCallback(
-    (code: SupportedLanguage) => {
+    (code: SupportedLanguage | string) => {
       dispatch(setLanguage(code));
     },
     [dispatch],
   );
 
-  return { language, t, changeLanguage, languages: LANGUAGES };
+  const easterEgg = getEasterEggTexts(language);
+
+  return { language, t, easterEgg, changeLanguage, languages: LANGUAGES };
 }
 
 export default useTranslation;

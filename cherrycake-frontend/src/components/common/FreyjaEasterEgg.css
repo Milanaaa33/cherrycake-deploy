@@ -1,0 +1,781 @@
+/* ==========================================================================
+   The Northern Gates (Северные Врата) - Cinematic Visual Quest & Lyrics
+   Atmosphere: Midnight Cyber-Noir, Typewriter Poetry & Mustafa Avşaroğlu Audio
+   ========================================================================== */
+
+/* Redesigned Noir Velvet Floating Trigger Talisman Button (Bottom Right, above audio bar) */
+.cc-freyja-floating-trigger {
+  position: fixed;
+  bottom: 86px;
+  right: 28px;
+  z-index: 950;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(45, 14, 36, 0.95), rgba(20, 6, 16, 0.98));
+  border: 1.5px solid rgba(255, 183, 197, 0.45);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(230, 57, 96, 0.35);
+  color: #ffb7c5;
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  outline: none;
+}
+
+.cc-freyja-floating-trigger:hover {
+  transform: translateY(-2px) scale(1.1);
+  border-color: rgba(255, 183, 197, 0.85);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.75), 0 0 24px rgba(230, 57, 96, 0.6);
+  color: #ffffff;
+}
+
+.cc-freyja-trigger-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: #ffb7c5;
+  flex-shrink: 0;
+}
+
+.cc-freyja-trigger-key-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.cc-freyja-trigger-pulse-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff3864;
+  box-shadow: 0 0 6px #ff3864;
+  animation: rubyPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.cc-freyja-trigger-label {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #fdf2f5;
+  white-space: nowrap;
+}
+
+@keyframes rubyPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.75);
+  }
+}
+
+/* Key Input Popup Modal (Black Noir Theme) */
+.cc-freyja-key-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(6, 3, 6, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 99998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  animation: ccKeyFadeIn 0.28s ease;
+}
+
+@keyframes ccKeyFadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.cc-freyja-key-card {
+  width: 100%;
+  max-width: 440px;
+  background: #090508;
+  border: 1px solid rgba(220, 50, 95, 0.4);
+  border-radius: 16px;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.95), 0 0 45px rgba(200, 35, 80, 0.25);
+  padding: 28px 24px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: relative;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #fae4ed;
+}
+
+.cc-freyja-key-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: transparent;
+  border: none;
+  color: #ff9bbb;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  transition: transform 0.2s, color 0.2s;
+}
+
+.cc-freyja-key-close:hover {
+  transform: scale(1.2);
+  color: #ffffff;
+}
+
+.cc-freyja-key-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: center;
+}
+
+.cc-freyja-key-badge {
+  display: inline-block;
+  align-self: center;
+  background: rgba(220, 45, 90, 0.2);
+  border: 1px solid rgba(245, 170, 195, 0.35);
+  color: #ffb4cc;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 10.5px;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.cc-freyja-key-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.cc-freyja-key-desc {
+  font-size: 13px;
+  color: #d8b2c2;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* 6-Letter Cipher Boxes with Red Velvet Border Shadow */
+.cc-freyja-key-field-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+}
+
+.cc-freyja-boxes-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  width: 100%;
+}
+
+.cc-freyja-box-input {
+  width: 48px;
+  height: 56px;
+  background: #0f070d;
+  border: 1.5px solid #d2325c;
+  /* Small red velvet shadow on the field border */
+  box-shadow: 0 0 14px rgba(210, 40, 80, 0.42), inset 0 0 8px rgba(180, 25, 65, 0.22);
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 700;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  text-align: center;
+  text-transform: uppercase;
+  outline: none;
+  transition: all 0.22s ease;
+  caret-color: transparent;
+}
+
+.cc-freyja-box-input:focus {
+  border-color: #ff5080;
+  box-shadow: 0 0 22px rgba(240, 50, 100, 0.65), inset 0 0 12px rgba(210, 35, 80, 0.35);
+  background: #180913;
+  transform: translateY(-2px);
+}
+
+.cc-freyja-box-input.filled {
+  border-color: #ff7b9f;
+  color: #fff0f5;
+  text-shadow: 0 0 10px rgba(255, 123, 159, 0.7);
+}
+
+.cc-freyja-boxes-row.error .cc-freyja-box-input {
+  border-color: #ff3333;
+  box-shadow: 0 0 20px rgba(255, 50, 50, 0.65), inset 0 0 10px rgba(255, 30, 30, 0.35);
+  animation: ccShake 0.4s ease;
+}
+
+.cc-freyja-boxes-row.success .cc-freyja-box-input {
+  border-color: #ff7b9f;
+  box-shadow: 0 0 24px rgba(255, 123, 159, 0.8), inset 0 0 12px rgba(255, 123, 159, 0.4);
+}
+
+@keyframes ccShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.cc-freyja-key-hint {
+  font-size: 11.5px;
+  color: #ff9bbb;
+  text-align: center;
+  min-height: 16px;
+  font-family: "SFMono-Regular", Consolas, monospace;
+}
+
+.cc-freyja-key-submit-btn {
+  background: linear-gradient(90deg, #a81e4b 0%, #d82b6b 100%);
+  border: 1px solid rgba(255, 170, 200, 0.35);
+  border-radius: 10px;
+  padding: 12px 18px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 18px rgba(180, 30, 80, 0.35);
+}
+
+.cc-freyja-key-submit-btn:hover {
+  background: linear-gradient(90deg, #c42459 0%, #ff4585 100%);
+  box-shadow: 0 6px 24px rgba(230, 45, 100, 0.55);
+  transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   Full Quest Overlay Styles
+   ========================================================================== */
+
+.cc-freyja-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(5, 3, 7, 0.94);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  box-sizing: border-box;
+  animation: ccQuestFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes ccQuestFadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.cc-freyja-terminal {
+  width: 100%;
+  max-width: 980px;
+  height: 95vh;
+  max-height: 860px;
+  background: #080408;
+  border: 1px solid rgba(245, 170, 195, 0.45);
+  border-radius: 18px;
+  box-shadow: 0 35px 90px rgba(0, 0, 0, 0.95), 0 0 60px rgba(210, 50, 100, 0.22);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "SF Pro Display", sans-serif;
+  position: relative;
+}
+
+/* Chrome Header */
+.cc-freyja-header {
+  background: linear-gradient(90deg, #180b15 0%, #260e1f 100%);
+  border-bottom: 1px solid rgba(245, 170, 195, 0.25);
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  z-index: 30;
+  flex-wrap: wrap;
+}
+
+.cc-freyja-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cc-freyja-window-dots {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.cc-freyja-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #442032;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cc-freyja-dot.red { background: #ff5f56; }
+.cc-freyja-dot.yellow { background: #ffbd2e; }
+.cc-freyja-dot.green { background: #27c93f; }
+.cc-freyja-dot:hover { filter: brightness(1.25); }
+
+.cc-freyja-title {
+  color: #fae2ea;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-family: "SFMono-Regular", Consolas, monospace;
+}
+
+/* Audio Player in Header */
+.cc-freyja-audio-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(30, 10, 22, 0.85);
+  border: 1px solid rgba(245, 170, 195, 0.35);
+  border-radius: 20px;
+  padding: 4px 14px;
+}
+
+.cc-freyja-play-btn {
+  background: transparent;
+  border: none;
+  color: #ff9bbb;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: transform 0.2s;
+}
+
+.cc-freyja-play-btn:hover {
+  transform: scale(1.15);
+  color: #ffffff;
+}
+
+.cc-freyja-track-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  color: #ffd6e4;
+}
+
+.cc-freyja-equalizer {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+
+.cc-freyja-eq-bar {
+  width: 2px;
+  background: #ff7b9f;
+  border-radius: 1px;
+  height: 3px;
+}
+
+.cc-freyja-eq-bar.playing:nth-child(1) { animation: ccEq 0.6s infinite ease-in-out; }
+.cc-freyja-eq-bar.playing:nth-child(2) { animation: ccEq 0.8s infinite ease-in-out 0.2s; }
+.cc-freyja-eq-bar.playing:nth-child(3) { animation: ccEq 0.5s infinite ease-in-out 0.4s; }
+
+@keyframes ccEq {
+  0%, 100% { height: 3px; }
+  50% { height: 12px; }
+}
+
+.cc-freyja-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cc-freyja-chapter-badge {
+  background: rgba(235, 75, 125, 0.25);
+  border: 1px solid rgba(245, 170, 195, 0.35);
+  color: #ffb8d0;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.cc-freyja-close-btn {
+  background: transparent;
+  border: 1px solid rgba(245, 170, 195, 0.3);
+  color: #fae2ea;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  transition: all 0.2s ease;
+}
+
+.cc-freyja-close-btn:hover {
+  background: rgba(210, 50, 100, 0.4);
+  color: #ffffff;
+  border-color: #ff9bbb;
+}
+
+/* Progress bar along top */
+.cc-freyja-progressbar {
+  height: 3px;
+  background: rgba(45, 15, 30, 0.8);
+  width: 100%;
+  position: relative;
+}
+
+.cc-freyja-progressbar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #d82b6b, #ff8cb2);
+  transition: width 0.4s ease;
+  box-shadow: 0 0 10px #ff8cb2;
+}
+
+/* Scrollable Main Body */
+.cc-freyja-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  color: #fae4ed;
+  line-height: 1.65;
+}
+
+/* Cinematic Artwork Container (NEVER CRUSHED - flex-shrink: 0) */
+.cc-freyja-art-card {
+  flex-shrink: 0 !important;
+  width: 100%;
+  height: 270px;
+  min-height: 270px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(245, 170, 195, 0.4);
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.85), 0 0 30px rgba(210, 50, 100, 0.2);
+  background: #000000;
+  position: relative;
+}
+
+.cc-freyja-art-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  filter: contrast(1.12) brightness(0.96);
+  transition: transform 0.8s ease;
+}
+
+.cc-freyja-art-card:hover .cc-freyja-art-img {
+  transform: scale(1.025);
+}
+
+/* Ambient CRT scanline overlay on art */
+.cc-freyja-art-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(rgba(15, 8, 12, 0) 50%, rgba(0, 0, 0, 0.35) 50%),
+              radial-gradient(circle at center, transparent 40%, rgba(10, 4, 8, 0.8) 100%);
+  background-size: 100% 3px, 100% 100%;
+  pointer-events: none;
+}
+
+/* Telemetry HUD on Art */
+.cc-freyja-art-hud {
+  position: absolute;
+  bottom: 12px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  color: #ffc4d8;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+}
+
+.cc-freyja-hud-tag {
+  background: rgba(14, 6, 12, 0.85);
+  border: 1px solid rgba(245, 170, 195, 0.35);
+  padding: 4px 10px;
+  border-radius: 6px;
+  backdrop-filter: blur(8px);
+}
+
+/* Chapter Title & Location Info */
+.cc-freyja-scene-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cc-freyja-subtitle {
+  color: #e588a8;
+  font-size: 11px;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.cc-freyja-heading {
+  font-size: 23px;
+  font-weight: 700;
+  color: #fff2f6;
+  margin: 0;
+  letter-spacing: -0.3px;
+  font-family: Georgia, serif;
+}
+
+/* Story Narrative Prose */
+.cc-freyja-narrative {
+  font-size: 15px;
+  color: #fae2ea;
+  white-space: pre-wrap;
+  line-height: 1.7;
+}
+
+/* Typewriter Poem Presentation Card */
+.cc-freyja-typewriter-card {
+  background: linear-gradient(135deg, rgba(35, 14, 26, 0.85) 0%, rgba(18, 6, 14, 0.95) 100%);
+  border-left: 3px solid #ff7b9f;
+  border-top: 1px solid rgba(245, 170, 195, 0.25);
+  border-bottom: 1px solid rgba(245, 170, 195, 0.25);
+  border-right: 1px solid rgba(245, 170, 195, 0.25);
+  border-radius: 0 14px 14px 0;
+  padding: 20px 24px;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.cc-freyja-poem-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  border-bottom: 1px solid rgba(245, 170, 195, 0.15);
+  padding-bottom: 8px;
+}
+
+.cc-freyja-poem-title {
+  color: #ff9bbb;
+  font-size: 13px;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.cc-freyja-skip-type-btn {
+  background: transparent;
+  border: 1px solid rgba(245, 170, 195, 0.3);
+  color: #ffd6e4;
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  transition: all 0.2s;
+}
+
+.cc-freyja-skip-type-btn:hover {
+  background: rgba(255, 123, 159, 0.3);
+  color: #ffffff;
+}
+
+.cc-freyja-typewriter-text {
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-size: 15.5px;
+  color: #fff2f6;
+  line-height: 1.85;
+  white-space: pre-wrap;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Glowing Blinking Cursor */
+.cc-freyja-cursor {
+  display: inline-block;
+  color: #ff7b9f;
+  font-weight: 700;
+  font-style: normal;
+  animation: ccCursorBlink 0.8s infinite;
+  text-shadow: 0 0 10px #ff7b9f;
+  margin-left: 2px;
+}
+
+@keyframes ccCursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Choices & Action Area */
+.cc-freyja-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.cc-freyja-choice-btn {
+  background: linear-gradient(90deg, rgba(45, 18, 34, 0.9) 0%, rgba(65, 24, 46, 0.9) 100%);
+  border: 1px solid rgba(245, 170, 195, 0.35);
+  border-radius: 10px;
+  padding: 13px 18px;
+  color: #fae2ea;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.25s ease;
+  text-align: left;
+}
+
+.cc-freyja-choice-btn:hover {
+  background: linear-gradient(90deg, rgba(160, 35, 80, 0.8) 0%, rgba(200, 50, 105, 0.8) 100%);
+  border-color: #ffa1be;
+  transform: translateY(-2px);
+  color: #ffffff;
+  box-shadow: 0 6px 20px rgba(210, 50, 100, 0.35);
+}
+
+.cc-freyja-key-badge {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 180, 205, 0.4);
+  color: #ffbd2e;
+  border-radius: 5px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-weight: 700;
+}
+
+/* Navigation bar for chapters */
+.cc-freyja-timeline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(245, 170, 195, 0.2);
+  padding-top: 14px;
+  margin-top: auto;
+}
+
+.cc-freyja-nav-btn {
+  background: rgba(30, 12, 22, 0.8);
+  border: 1px solid rgba(245, 170, 195, 0.25);
+  color: #e5c0cf;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.cc-freyja-nav-btn:hover:not(:disabled) {
+  background: rgba(180, 45, 95, 0.4);
+  color: #ffffff;
+  border-color: #ffa1be;
+}
+
+.cc-freyja-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.cc-freyja-dots-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.cc-freyja-step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(245, 170, 195, 0.25);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cc-freyja-step-dot.active {
+  background: #ff7b9f;
+  box-shadow: 0 0 8px #ff7b9f;
+  transform: scale(1.25);
+}
+
+@media (max-width: 600px) {
+  .cc-freyja-floating-trigger {
+    bottom: 76px;
+    right: 16px;
+    width: 38px;
+    height: 38px;
+  }
+  .cc-freyja-terminal {
+    height: 98vh;
+    border-radius: 10px;
+  }
+  .cc-freyja-art-card {
+    height: 190px;
+    min-height: 190px;
+  }
+  .cc-freyja-heading {
+    font-size: 19px;
+  }
+  .cc-freyja-body {
+    padding: 14px;
+  }
+  .cc-freyja-audio-bar {
+    display: none;
+  }
+}

@@ -10,16 +10,20 @@ spring:
     # Host, port, username and password come from SPRING_MAIL_HOST / SPRING_MAIL_PORT /
     # SPRING_MAIL_USERNAME / SPRING_MAIL_PASSWORD. Without SPRING_MAIL_HOST no mail is sent
     # and sign-in codes are written to the log instead.
+    host: ${SPRING_MAIL_HOST:}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
     properties:
       mail:
         smtp:
           auth: true
           starttls:
             enable: true
-          # Fail fast (the frontend waits 10 s): an unreachable mail server gives a clear 503 instead of a hang.
-          connectiontimeout: 8000
-          timeout: 8000
-          writetimeout: 8000
+          # Fail cleanly with a 503 if the mail server is unreachable instead of hanging.
+          connectiontimeout: 10000
+          timeout: 10000
+          writetimeout: 10000
   jpa:
     open-in-view: false
     hibernate:
@@ -34,6 +38,7 @@ springdoc:
 
 
 app:
+  public-url: ${APP_PUBLIC_URL:http://localhost:5173}
   auth:
     # Comma-separated emails that are always ADMIN (bootstrap). Other roles are managed in the admin panel.
     admin-emails: ${ADMIN_EMAILS:}

@@ -35,7 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AuthService {
 
-    private static final Duration CODE_TTL = Duration.ofMinutes(10);
+    private static final Duration CODE_TTL = Duration.ofMinutes(5);
     private static final Duration RESEND_DELAY = Duration.ofSeconds(60);
     private static final Duration CODE_HISTORY = Duration.ofHours(1);
     private static final Duration SESSION_TTL = Duration.ofDays(30);
@@ -67,16 +67,30 @@ public class AuthService {
 
         jdbc.update("DELETE FROM auth_codes WHERE created_at < ?", now.minus(CODE_HISTORY));
 
-        Integer recent = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM auth_codes WHERE email = ? AND created_at > ?",
-                Integer.class, email, now.minus(RESEND_DELAY));
-        if (recent != null && recent > 0) {
-            throw new TooManyRequestsException("Please wait a minute before requesting another code");
+        List<LocalDateTime> recent = jdbc.query(
+                "SELECT created_at FROM auth_codes WHERE email = ? AND created_at > ? ORDER BY created_at DESC LIMIT 1",
+                (rs, i) -> rs.getTimestamp(1).toLocalDateTime(),
+                email, now.minus(RESEND_DELAY));
+        if (!recent.isEmpty()) {
+            long elapsedMs = Duration.between(recent.get(0), now).toMillis();
+            long retryAfter = Math.max(1L, (RESEND_DELAY.toMillis() - elapsedMs + 999L) / 1000L);
+            throw new TooManyRequestsException(
+                    "Please wait " + retryAfter + " seconds before requesting another code",
+                    retryAfter);
         }
         Integer lastHour = jdbc.queryForObject(
                 "SELECT COUNT(*) FROM auth_codes WHERE email = ?", Integer.class, email);
         if (lastHour != null && lastHour >= MAX_CODES_PER_HOUR) {
-            throw new TooManyRequestsException("Too many codes requested. Please try again later");
+            List<LocalDateTime> oldest = jdbc.query(
+                    "SELECT created_at FROM auth_codes WHERE email = ? ORDER BY created_at ASC LIMIT 1",
+                    (rs, i) -> rs.getTimestamp(1).toLocalDateTime(),
+                    email);
+            long retryAfter = oldest.isEmpty()
+                    ? 60L
+                    : Math.max(1L, Duration.between(now, oldest.get(0).plus(CODE_HISTORY)).toSeconds());
+            throw new TooManyRequestsException(
+                    "Too many codes requested. Please try again later",
+                    retryAfter);
         }
 
         String code = String.format(Locale.ROOT, "%06d", random.nextInt(1_000_000));

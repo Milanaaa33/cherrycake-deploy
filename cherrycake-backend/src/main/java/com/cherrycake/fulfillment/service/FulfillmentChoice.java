@@ -11,8 +11,10 @@ public record FulfillmentChoice(
         Long pickupPointId,
         Long deliveryZoneId,
         Long timeSlotId,
-        BigDecimal deliveryFee) {
+        BigDecimal deliveryFee,
+        String locationLabel,
+        String timeSlotLabel) {
 
     /** Order without pickup or delivery details (checkout before CC-38). */
-    public static final FulfillmentChoice NONE = new FulfillmentChoice(null, null, null, null, new BigDecimal("0.00"));
+    public static final FulfillmentChoice NONE = new FulfillmentChoice(null, null, null, null, new BigDecimal("0.00"), null, null);
 }

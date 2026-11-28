@@ -1,27 +1,60 @@
-:root {
-  /* Brand colors */
-  --color-primary: #7b1e3c;
-  --color-primary-hover: #5e1530;
-  --color-accent: #f5e6d3;
+:root,
+[data-theme="dark"] {
+  /* Cherry Void Dark Theme Tokens */
+  --cherry-void: #12060e;
+  --cherry-deep: #190814;
+  --cherry-panel: #230b1c;
+  --cherry-card: #2d0e24;
+  --cherry-card-hover: #38132d;
+  --cherry-border: rgba(255, 183, 197, 0.16);
+  --cherry-border-glow: rgba(230, 57, 96, 0.4);
+  --raspberry-coulis: #e63960;
+  --raspberry-bright: #ff3864;
+  --raspberry-dim: #a82040;
+  --sakura-pink: #ffb7c5;
+  --sakura-glow: #ffd5df;
+  --sakura-soft: #fff0f4;
+  --cheesecake-cream: #fff6ed;
+  --crust-gold: #e5b061;
+  --crust-glow: #f5cf8e;
+  --mint-fresh: #38c172;
+  --mint-glow: rgba(56, 193, 114, 0.3);
+  --text-main: #fdf2f5;
+  --text-dim: #c7a3b3;
+  --text-faint: #805f6e;
+  --shadow-elevation: 0 12px 36px -8px rgba(18, 6, 14, 0.7);
+  --nav-bg: rgba(18, 6, 14, 0.94);
+  --input-bg: rgba(28, 9, 23, 0.85);
 
-  /* Backgrounds */
-  --color-background: #fffdf9;
-  --color-surface: #ffffff;
-  --color-surface-soft: #fcf5ee;
+  /* Semantic UI Tokens + Compatibility Aliases */
+  --color-primary: #e63960;
+  --color-primary-hover: #ff3864;
+  --color-accent: #ffb7c5;
+  --color-text: #fdf2f5;
+  --color-text-muted: #c7a3b3;
+  --color-muted: #c7a3b3;
+  --color-success: #38c172;
+  --color-error: #ff4757;
+  --color-warning: #e5b061;
+  --color-border: rgba(255, 183, 197, 0.2);
+  --color-bg: #12060e;
+  --color-background: #12060e;
+  --color-surface: #2d0e24;
+  --color-surface-soft: #230b1c;
 
-  /* Text */
-  --color-text: #222222;
-  --color-muted: #666666;
+  --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.35);
+  --shadow-hover: 0 14px 35px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
 
-  /* Feedback */
-  --color-success: #1e8449;
-  --color-error: #c0392b;
-  --color-warning: #b9770e;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
 
-  /* Borders */
-  --color-border: #e8dcd6;
-
-  /* Spacing */
   --spacing-1: 4px;
   --spacing-2: 8px;
   --spacing-3: 12px;
@@ -31,7 +64,13 @@
   --spacing-12: 48px;
   --spacing-16: 64px;
 
-  /* Typography */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 20px;
+  --font-size-xl: 24px;
+  --font-size-2xl: 32px;
+
   --font-xs: 12px;
   --font-sm: 14px;
   --font-md: 16px;
@@ -39,37 +78,68 @@
   --font-xl: 24px;
   --font-2xl: 32px;
 
-  /* Borders and shadows */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 16px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
   --radius-xl: 24px;
+
+  --touch-target: 44px;
+
+  --bp-mobile: 320px;
+  --bp-tablet: 768px;
+  --bp-desktop: 1200px;
+
+  --font-serif: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-cursive: 'Parisienne', cursive;
+  --font-script: 'Parisienne', cursive;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+[data-theme="light"] {
+  /* Raspberry Cheesecake Light Theme Tokens */
+  --cherry-void: #f3dfd5;
+  --cherry-deep: #f6eae5;
+  --cherry-panel: #ffffff;
+  --cherry-card: #ffffff;
+  --cherry-card-hover: #fff3f6;
+  --cherry-border: rgba(120, 24, 48, 0.25);
+  --cherry-border-glow: rgba(184, 46, 74, 0.5);
+  --raspberry-coulis: #c82348;
+  --raspberry-bright: #e02850;
+  --raspberry-dim: #981735;
+  --sakura-pink: #c82e50;
+  --sakura-glow: #e04b6e;
+  --sakura-soft: #ffe4eb;
+  --cheesecake-cream: #2d0e1e;
+  --crust-gold: #b37329;
+  --crust-glow: #c7863a;
+  --mint-fresh: #28a745;
+  --mint-glow: rgba(40, 167, 69, 0.25);
+  --text-main: #2d0e1e;
+  --text-dim: #642b3e;
+  --text-faint: #8c5366;
+  --shadow-elevation: 0 10px 30px -6px rgba(184, 46, 74, 0.1);
+  --nav-bg: rgba(252, 246, 243, 0.95);
+  --input-bg: #ffffff;
+
+  /* Semantic UI Tokens + Compatibility Aliases */
+  --color-primary: #c82348;
+  --color-primary-hover: #e02850;
+  --color-accent: #ffe4eb;
+  --color-text: #2d0e1e;
+  --color-text-muted: #642b3e;
+  --color-muted: #642b3e;
+  --color-success: #28a745;
+  --color-error: #c82348;
+  --color-warning: #b37329;
+  --color-border: rgba(120, 24, 48, 0.22);
+  --color-bg: #f3dfd5;
+  --color-background: #f3dfd5;
+  --color-surface: #ffffff;
+  --color-surface-soft: #fcf5ee;
 
   --shadow-card: 0 8px 30px rgba(80, 30, 45, 0.07);
   --shadow-hover: 0 14px 35px rgba(80, 30, 45, 0.12);
-}
-
-/* Night theme: the same tokens with dark values (toggle in the header, saved as cc_theme). */
-[data-theme="dark"] {
-  --color-primary: #ff6b8f;
-  --color-primary-hover: #ff8aa6;
-  --color-accent: #3a1a2b;
-
-  --color-background: #140410;
-  --color-surface: #221021;
-  --color-surface-soft: #2d1529;
-
-  --color-text: #fdf2f5;
-  --color-muted: #c7a3b3;
-
-  --color-success: #4ad17f;
-  --color-error: #ff6b6b;
-  --color-warning: #f0b45a;
-
-  --color-border: rgba(255, 183, 197, 0.18);
-
-  --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.35);
-  --shadow-hover: 0 14px 35px rgba(0, 0, 0, 0.45);
-
-  color-scheme: dark;
+  color-scheme: light;
 }

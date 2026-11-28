@@ -1,7 +1,6 @@
-
-import { configureStore, createSlice } from '@reduxjs/toolkit';
+import { configureStore, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
-import { FALLBACK_REGION_MAP } from '../constants/regions';
+import { FALLBACK_REGIONS, FALLBACK_REGION_MAP, type RegionInfo } from '../constants/regions';
 import {
   DEFAULT_LANGUAGE,
   REGION_TO_LANGUAGE,
@@ -9,14 +8,8 @@ import {
   type SupportedLanguage,
 } from '../i18n/languages';
 
+export type Region = RegionInfo;
 type RegionCode = string;
-
-type CountryInfo = {
-  name: string;
-  currencyCode: string;
-  currencySymbol: string;
-  vatRate: number;
-};
 
 type RegionState = {
   code: RegionCode;
@@ -25,6 +18,7 @@ type RegionState = {
   currencyCode: string;
   currencySymbol: string;
   vatRate: number;
+  regions: Region[];
 };
 
 type RegionDetails = {
@@ -36,7 +30,7 @@ type RegionDetails = {
 };
 
 // Fallback data when the regions API is unavailable (shared with CountrySwitcher).
-const countries: Record<string, CountryInfo> = FALLBACK_REGION_MAP;
+const countries: Record<string, RegionInfo> = FALLBACK_REGION_MAP;
 
 const isValidRegionCode = (value: string): boolean =>
   /^[A-Z]{3}$/.test(value);
@@ -44,7 +38,15 @@ const isValidRegionCode = (value: string): boolean =>
 const isFallbackRegion = (value: string): boolean =>
   Object.prototype.hasOwnProperty.call(countries, value);
 
-const savedRegion = localStorage.getItem('cc_region');
+function readSavedRegion(): string | null {
+  try {
+    return localStorage.getItem('cc_region');
+  } catch {
+    return null;
+  }
+}
+
+const savedRegion = readSavedRegion();
 const envRegion = import.meta.env.VITE_DEFAULT_REGION || 'UZB';
 
 const initialCode: RegionCode =
@@ -54,54 +56,53 @@ const initialCode: RegionCode =
       ? envRegion
       : 'UZB';
 
+const initialCountry = countries[initialCode] ?? countries.UZB;
+
 const initialRegionState: RegionState = {
   code: initialCode,
   selected: initialCode,
-  ...(countries[initialCode] ?? countries.UZB),
+  name: initialCountry.name,
+  currencyCode: initialCountry.currencyCode,
+  currencySymbol: initialCountry.currencySymbol,
+  vatRate: initialCountry.vatRate,
+  regions: FALLBACK_REGIONS,
 };
 
-const regionSlice = createSlice({
+export const regionSlice = createSlice({
   name: 'region',
   initialState: initialRegionState,
   reducers: {
     setRegion: (state, action: PayloadAction<string>) => {
       const code = action.payload;
-      const country = countries[code];
+      const country =
+        state.regions.find((r) => r.code === code) ?? countries[code];
 
       if (!country) {
         return;
       }
 
-      Object.assign(state, {
-        code,
-        selected: code,
-        ...country,
-      });
+      state.code = code;
+      state.selected = code;
+      state.name = country.name;
+      state.currencyCode = country.currencyCode;
+      state.currencySymbol = country.currencySymbol;
+      state.vatRate = country.vatRate;
 
-      localStorage.setItem('cc_region', code);
+      try {
+        localStorage.setItem('cc_region', code);
+      } catch {
+        // Storage blocked.
+      }
     },
 
     setRegionCode: (state, action: PayloadAction<string>) => {
-      const code = action.payload;
-      const country = countries[code];
-
-      if (!country) {
-        return;
-      }
-
-      Object.assign(state, {
-        code,
-        selected: code,
-        ...country,
-      });
-
-      localStorage.setItem('cc_region', code);
+      regionSlice.caseReducers.setRegion(state, action);
     },
 
     // Supports all regions returned by the backend API.
     setRegionDetails: (
       state,
-      action: PayloadAction<RegionDetails>
+      action: PayloadAction<RegionDetails>,
     ) => {
       const region = action.payload;
 
@@ -123,10 +124,29 @@ const regionSlice = createSlice({
       state.currencySymbol = region.currencySymbol;
       state.vatRate = region.vatRate;
 
-      localStorage.setItem('cc_region', region.code);
+      try {
+        localStorage.setItem('cc_region', region.code);
+      } catch {
+        // Storage blocked.
+      }
+    },
+
+    setRegions: (state, action: PayloadAction<Region[]>) => {
+      if (!Array.isArray(action.payload) || action.payload.length === 0) {
+        return;
+      }
+      state.regions = action.payload;
+      const active = action.payload.find((r) => r.code === state.code);
+      if (active) {
+        state.name = active.name;
+        state.currencyCode = active.currencyCode;
+        state.currencySymbol = active.currencySymbol;
+        state.vatRate = active.vatRate;
+      }
     },
   },
 });
+
 export type CartItem = {
   id: string;
   productId: number;
@@ -134,6 +154,8 @@ export type CartItem = {
   quantity: number;
   modifierIds: number[];
   photoUrl: string | null;
+  unitPrice?: number;
+  imageUrl?: string;
 };
 
 export type StoredCartItem = CartItem | string;
@@ -143,34 +165,52 @@ export function isCartItem(item: StoredCartItem): item is CartItem {
 }
 
 function readCart(): StoredCartItem[] {
-  const savedCart = localStorage.getItem('cc_cart');
-  if (!savedCart) return [];
-
   try {
+    const savedCart = localStorage.getItem('cc_cart');
+    if (!savedCart) return [];
     const parsed: unknown = JSON.parse(savedCart);
     if (!Array.isArray(parsed)) return [];
 
-    return parsed.filter((item): item is StoredCartItem => {
-      if (typeof item === 'string') return true;
-      if (!item || typeof item !== 'object') return false;
-      const candidate = item as Partial<CartItem>;
-      return (
-        typeof candidate.id === 'string' &&
-        typeof candidate.productId === 'number' &&
-        typeof candidate.name === 'string' &&
-        typeof candidate.quantity === 'number' &&
-        candidate.quantity >= 1 &&
-        Array.isArray(candidate.modifierIds) &&
-        candidate.modifierIds.every((id) => typeof id === 'number') &&
-        (typeof candidate.photoUrl === 'string' || candidate.photoUrl === null)
-      );
-    });
+    return parsed
+      .filter((item): item is StoredCartItem => {
+        if (typeof item === 'string') return true;
+        if (!item || typeof item !== 'object') return false;
+        const candidate = item as Partial<CartItem>;
+        return (
+          typeof candidate.productId === 'number' &&
+          typeof candidate.name === 'string' &&
+          typeof candidate.quantity === 'number' &&
+          candidate.quantity >= 1
+        );
+      })
+      .map((item) => {
+        if (typeof item === 'string') return item;
+        const modifierIds = Array.isArray(item.modifierIds)
+          ? item.modifierIds.filter((id): id is number => typeof id === 'number')
+          : [];
+        return {
+          ...item,
+          id: typeof item.id === 'string' ? item.id : `${item.productId}-${Date.now()}`,
+          modifierIds,
+          photoUrl: typeof item.photoUrl === 'string' ? item.photoUrl : item.imageUrl ?? null,
+        };
+      });
   } catch {
     return [];
   }
 }
 
-const cartSlice = createSlice({
+function saveCart(items: StoredCartItem[]) {
+  try {
+    localStorage.setItem('cc_cart', JSON.stringify(items));
+  } catch {
+    // Storage blocked.
+  }
+}
+
+export const calculateCart = createAsyncThunk('cart/calculate', async () => null);
+
+export const cartSlice = createSlice({
   name: 'cart',
   initialState: {
     items: readCart(),
@@ -178,16 +218,24 @@ const cartSlice = createSlice({
   reducers: {
     addToCart: (
       state,
-      action: PayloadAction<Omit<CartItem, 'id'> & { id?: string } | string>,
+      action: PayloadAction<
+        | (Omit<CartItem, 'id' | 'modifierIds' | 'photoUrl'> & {
+            id?: string;
+            modifierIds?: number[];
+            photoUrl?: string | null;
+          })
+        | string
+      >,
     ) => {
       if (typeof action.payload === 'string') {
         state.items.push(action.payload);
-        localStorage.setItem('cc_cart', JSON.stringify(state.items));
+        saveCart(state.items);
         return;
       }
 
       const item = action.payload;
-      const modifierKey = [...item.modifierIds].sort((a, b) => a - b).join(',');
+      const modifierIds = Array.isArray(item.modifierIds) ? item.modifierIds : [];
+      const modifierKey = [...modifierIds].sort((a, b) => a - b).join(',');
       const existing = state.items.find(
         (current) =>
           isCartItem(current) &&
@@ -196,40 +244,54 @@ const cartSlice = createSlice({
       );
 
       if (existing && isCartItem(existing)) {
-        existing.quantity += Math.max(1, item.quantity);
+        existing.quantity += Math.max(1, item.quantity || 1);
       } else {
+        const photoUrl = item.photoUrl ?? item.imageUrl ?? null;
         state.items.push({
           ...item,
           id: item.id ?? `${item.productId}-${modifierKey || 'base'}`,
-          quantity: Math.max(1, item.quantity),
+          quantity: Math.max(1, item.quantity || 1),
+          modifierIds,
+          photoUrl,
+          imageUrl: item.imageUrl ?? (photoUrl ?? undefined),
+          unitPrice: item.unitPrice ?? 0,
         });
       }
-      localStorage.setItem('cc_cart', JSON.stringify(state.items));
+      saveCart(state.items);
     },
 
-    removeFromCart: (state, action: PayloadAction<string>) => {
-      state.items = state.items.filter(
-        (item) => !isCartItem(item) || item.id !== action.payload,
-      );
-      localStorage.setItem('cc_cart', JSON.stringify(state.items));
+    removeFromCart: (state, action: PayloadAction<string | number>) => {
+      const target = action.payload;
+      state.items = state.items.filter((item) => {
+        if (typeof item === 'string') return item !== target;
+        return item.id !== target && item.productId !== target;
+      });
+      saveCart(state.items);
     },
 
     updateCartQuantity: (
       state,
-      action: PayloadAction<{ id: string; quantity: number }>,
+      action: PayloadAction<{ id?: string; productId?: number | string; quantity: number }>,
     ) => {
+      const { id, productId, quantity } = action.payload;
       const item = state.items.find(
-        (current) => isCartItem(current) && current.id === action.payload.id,
+        (current) =>
+          isCartItem(current) &&
+          ((id && current.id === id) || (productId !== undefined && current.productId === productId)),
       );
       if (item && isCartItem(item)) {
-        item.quantity = Math.max(1, action.payload.quantity);
-        localStorage.setItem('cc_cart', JSON.stringify(state.items));
+        item.quantity = Math.max(1, quantity);
+        saveCart(state.items);
       }
     },
 
     clearCart: (state) => {
       state.items = [];
-      localStorage.removeItem('cc_cart');
+      try {
+        localStorage.removeItem('cc_cart');
+      } catch {
+        // Storage blocked.
+      }
     },
   },
 });
@@ -268,11 +330,11 @@ const initialLanguageState: LanguageState = {
   chosen: savedLanguage !== null,
 };
 
-const languageSlice = createSlice({
+export const languageSlice = createSlice({
   name: 'language',
   initialState: initialLanguageState,
   reducers: {
-    setLanguage: (state, action: PayloadAction<SupportedLanguage>) => {
+    setLanguage: (state, action: PayloadAction<SupportedLanguage | string>) => {
       if (!isSupportedLanguage(action.payload)) return;
       state.current = action.payload;
       state.chosen = true;
@@ -290,18 +352,20 @@ const languageSlice = createSlice({
   },
 });
 
-// Day / night theme. Saved in localStorage ('cc_theme'); a new visitor follows the system setting.
+// Day / night theme. Saved in localStorage ('cc_theme' and 'cherry_theme'); defaults to 'dark' for new visitors.
 export type Theme = 'light' | 'dark';
+export type ToastType = 'error' | 'success' | 'warning';
 const THEME_KEY = 'cc_theme';
+const LEGACY_THEME_KEY = 'cherry_theme';
 
 function readInitialTheme(): Theme {
   try {
-    const saved = localStorage.getItem(THEME_KEY);
+    const saved = localStorage.getItem(THEME_KEY) || localStorage.getItem(LEGACY_THEME_KEY);
     if (saved === 'light' || saved === 'dark') return saved;
   } catch {
     // Storage is blocked.
   }
-  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return 'dark';
 }
 
 function applyTheme(theme: Theme) {
@@ -310,6 +374,7 @@ function applyTheme(theme: Theme) {
   }
   try {
     localStorage.setItem(THEME_KEY, theme);
+    localStorage.setItem(LEGACY_THEME_KEY, theme);
   } catch {
     // Nothing to do.
   }
@@ -320,20 +385,32 @@ if (typeof document !== 'undefined') {
   document.documentElement.setAttribute('data-theme', initialTheme);
 }
 
-// Keep existing UI functionality.
-const uiSlice = createSlice({
+export const uiSlice = createSlice({
   name: 'ui',
   initialState: {
     toast: '',
+    toastType: 'error' as ToastType,
     theme: initialTheme,
+    isCartDrawerOpen: false,
+    isAboutModalOpen: false,
+    isBookingModalOpen: false,
   },
   reducers: {
-    showToast: (state, action: PayloadAction<string>) => {
-      state.toast = action.payload;
+    showToast: (
+      state,
+      action: PayloadAction<string | { type?: ToastType; message?: string }>,
+    ) => {
+      if (typeof action.payload === 'string') {
+        state.toast = action.payload;
+        state.toastType = 'error';
+      } else {
+        state.toast = action.payload?.message || 'Cannot reach the server. Please try again.';
+        state.toastType = action.payload?.type || 'error';
+      }
     },
 
     hideToast: (state) => {
-      state.toast = "";
+      state.toast = '';
     },
 
     toggleTheme: (state) => {
@@ -345,6 +422,28 @@ const uiSlice = createSlice({
       state.theme = action.payload;
       applyTheme(state.theme);
     },
+
+    openCartDrawer: (state) => {
+      state.isCartDrawerOpen = true;
+    },
+    closeCartDrawer: (state) => {
+      state.isCartDrawerOpen = false;
+    },
+    toggleCartDrawer: (state) => {
+      state.isCartDrawerOpen = !state.isCartDrawerOpen;
+    },
+    openAboutModal: (state) => {
+      state.isAboutModalOpen = true;
+    },
+    closeAboutModal: (state) => {
+      state.isAboutModalOpen = false;
+    },
+    openBookingModal: (state) => {
+      state.isBookingModalOpen = true;
+    },
+    closeBookingModal: (state) => {
+      state.isBookingModalOpen = false;
+    },
   },
 });
 
@@ -352,6 +451,7 @@ export const {
   setRegion,
   setRegionCode,
   setRegionDetails,
+  setRegions,
 } = regionSlice.actions;
 
 export const {
@@ -361,11 +461,22 @@ export const {
   clearCart,
 } = cartSlice.actions;
 
+export const addItem = addToCart;
+export const removeItem = removeFromCart;
+export const updateQuantity = updateCartQuantity;
+
 export const {
   showToast,
   hideToast,
   toggleTheme,
   setTheme,
+  openCartDrawer,
+  closeCartDrawer,
+  toggleCartDrawer,
+  openAboutModal,
+  closeAboutModal,
+  openBookingModal,
+  closeBookingModal,
 } = uiSlice.actions;
 
 export const {
@@ -384,3 +495,4 @@ export const store = configureStore({
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+export default store;

@@ -5,9 +5,11 @@ import axios from "axios";
 import { api } from "../api/client";
 import { useSelector } from "react-redux";
 import type { RootState } from "../store";
+import { getAuthEmail } from "../utils/auth";
 import { useTranslation } from "../i18n/useTranslation";
 import Input from "../components/ui/Input";
-import Select from "../components/ui/Select";
+import CustomSelect from "../components/ui/CustomSelect";
+import DatePicker from "../components/ui/DatePicker";
 import Button from "../components/ui/Button";
 
 // Response of GET /api/time-slots?date=YYYY-MM-DD (the same slots are used for orders).
@@ -48,11 +50,11 @@ export default function Booking() {
   const region = useSelector((state: RootState) => state.region.code);
   const [date, setDate] = useState(todayLocal);
   const [timeSlotId, setTimeSlotId] = useState("");
-  const [guestsCount, setGuestsCount] = useState("1");
+  const [guestsCount, setGuestsCount] = useState("2");
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => getAuthEmail() ?? "");
 
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(true);
@@ -211,159 +213,284 @@ export default function Booking() {
     }
   }
 
-  if (confirmation) {
-    return (
-      <section
-        style={{
-          maxWidth: 600,
-          margin: "32px auto",
-          padding: 24,
-        }}
-      >
-        <h1>{t("booking.confirmedTitle", "Booking confirmed!")}</h1>
-        <p>{t("booking.confirmedText", "Your table has been successfully booked.")}</p>
-
-        <p>
-          <strong>{t("booking.bookingNumber", "Booking number:")}</strong> {confirmation.bookingNumber}
-        </p>
-
-        <p>
-          <strong>{t("booking.tableNumber", "Table number:")}</strong> {confirmation.tableNumber}
-        </p>
-
-        <p>
-          <strong>{t("booking.dateLabel", "Date:")}</strong> {confirmation.date}
-        </p>
-
-        <p>
-          <strong>{t("booking.timeLabel", "Time:")}</strong> {confirmation.time}
-        </p>
-
-        <p>
-          <strong>{t("booking.guestsLabel", "Guests:")}</strong> {confirmation.guestsCount}
-        </p>
-      </section>
-    );
-  }
-
   return (
     <section
+      className="booking-page"
       style={{
-        maxWidth: 600,
-        margin: "32px auto",
-        padding: 24,
+        padding: "var(--space-6) var(--space-4)",
+        maxWidth: "660px",
+        margin: "0 auto",
       }}
     >
-      <h1>{t("booking.title", "Book a Table")}</h1>
-      <p>{t("booking.subtitle", "Choose your preferred date and time.")}</p>
-
-      <form
-        onSubmit={handleSubmit}
-        noValidate
-        style={{
-          display: "grid",
-          gap: 18,
-          marginTop: 24,
-        }}
-      >
-        <Input
-          label={t("booking.date", "Booking date")}
-          type="date"
-          value={date}
-          min={todayLocal()}
-          required
-          error={errors.date}
-          onChange={(event) => {
-            const nextDate = event.target.value;
-            const validDate = Boolean(nextDate) && nextDate >= todayLocal();
-
-            setDate(nextDate);
-            setTimeSlotId("");
-            setSlots([]);
-            setSlotsError(
-              validDate ? "" : t("booking.invalidDate", "Please choose a valid date."),
-            );
-            setSlotsLoading(validDate);
-            setErrors({});
-            setSubmitError("");
+      {/* Page Header */}
+      <div style={{ textAlign: "center", marginBottom: "var(--space-6)" }}>
+        <span
+          style={{
+            fontSize: "var(--font-size-xs)",
+            textTransform: "uppercase",
+            letterSpacing: "0.25em",
+            color: "var(--sakura-pink)",
+            fontWeight: 700,
+            display: "block",
+            marginBottom: "6px",
           }}
-        />
+        >
+          {t("booking.eyebrow", "Flagship Hospitality")}
+        </span>
+        <h1
+          style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: "clamp(2rem, 3.5vw, 2.6rem)",
+            color: "var(--cheesecake-cream)",
+            margin: "0 0 8px",
+          }}
+        >
+          {t("booking.title", "Table Reservation")}
+        </h1>
+        <p style={{ color: "var(--text-dim)", fontSize: "0.95rem", margin: 0 }}>
+          {t("booking.subtitle", "Reserve your table at Cherry Café for an enchanting pastry & barista experience.")}
+        </p>
+      </div>
 
-        <Select
-          label={t("booking.availableTime", "Available time")}
-          value={timeSlotId}
-          options={timeOptions}
-          disabled={slotsLoading || Boolean(slotsError)}
-          error={errors.timeSlotId}
-          onChange={(event) => setTimeSlotId(event.target.value)}
-        />
-
-        {slotsError && (
-          <p role="alert" style={{ color: "crimson" }}>
-            {slotsError}
+      {confirmation ? (
+        <div
+          className="booking-card"
+          style={{
+            background: "var(--cherry-card)",
+            border: "2px solid var(--cherry-border-glow)",
+            borderRadius: "20px",
+            padding: "36px 28px",
+            textAlign: "center",
+            boxShadow: "0 16px 40px rgba(0, 0, 0, 0.3)",
+          }}
+        >
+          <div style={{ marginBottom: "16px", display: "flex", justifyContent: "center" }}>
+            <img
+              src="/TransparentSakuraFlower.png"
+              alt="Sakura"
+              style={{
+                width: "60px",
+                height: "60px",
+                objectFit: "contain",
+                filter: "drop-shadow(0 4px 12px rgba(230, 57, 96, 0.4))",
+              }}
+            />
+          </div>
+          <span
+            style={{
+              backgroundColor: "rgba(56, 193, 114, 0.2)",
+              color: "var(--mint-fresh)",
+              padding: "4px 14px",
+              borderRadius: "999px",
+              fontWeight: 700,
+              fontSize: "0.85rem",
+              display: "inline-block",
+              marginBottom: "14px",
+            }}
+          >
+            {t("booking.confirmedTitle", "Booking confirmed!")}
+          </span>
+          <h2
+            style={{
+              fontFamily: "'Playfair Display', serif",
+              color: "var(--cheesecake-cream)",
+              fontSize: "1.8rem",
+              margin: "0 0 10px",
+            }}
+          >
+            {t("booking.confirmedText", "Your table has been successfully booked.")}
+          </h2>
+          <p style={{ color: "var(--text-dim)", fontSize: "0.95rem", marginBottom: "20px" }}>
+            {t("booking.bookingNumber", "Booking number:")}{" "}
+            <strong data-testid="booking-number" style={{ color: "var(--sakura-pink)", fontSize: "1.1rem" }}>
+              {confirmation.bookingNumber}
+            </strong>
           </p>
-        )}
 
-        {!slotsLoading &&
-          !slotsError &&
-          slots.every((slot) => !slot.isAvailable) && (
-            <p role="status">
-              {t("booking.noSlots", "No available time slots for this date.")}
-            </p>
+          <div
+            style={{
+              background: "var(--color-surface-soft)",
+              border: "2px solid var(--cherry-border)",
+              borderRadius: "14px",
+              padding: "16px",
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+              gap: "12px",
+              marginBottom: "24px",
+              textAlign: "center",
+            }}
+          >
+            <div>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-dim)" }}>
+                {t("booking.tableNumber", "Table number:")}
+              </div>
+              <strong style={{ color: "var(--crust-gold)", fontSize: "0.98rem" }}>
+                #{confirmation.tableNumber}
+              </strong>
+            </div>
+            <div>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-dim)" }}>
+                {t("booking.dateLabel", "Date:")} &amp; {t("booking.timeLabel", "Time:")}
+              </div>
+              <strong style={{ color: "var(--text-main)", fontSize: "0.98rem" }}>
+                {confirmation.date} · {confirmation.time}
+              </strong>
+            </div>
+            <div>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-dim)" }}>
+                {t("booking.guestsLabel", "Guests:")}
+              </div>
+              <strong style={{ color: "var(--text-main)", fontSize: "0.98rem" }}>
+                {confirmation.guestsCount}
+              </strong>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            onClick={() => {
+              setConfirmation(null);
+              setTimeSlotId("");
+            }}
+          >
+            {t("booking.bookAnother", "Book Another Table")}
+          </Button>
+        </div>
+      ) : (
+        <div
+          className="booking-card"
+          style={{
+            background: "var(--cherry-card)",
+            border: "2px solid var(--cherry-border)",
+            borderRadius: "20px",
+            padding: "32px 28px",
+            boxShadow: "0 16px 40px rgba(0, 0, 0, 0.25)",
+          }}
+        >
+          {submitError && (
+            <div
+              role="alert"
+              data-testid="booking-conflict-error"
+              style={{
+                padding: "14px",
+                backgroundColor: "rgba(230, 57, 96, 0.15)",
+                border: "2px solid var(--raspberry-coulis)",
+                color: "var(--color-error)",
+                borderRadius: "10px",
+                marginBottom: "20px",
+                fontSize: "0.9rem",
+                fontWeight: 600,
+              }}
+            >
+              {submitError}
+            </div>
           )}
 
-        <Select
-          label={t("booking.guests", "Number of guests")}
-          value={guestsCount}
-          options={guestOptions}
-          error={errors.guestsCount}
-          onChange={(event) => setGuestsCount(event.target.value)}
-        />
+          <form
+            onSubmit={handleSubmit}
+            noValidate
+            style={{
+              display: "grid",
+              gap: 18,
+            }}
+          >
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
+              <DatePicker
+                label={t("booking.date", "Booking date")}
+                value={date}
+                min={todayLocal()}
+                error={errors.date}
+                onChange={(nextDate) => {
+                  const validDate = Boolean(nextDate) && nextDate >= todayLocal();
 
-        <Input
-          label={t("booking.fullName", "Full name")}
-          value={name}
-          required
-          error={errors.name}
-          onChange={(event) => setName(event.target.value)}
-        />
+                  setDate(nextDate);
+                  setTimeSlotId("");
+                  setSlots([]);
+                  setSlotsError(
+                    validDate ? "" : t("booking.invalidDate", "Please choose a valid date."),
+                  );
+                  setSlotsLoading(validDate);
+                  setErrors({});
+                  setSubmitError("");
+                }}
+              />
 
-        <Input
-          label={t("booking.phone", "Phone number")}
-          type="tel"
-          value={phone}
-          required
-          error={errors.phone}
-          onChange={(event) => setPhone(event.target.value)}
-        />
+              <CustomSelect
+                label={t("booking.availableTime", "Available time")}
+                value={timeSlotId}
+                options={timeOptions}
+                disabled={slotsLoading || Boolean(slotsError)}
+                error={errors.timeSlotId}
+                onChange={(value) => setTimeSlotId(value)}
+              />
+            </div>
 
-        <Input
-          label={t("booking.email", "Email")}
-          type="email"
-          value={email}
-          required
-          error={errors.email}
-          onChange={(event) => setEmail(event.target.value)}
-        />
+            {slotsError && (
+              <p role="alert" style={{ color: "var(--color-error)", margin: 0 }}>
+                {slotsError}
+              </p>
+            )}
 
-        {submitError && (
-          <p role="alert" style={{ color: "crimson" }}>
-            {submitError}
-          </p>
-        )}
+            {!slotsLoading &&
+              !slotsError &&
+              slots.every((slot) => !slot.isAvailable) && (
+                <p role="status" style={{ margin: 0, color: "var(--text-dim)" }}>
+                  {t("booking.noSlots", "No available time slots for this date.")}
+                </p>
+              )}
 
-        <Button
-          type="submit"
-          loading={submitting}
-          disabled={
-            slotsLoading ||
-            Boolean(slotsError) ||
-            !slots.some((slot) => slot.isAvailable)
-          }
-        >
-          {t("booking.confirm", "Confirm Booking")}
-        </Button>
-      </form>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
+              <CustomSelect
+                label={t("booking.guests", "Number of guests")}
+                value={guestsCount}
+                options={guestOptions}
+                error={errors.guestsCount}
+                onChange={(value) => setGuestsCount(value)}
+              />
+
+              <Input
+                label={t("booking.fullName", "Full name")}
+                value={name}
+                required
+                error={errors.name}
+                onChange={(event) => setName(event.target.value)}
+              />
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
+              <Input
+                label={t("booking.phone", "Phone number")}
+                type="tel"
+                value={phone}
+                required
+                error={errors.phone}
+                onChange={(event) => setPhone(event.target.value)}
+              />
+
+              <Input
+                label={t("booking.email", "Email")}
+                type="email"
+                value={email}
+                required
+                error={errors.email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+            </div>
+
+            <Button
+              type="submit"
+              loading={submitting}
+              disabled={
+                slotsLoading ||
+                Boolean(slotsError) ||
+                !slots.some((slot) => slot.isAvailable)
+              }
+            >
+              {t("booking.confirm", "Confirm Booking")}
+            </Button>
+          </form>
+        </div>
+      )}
     </section>
   );
 }

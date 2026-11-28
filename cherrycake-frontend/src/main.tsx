@@ -6,7 +6,9 @@ import { store } from "./store";
 import App from "./App";
 import "./index.css";
 import "./styles/tokens.css";
+import "./styles/global.css";
 import "./styles/dark.css";
+import "./styles/animations.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

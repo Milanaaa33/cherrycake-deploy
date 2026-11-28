@@ -142,7 +142,9 @@ public class FulfillmentService {
             if (!point.isAvailable()) {
                 throw new ConflictException("Pickup point " + pickupPointId + " is not available");
             }
-            return new FulfillmentChoice(type, point.getId(), null, slot.getId(), NO_FEE);
+            String pointLabel = point.getName()
+                    + (point.getAddress() != null && !point.getAddress().isBlank() ? " — " + point.getAddress() : "");
+            return new FulfillmentChoice(type, point.getId(), null, slot.getId(), NO_FEE, pointLabel, describe(slot));
         }
 
         if (deliveryZoneId == null) {
@@ -159,7 +161,8 @@ public class FulfillmentService {
             throw new ConflictException("Delivery zone " + deliveryZoneId + " is not available");
         }
         return new FulfillmentChoice(
-                type, null, zone.getId(), slot.getId(), region.toLocalCurrency(zone.getDeliveryFee()));
+                type, null, zone.getId(), slot.getId(), region.toLocalCurrency(zone.getDeliveryFee()),
+                zone.getName(), describe(slot));
     }
 
     /**

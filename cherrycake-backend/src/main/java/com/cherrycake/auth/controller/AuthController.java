@@ -35,7 +35,7 @@ public class AuthController {
 
     @PostMapping("/request-code")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Send a 6-digit sign-in code to the email (valid for 10 minutes)")
+    @Operation(summary = "Send a 6-digit sign-in code to the email (valid for 5 minutes)")
     @ApiResponse(responseCode = "204", description = "Code sent (or written to the backend log when no mail server is configured)")
     @ApiResponse(responseCode = "400", description = "Invalid email",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))

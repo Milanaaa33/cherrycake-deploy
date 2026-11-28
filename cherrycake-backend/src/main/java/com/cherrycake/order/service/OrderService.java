@@ -9,6 +9,7 @@ import com.cherrycake.common.exception.BadRequestException;
 import com.cherrycake.common.exception.NotFoundException;
 import com.cherrycake.fulfillment.service.FulfillmentChoice;
 import com.cherrycake.fulfillment.service.FulfillmentService;
+import com.cherrycake.mail.CherryCakeEmailTemplates.OrderEmailDetails;
 import com.cherrycake.order.dto.CreateOrderRequest;
 import com.cherrycake.order.dto.OrderResponse;
 import com.cherrycake.order.entity.Order;
@@ -25,8 +26,11 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * Validates and persists guest orders using server-side calculation from {@link CartCalculationService} (CC-24).
@@ -44,6 +48,7 @@ public class OrderService {
     private final RegionRepository regionRepository;
     private final ObjectMapper objectMapper;
     private final FulfillmentService fulfillmentService;
+    private final ObjectProvider<OrderConfirmationEmailSender> orderEmailSenderProvider;
 
     public OrderService(
             OrderRepository orderRepository,
@@ -52,7 +57,8 @@ public class OrderService {
             ProductRepository productRepository,
             RegionRepository regionRepository,
             ObjectMapper objectMapper,
-            FulfillmentService fulfillmentService) {
+            FulfillmentService fulfillmentService,
+            ObjectProvider<OrderConfirmationEmailSender> orderEmailSenderProvider) {
         this.orderRepository = orderRepository;
         this.catalogService = catalogService;
         this.cartCalculationService = cartCalculationService;
@@ -60,6 +66,7 @@ public class OrderService {
         this.regionRepository = regionRepository;
         this.objectMapper = objectMapper;
         this.fulfillmentService = fulfillmentService;
+        this.orderEmailSenderProvider = orderEmailSenderProvider;
     }
 
     @Transactional
@@ -144,7 +151,29 @@ public class OrderService {
             fulfillmentService.reserveSlot(fulfillment.timeSlotId(), request.orderDate());
         }
         Order saved = orderRepository.save(order);
-        return toResponse(saved, region.getCode());
+        OrderResponse response = toResponse(saved, region.getCode());
+        dispatchOrderConfirmationEmail(new OrderEmailDetails(
+                response,
+                fulfillment.locationLabel(),
+                fulfillment.timeSlotLabel()));
+        return response;
+    }
+
+    private void dispatchOrderConfirmationEmail(OrderEmailDetails details) {
+        OrderConfirmationEmailSender sender = orderEmailSenderProvider.getIfAvailable();
+        if (sender == null) {
+            return;
+        }
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    sender.sendOrderConfirmation(details);
+                }
+            });
+            return;
+        }
+        sender.sendOrderConfirmation(details);
     }
 
     /**

@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.cherrycake.auth.service.LoginCodeSender;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -128,6 +129,22 @@ class AuthControllerTests {
                     .andExpect(status().isBadRequest());
         }
         // Even the correct code no longer works.
+        mvc.perform(post("/api/auth/verify-code").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + email + "\",\"code\":\"" + code + "\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void expiredCodeIsRejected() throws Exception {
+        String email = "expired.test@example.com";
+        mvc.perform(post("/api/auth/request-code").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + email + "\"}"))
+                .andExpect(status().isNoContent());
+        String code = SENT_CODES.get(email);
+
+        jdbc.update("UPDATE auth_codes SET expires_at = ? WHERE email = ?",
+                LocalDateTime.now().minusSeconds(1), email);
+
         mvc.perform(post("/api/auth/verify-code").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"" + email + "\",\"code\":\"" + code + "\"}"))
                 .andExpect(status().isBadRequest());
